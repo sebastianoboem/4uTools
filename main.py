@@ -614,7 +614,104 @@ class GumBackupApp:
             else:
                 self.android_engine.stop()
 
+    def _check_and_install_adb(self):
+        if os.name == 'nt':
+            self._check_and_install_adb_windows()
+        else:
+            self._check_and_install_adb_macos()
+
+    def _check_and_install_adb_windows(self):
+        adb_found = shutil.which("adb") is not None
+        if adb_found:
+            return
+        
+        print(Fore.RED + "ADB non trovato! È necessario per il backup Android.")
+        print(Fore.YELLOW + "\nNOTA: Se ADB è già stato installato in precedenza, potrebbe essere")
+        print(Fore.YELLOW + "necessario un RIAVIO del sistema per rendere effettive le modifiche.\n")
+        
+        res = self._run_gum(["confirm", "--default=true", "Vuoi installare ADB automaticamente con winget?"])
+        if res.returncode == 0:
+            try:
+                print(Fore.CYAN + "Installazione in corso...")
+                result = subprocess.run(
+                    ["winget", "install", "-e", "--id", "Google.PlatformTools"],
+                    capture_output=True,
+                    text=True
+                )
+                if result.returncode == 0:
+                    print(Fore.GREEN + "\nADB installato con successo!")
+                    print(Fore.YELLOW + "Riavvia l'app per continuare.")
+                    sys.exit(0)
+                else:
+                    print(Fore.RED + f"Installazione fallita: {result.stderr}")
+                    sys.exit(1)
+            except Exception as e:
+                print(Fore.RED + f"Errore durante l'installazione: {e}")
+                sys.exit(1)
+        else:
+            print(Fore.RED + "ADB è necessario per il corretto funzionamento dell'app.")
+            sys.exit(1)
+
+    def _check_and_install_adb_macos(self):
+        brew_found = shutil.which("brew") is not None
+        
+        if not brew_found:
+            print(Fore.RED + "Homebrew non trovato! È necessario per installare ADB.")
+            res = self._run_gum(["confirm", "--default=true", "Vuoi installare Homebrew automaticamente?"])
+            if res.returncode == 0:
+                try:
+                    print(Fore.CYAN + "Installazione di Homebrew in corso...")
+                    print(Fore.YELLOW + "Potrebbe essere richiesta la password dell'utente.\n")
+                    result = subprocess.run(
+                        ["/bin/bash", "-c", "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"],
+                        capture_output=True,
+                        text=True
+                    )
+                    if result.returncode == 0:
+                        print(Fore.GREEN + "\nHomebrew installato con successo!")
+                    else:
+                        print(Fore.RED + f"Installazione Homebrew fallita: {result.stderr}")
+                        sys.exit(1)
+                except Exception as e:
+                    print(Fore.RED + f"Errore durante l'installazione di Homebrew: {e}")
+                    sys.exit(1)
+            else:
+                print(Fore.RED + "Homebrew è necessario per il corretto funzionamento dell'app.")
+                sys.exit(1)
+        
+        adb_found = shutil.which("adb") is not None
+        if adb_found:
+            return
+        
+        print(Fore.RED + "ADB non trovato! È necessario per il backup Android.")
+        print(Fore.YELLOW + "\nNOTA: Se ADB è già stato installato in precedenza, potrebbe essere")
+        print(Fore.YELLOW + "necessario un RIAVIO del terminale per rendere effettive le modifiche.\n")
+        
+        res = self._run_gum(["confirm", "--default=true", "Vuoi installare ADB automaticamente con Homebrew?"])
+        if res.returncode == 0:
+            try:
+                print(Fore.CYAN + "Installazione di ADB in corso...")
+                result = subprocess.run(
+                    ["brew", "install", "android-platform-tools"],
+                    capture_output=True,
+                    text=True
+                )
+                if result.returncode == 0:
+                    print(Fore.GREEN + "\nADB installato con successo!")
+                    print(Fore.YELLOW + "Riavvia l'app per continuare.")
+                    sys.exit(0)
+                else:
+                    print(Fore.RED + f"Installazione ADB fallita: {result.stderr}")
+                    sys.exit(1)
+            except Exception as e:
+                print(Fore.RED + f"Errore durante l'installazione di ADB: {e}")
+                sys.exit(1)
+        else:
+            print(Fore.RED + "ADB è necessario per il corretto funzionamento dell'app.")
+            sys.exit(1)
+
     def run(self):
+        self._check_and_install_adb()
         try:
             self.step_select_mode()
             self.step1_select_filters()
