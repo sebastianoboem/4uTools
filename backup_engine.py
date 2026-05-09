@@ -8,6 +8,10 @@ import platform
 import subprocess
 from pathlib import Path
 
+# Read chunk size for MD5 verification (larger buffer reduces syscall overhead).
+HASH_CHUNK_SIZE = 1024 * 1024
+
+
 class BackupEngine:
     def __init__(self):
         self.stop_event = threading.Event()
@@ -313,6 +317,7 @@ class BackupEngine:
 
         dest_path = Path(destination_root) / f"Backup_{int(time.time())}"
         dest_path.mkdir(parents=True, exist_ok=True)
+        created_dirs = {dest_path}
 
         for file_info in files_list:
             # Check Pause
@@ -328,7 +333,10 @@ class BackupEngine:
             dst = dest_path / file_info['category'] / label / target_structure
             
             try:
-                dst.parent.mkdir(parents=True, exist_ok=True)
+                parent = dst.parent
+                if parent not in created_dirs:
+                    parent.mkdir(parents=True, exist_ok=True)
+                    created_dirs.add(parent)
                 
                 if progress_callback:
                     progress_callback("copying", src.name, copied_size)
@@ -360,7 +368,7 @@ class BackupEngine:
     def _get_hash(self, path):
         hash_md5 = hashlib.md5()
         with open(path, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
+            for chunk in iter(lambda: f.read(HASH_CHUNK_SIZE), b""):
                 hash_md5.update(chunk)
         return hash_md5.hexdigest()
 
@@ -444,109 +452,8 @@ class AndroidBackupEngine(BackupEngine):
                 ext_to_cat[e] = "Altro"
         allowed_exts = {e.lower() for e in allowed_exts}
 
-        # Construct find command
-        # We search in /sdcard/ (External Storage)
-        # Exclude common junk
-        
-        # Build exclude args for find
-        # find /sdcard -path "/sdcard/Android/data" -prune -o -path "/sdcard/Android/obb" -prune -o -type f -print
-        
+        # Scan /sdcard: list top-level entries, then per-folder find + stat (fallback: find paths only).
         base_path = "/sdcard"
-        
-        # Basic exclusions to prune
-        prune_paths = [f"{base_path}/Android/data", f"{base_path}/Android/obb", f"{base_path}/.thumbnails"]
-        
-        # Helper to check if an exclusion is overridden by an exception (is parent of exception)
-        def is_parent_of_exception(excl_path):
-             excl_path = excl_path.replace("\\", "/")
-             for exc in exceptions:
-                 exc = exc.replace("\\", "/")
-                 # If exc starts with excl_path, then excl_path is a parent of exception
-                 # e.g. excl=/A, exc=/A/B
-                 if exc.startswith(excl_path) and len(exc) > len(excl_path):
-                     return True
-             return False
-
-        # Add user exclusions if they look like absolute paths or relative
-        for excl in exclusions:
-            # Clean up exclusion string
-            excl = excl.replace("\\", "/")
-            
-            path_to_prune = ""
-            if not excl.startswith("/"):
-                pass
-            else:
-                # Absolute path
-                if excl.startswith("/sdcard"):
-                    path_to_prune = excl
-                elif excl.startswith("/"):
-                     path_to_prune = f"{base_path}{excl}"
-            
-            if path_to_prune:
-                # Only prune if it DOES NOT contain an exception
-                if not is_parent_of_exception(path_to_prune):
-                    prune_paths.append(path_to_prune)
-
-        cmd_parts = [self.adb_exe, "-s", device_id, "shell", "find", base_path]
-        
-        # Add prunes
-        # Syntax: ( -path "path1" -o -path "path2" ) -prune -o -type f -print
-        # But adb shell escaping is tricky.
-        # Let's try a simpler approach: fetch all files and filter in Python?
-        # No, listing all files in Android/data is HUGE (thousands of cache files).
-        # We MUST prune Android/data.
-        
-        # "find /sdcard \( -path '/sdcard/Android/data' -o -path '/sdcard/Android/obb' \) -prune -o -type f -print"
-        
-        # Constructing the find command string safely
-        # Note: On Android, paths are case sensitive usually.
-        
-        find_cmd = f"find {base_path} \\( -path '{base_path}/Android/data' -o -path '{base_path}/Android/obb' -o -path '*/.thumbnails' -o -path '*/.cache' \\) -prune -o -type f -print"
-        
-        try:
-            # Run find
-            process = subprocess.Popen(
-                [self.adb_exe, "-s", device_id, "shell", find_cmd],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                encoding='utf-8',
-                errors='ignore'
-            )
-            
-            # Process output line by line
-            # Since we can't easily get size with standard find on all androids without -printf or stat loop,
-            # we will try to batch stat later OR just ignore size if it's too slow.
-            # But we need size for progress bar.
-            # Let's try to use `ls -l` for the found files? 
-            # No, too many files.
-            # Let's assume a dummy size first, or try to parse `ls -lR` instead of `find`.
-            
-            # Actually `ls -lR /sdcard` is robust enough usually.
-            # But parsing `ls -lR` is painful because of date formats.
-            
-            # Let's stick to `find` and then maybe do a batch `ls -l`?
-            # Or use `du -a`? `du -a /sdcard` gives size (blocks) and path.
-            # `du -k -a /sdcard` -> size in KB.
-            # `du` output: `1024   /sdcard/DCIM/Camera/IMG.jpg`
-            # This is good! Android `du` is usually available.
-            
-            pass
-        except Exception:
-            pass
-            
-        # Retrying with `du -a` approach which gives size and filtering
-        # But du includes directories.
-        # And we still want to prune Android/data before du scans it (it's slow).
-        # `du` doesn't support prune usually on Android toybox.
-        
-        # Back to `find`.
-        # Let's just use `find` to get paths. Then `ls -l` specific files? No.
-        # Let's try `stat -c '%s|%n'`.
-        # If stat is available (Android 6.0+), it's the best.
-        
-        # 1. Get list of top-level folders in /sdcard to scan individually
-        # This avoids "Permission denied" on one folder killing the whole find command
         folders_to_scan = []
         try:
             ls_cmd = [self.adb_exe, "-s", device_id, "shell", "ls", "-1", base_path]

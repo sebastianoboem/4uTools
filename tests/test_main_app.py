@@ -218,7 +218,11 @@ class TestRunMethod:
             app.gum_exe = None
             
             with patch.object(app, '_check_and_install_adb') as mock_check, \
-                 patch.object(app, 'step_select_mode'):
+                 patch.object(app, 'step_select_mode'), \
+                 patch.object(app, 'step1_select_filters'), \
+                 patch.object(app, 'step2_select_drive'), \
+                 patch.object(app, 'step3_scan_and_confirm', return_value=([], 0)), \
+                 patch.object(app, 'step4_perform_backup'):
                 
                 app.run()
                 

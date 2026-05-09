@@ -139,7 +139,8 @@ class TestAndroidCopyFiles:
             
             files = [{
                 'source': '/sdcard/test.pdf',
-                'name': 'test.pdf',
+                'rel_path': 'test.pdf',
+                'device_id': 'device123',
                 'size': 1000,
                 'category': 'Documenti'
             }]

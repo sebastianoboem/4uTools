@@ -37,7 +37,7 @@ def mock_psutil():
     psutil_mock = MagicMock()
     psutil_mock.disk_partitions.return_value = []
     psutil_mock.disk_usage.return_value = MagicMock(total=1000000000, free=500000000)
-    return patch('psutil', psutil_mock)
+    return patch('backup_engine.psutil', psutil_mock)
 
 
 @pytest.fixture

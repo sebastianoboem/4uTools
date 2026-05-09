@@ -1,6 +1,7 @@
 import os
 import sys
 import pytest
+import threading
 from unittest.mock import patch, MagicMock, mock_open
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -154,17 +155,18 @@ class TestCopyFiles:
         
         engine = BackupEngine()
         files = [{
-            'path': str(source_file),
-            'name': 'source.txt',
+            'source': str(source_file),
+            'rel_path': 'source.txt',
             'size': 7,
-            'category': 'Documenti'
+            'category': 'Documenti',
+            'root_label': ''
         }]
         
         count, errors = engine.copy_files(files, str(dest_dir))
         
         assert count == 1
         assert len(errors) == 0
-        assert (dest_dir / "source.txt").exists()
+        assert any(p.name == "source.txt" for p in dest_dir.rglob("source.txt"))
 
     def test_copy_files_verifies_md5(self, temp_dir, mock_platform):
         mock_platform('Darwin')
@@ -178,13 +180,14 @@ class TestCopyFiles:
         
         engine = BackupEngine()
         files = [{
-            'path': str(source_file),
-            'name': 'verify.txt',
+            'source': str(source_file),
+            'rel_path': 'verify.txt',
             'size': len(content),
-            'category': 'Documenti'
+            'category': 'Documenti',
+            'root_label': ''
         }]
         
-        count, errors = engine.copy_files(files, str(dest_dir), verify_md5=True)
+        count, errors = engine.copy_files(files, str(dest_dir), verify=True)
         
         assert count == 1
 
@@ -200,7 +203,13 @@ class TestCopyFiles:
         engine = BackupEngine()
         engine.stop_event.set()
         
-        files = [{'path': str(temp_dir / f"file{i}.txt"), 'name': f"file{i}.txt", 'size': 10, 'category': 'Documenti'} for i in range(5)]
+        files = [{
+            'source': str(temp_dir / f"file{i}.txt"),
+            'rel_path': f"file{i}.txt",
+            'size': 10,
+            'category': 'Documenti',
+            'root_label': ''
+        } for i in range(5)]
         
         count, errors = engine.copy_files(files, str(dest_dir))
         
@@ -218,11 +227,32 @@ class TestCopyFiles:
         engine = BackupEngine()
         engine.pause_event.clear()
         
-        files = [{'path': str(source_file), 'name': "paused.txt", 'size': 7, 'category': 'Documenti'}]
-        
-        count, errors = engine.copy_files(files, str(dest_dir))
-        
-        assert count == 0
+        files = [{
+            'source': str(source_file),
+            'rel_path': "paused.txt",
+            'size': 7,
+            'category': 'Documenti',
+            'root_label': ''
+        }]
+
+        result = {}
+
+        def run_copy():
+            result["count"], result["errors"] = engine.copy_files(files, str(dest_dir))
+
+        worker = threading.Thread(target=run_copy, daemon=True)
+        worker.start()
+        worker.join(timeout=0.2)
+
+        # While paused, copy loop should still be blocked.
+        assert worker.is_alive()
+
+        engine.resume()
+        worker.join(timeout=1.0)
+
+        assert not worker.is_alive()
+        assert result["count"] == 1
+        assert result["errors"] == []
 
 
 class TestStopPause:
