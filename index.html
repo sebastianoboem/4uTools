@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>4uTools</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <nav class="top-tabs" id="top-tabs">
+        <img src="/app-icon.png" alt="" class="top-app-icon" width="56" height="56" />
+        <span class="top-title">Overview</span>
+      </nav>
+
+      <main class="content" id="content">
+          <section id="screen-empty" class="screen-empty">
+            <div class="empty-icon" aria-hidden="true">📱</div>
+            <p class="empty-title">Connect an Android device</p>
+            <p class="empty-sub">Enable USB debugging and authorize this computer</p>
+            <p id="error-banner" class="error-banner hidden"></p>
+          </section>
+
+          <section id="screen-dashboard" class="screen-dashboard hidden">
+            <div class="dashboard-header">
+              <h1 id="device-name">—</h1>
+              <p id="device-subtitle" class="muted"></p>
+            </div>
+
+            <div class="dashboard-grid">
+              <div class="card device-visual">
+                <div class="phone-shell" id="phone-shell">
+                  <div class="phone-screen" id="phone-screen">
+                    <img id="mirror-img" class="mirror-img hidden" alt="Device screen mirror" />
+                    <div id="mirror-placeholder" class="mirror-placeholder">
+                      <span class="mirror-pulse" aria-hidden="true"></span>
+                      <span class="mirror-hint">Mirror</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="action-row">
+                  <button type="button" id="btn-reboot" class="btn btn-secondary">
+                    <span class="btn-icon">↻</span> Restart
+                  </button>
+                  <button type="button" id="btn-shutdown" class="btn btn-secondary">
+                    <span class="btn-icon">⏻</span> Shutdown
+                  </button>
+                  <button type="button" id="btn-refresh" class="btn btn-secondary icon-only" title="Refresh">
+                    <span id="refresh-icon" class="btn-icon">⟳</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="card specs">
+                <div id="spec-rows" class="spec-rows"></div>
+                <button type="button" id="btn-device-details" class="btn btn-primary full">
+                  View Device Details
+                </button>
+              </div>
+
+              <div class="status-column">
+                <button type="button" class="card status-card status-card--battery clickable" id="card-battery">
+                  <h3>Battery Life</h3>
+                  <p id="battery-subtitle" class="status-subtitle">—</p>
+                  <div class="battery-row">
+                    <div id="battery-gauge"></div>
+                    <div class="battery-meta">
+                      <p class="cycles-label">Charge Cycles</p>
+                      <p id="charge-cycles" class="cycles-value">—</p>
+                      <p id="battery-level-pill" class="battery-level-pill">—</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button type="button" class="card status-card status-card--storage clickable" id="card-storage">
+                  <h3>Storage</h3>
+                  <p id="storage-used-pct" class="status-subtitle">—</p>
+                  <div class="storage-visual">
+                    <div id="storage-donut" class="storage-donut"></div>
+                    <div class="storage-stats">
+                      <p id="storage-free" class="stat-big">—</p>
+                      <p id="storage-total" class="muted">used of —</p>
+                    </div>
+                  </div>
+                  <div id="storage-bar" class="storage-bar hidden"></div>
+                  <div id="storage-legend-mini" class="storage-legend-mini"></div>
+                </button>
+
+                <button type="button" class="card status-card status-card--verification clickable" id="card-verification">
+                  <div class="status-card-head status-card-head--verification">
+                    <div class="status-icon status-icon--shield" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3l8 3v6c0 5-3.5 8.5-8 9-4.5-.5-8-4-8-9V6l8-3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                    </div>
+                    <h3>Verification Report</h3>
+                    <div id="verification-score-ring" class="verification-score-ring"></div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </section>
+        </main>
+
+      <footer class="quick-actions" id="quick-actions">
+        <button type="button" class="quick-action" data-action="backup">
+          <span class="qa-icon">📦</span><span>Backup/Restore</span>
+        </button>
+        <button type="button" class="quick-action" data-action="app-manager">
+          <span class="qa-icon">🛡</span><span>AppManager</span>
+        </button>
+      </footer>
+
+      <footer class="footer">
+        <label class="footer-check">
+          <input type="checkbox" id="hide-serial" />
+          Hide Serial / IMEI
+        </label>
+        <button type="button" id="btn-check-update" class="footer-link">Cerca aggiornamenti</button>
+        <span>4uTools V1.0.0</span>
+      </footer>
+    </div>
+
+    <dialog id="modal-device" class="modal">
+      <div class="modal-inner">
+        <header class="modal-header">
+          <h2>Device Details</h2>
+          <button type="button" class="modal-close" data-close>×</button>
+        </header>
+        <div id="modal-device-body" class="modal-body"></div>
+      </div>
+    </dialog>
+
+    <dialog id="modal-battery" class="modal">
+      <div class="modal-inner">
+        <header class="modal-header">
+          <h2>Battery Details</h2>
+          <button type="button" class="modal-close" data-close>×</button>
+        </header>
+        <div id="modal-battery-body" class="modal-body"></div>
+      </div>
+    </dialog>
+
+    <dialog id="modal-storage" class="modal">
+      <div class="modal-inner">
+        <header class="modal-header">
+          <h2>Storage Details</h2>
+          <button type="button" class="modal-close" data-close>×</button>
+        </header>
+        <div id="modal-storage-body" class="modal-body"></div>
+      </div>
+    </dialog>
+
+    <dialog id="modal-verification" class="modal">
+      <div class="modal-inner wide">
+        <header class="modal-header">
+          <h2>Verification Report</h2>
+          <button type="button" class="modal-close" data-close>×</button>
+        </header>
+        <div id="modal-verification-body" class="modal-body"></div>
+      </div>
+    </dialog>
+
+    <dialog id="modal-update" class="modal">
+      <div class="modal-inner">
+        <header class="modal-header">
+          <h2>Aggiornamento disponibile</h2>
+          <button type="button" class="modal-close" data-close-update>×</button>
+        </header>
+        <div class="modal-body">
+          <p id="update-version" class="update-version"></p>
+          <p id="update-notes" class="muted"></p>
+          <div id="update-progress" class="update-progress hidden">
+            <p id="update-progress-text" class="muted">Download in corso…</p>
+          </div>
+          <div class="update-actions">
+            <button type="button" id="btn-update-later" class="btn btn-secondary">Più tardi</button>
+            <button type="button" id="btn-update-now" class="btn btn-primary">Aggiorna ora</button>
+          </div>
+        </div>
+      </div>
+    </dialog>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

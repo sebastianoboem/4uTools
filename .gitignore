@@ -1,0 +1,9 @@
+node_modules/
+target/
+dist/
+resources/platform-tools/
+latest.json
+.DS_Store
+*.iml
+.idea/
+src-tauri/.updater-keys/

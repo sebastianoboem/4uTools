@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <style>
+      @font-face {
+        font-family: "IconFont";
+        src: url("fonts/ArialRoundedBold.ttf") format("truetype");
+        font-weight: 700;
+        font-style: normal;
+      }
+    </style>
+  </defs>
+  <rect x="96" y="96" width="832" height="832" rx="186" fill="#3B82F6"/>
+  <text
+    x="524"
+    y="638"
+    text-anchor="middle"
+    fill="#FFFFFF"
+    font-family="IconFont, Arial Rounded MT Bold, Arial, sans-serif"
+    font-weight="700"
+    letter-spacing="-6"
+  >
+    <tspan font-size="520">4</tspan><tspan font-size="300">u</tspan>
+  </text>
+</svg>
