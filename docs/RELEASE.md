@@ -33,7 +33,14 @@ Aggiorna `pubkey` in `tauri.conf.json` con il contenuto di `key.pem.pub`.
 
 ```bash
 export TAURI_SIGNING_PRIVATE_KEY="$(cat src-tauri/.updater-keys/key.pem)"
+export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=""
 npm run tauri build
+```
+
+Se la firma fallisce in CI, firma manualmente:
+
+```bash
+npx tauri signer sign target/release/bundle/macos/4uTools.app.tar.gz
 ```
 
 Con `createUpdaterArtifacts: true` vengono creati `.sig` e `.app.tar.gz` (macOS).
