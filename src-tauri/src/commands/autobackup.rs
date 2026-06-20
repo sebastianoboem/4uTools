@@ -12,10 +12,7 @@ const CONFIG: PartnerAppConfig = PartnerAppConfig {
     dev_default_path: Some("/Users/ilpano/Projects/AutoBackup"),
     legacy_mac_binary: Some("AutoBackupMAC"),
     legacy_win_binary: Some("AutoBackupPC-ANDROID.exe"),
-    windows_exe_names: &[
-        &["AutoBackup", "AutoBackup.exe"],
-        &["Programs", "AutoBackup", "AutoBackup.exe"],
-    ],
+    windows_exe_basenames: &["AutoBackup", "autobackup", "AutoBackupPC-ANDROID"],
     not_installed_error: "AutoBackup non è installato",
 };
 

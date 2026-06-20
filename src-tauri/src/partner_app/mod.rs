@@ -14,8 +14,9 @@ pub struct PartnerAppConfig {
     pub legacy_mac_binary: Option<&'static str>,
     #[cfg_attr(not(target_os = "windows"), allow(dead_code))]
     pub legacy_win_binary: Option<&'static str>,
+    /// Basenames (no `.exe`) tried under typical Tauri NSIS install folders.
     #[cfg_attr(not(target_os = "windows"), allow(dead_code))]
-    pub windows_exe_names: &'static [&'static [&'static str]],
+    pub windows_exe_basenames: &'static [&'static str],
     pub not_installed_error: &'static str,
 }
 
@@ -129,31 +130,133 @@ pub fn resolve_installed(
 }
 
 #[cfg(target_os = "windows")]
-pub fn resolve_windows_exe(config: &PartnerAppConfig, app: &AppHandle) -> Option<PathBuf> {
-    let local = dirs::data_local_dir()?;
-    let mut candidates: Vec<PathBuf> = config
-        .windows_exe_names
-        .iter()
-        .map(|parts| {
-            let mut path = local.clone();
-            for part in *parts {
-                path = path.join(part);
-            }
-            path
+fn windows_install_roots(install_folder: &str) -> Vec<PathBuf> {
+    let mut roots = Vec::new();
+    if let Some(local) = dirs::data_local_dir() {
+        roots.push(local.join(install_folder));
+        roots.push(local.join("Programs").join(install_folder));
+    }
+    for var in ["ProgramFiles", "ProgramFiles(x86)"] {
+        if let Ok(pf) = std::env::var(var) {
+            roots.push(PathBuf::from(pf).join(install_folder));
+        }
+    }
+    roots
+}
+
+#[cfg(target_os = "windows")]
+fn is_uninstaller_exe(path: &Path) -> bool {
+    path.file_stem()
+        .and_then(|s| s.to_str())
+        .map(|stem| {
+            let lower = stem.to_lowercase();
+            lower.contains("uninst") || lower == "uninstall"
         })
-        .collect();
+        .unwrap_or(false)
+}
+
+#[cfg(target_os = "windows")]
+fn find_exe_in_dir(dir: &Path, basenames: &[&str]) -> Option<PathBuf> {
+    if !dir.is_dir() {
+        return None;
+    }
+
+    for base in basenames {
+        let exe = dir.join(format!("{base}.exe"));
+        if exe.is_file() {
+            return Some(exe);
+        }
+    }
+
+    let mut fallback = None;
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) != Some("exe") || is_uninstaller_exe(&path) {
+                continue;
+            }
+            if basenames.iter().any(|base| {
+                path.file_stem()
+                    .and_then(|s| s.to_str())
+                    .is_some_and(|stem| stem.eq_ignore_ascii_case(base))
+            }) {
+                return Some(path);
+            }
+            if fallback.is_none() {
+                fallback = Some(path);
+            }
+        }
+    }
+
+    fallback
+}
+
+#[cfg(target_os = "windows")]
+fn registry_install_exe(product_folder: &str, basenames: &[&str]) -> Option<PathBuf> {
+    use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
+    use winreg::RegKey;
+
+    let subkey = format!(r"Software\Microsoft\Windows\CurrentVersion\Uninstall\{product_folder}");
+
+    for hive in [HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE] {
+        let Ok(key) = RegKey::predef(hive).open_subkey(&subkey) else {
+            continue;
+        };
+
+        if let Ok(main_binary) = key.get_value::<String, _>("MainBinaryName") {
+            if let Ok(loc) = key.get_value::<String, _>("InstallLocation") {
+                let install_dir = PathBuf::from(loc.trim().trim_matches('"'));
+                let exe = install_dir.join(main_binary.trim());
+                if exe.is_file() {
+                    return Some(exe);
+                }
+            }
+        }
+
+        if let Ok(loc) = key.get_value::<String, _>("InstallLocation") {
+            let install_dir = PathBuf::from(loc.trim().trim_matches('"'));
+            if let Some(exe) = find_exe_in_dir(&install_dir, basenames) {
+                return Some(exe);
+            }
+        }
+
+        if let Ok(icon) = key.get_value::<String, _>("DisplayIcon") {
+            let path_str = icon.split(',').next()?.trim().trim_matches('"');
+            let path = PathBuf::from(path_str);
+            if path.is_file() && !is_uninstaller_exe(&path) {
+                return Some(path);
+            }
+        }
+    }
+
+    None
+}
+
+#[cfg(target_os = "windows")]
+pub fn resolve_windows_exe(config: &PartnerAppConfig, app: &AppHandle) -> Option<PathBuf> {
+    if let Some(path) = registry_install_exe(config.install_folder, config.windows_exe_basenames) {
+        return Some(path);
+    }
+
+    for root in windows_install_roots(config.install_folder) {
+        if let Some(path) = find_exe_in_dir(&root, config.windows_exe_basenames) {
+            return Some(path);
+        }
+    }
 
     if let Ok(dir) = install_dir(config, app) {
         if let Some(name) = config.legacy_win_binary {
-            candidates.push(dir.join(name));
+            let legacy = dir.join(name);
+            if legacy.is_file() {
+                return Some(legacy);
+            }
         }
-        candidates.push(dir.join(format!(
-            "{}.exe",
-            config.install_folder
-        )));
+        if let Some(path) = find_exe_in_dir(&dir, config.windows_exe_basenames) {
+            return Some(path);
+        }
     }
 
-    candidates.into_iter().find(|p| p.is_file())
+    None
 }
 
 pub fn check_installed(

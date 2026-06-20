@@ -13,10 +13,7 @@ const CONFIG: PartnerAppConfig = PartnerAppConfig {
     dev_default_path: Some("/Users/ilpano/Projects/AndroidAdwareCleaner"),
     legacy_mac_binary: None,
     legacy_win_binary: None,
-    windows_exe_names: &[
-        &["AndroidAdwareCleaner", "AndroidAdwareCleaner.exe"],
-        &["Programs", "AndroidAdwareCleaner", "AndroidAdwareCleaner.exe"],
-    ],
+    windows_exe_basenames: &["AndroidAdwareCleaner", "android-adware-cleaner"],
     not_installed_error: "AndroidAdwareCleaner non è installato",
 };
 
