@@ -8,8 +8,7 @@
     "build": "tsc && vite build",
     "tauri": "tauri",
     "setup:adb": "bash scripts/download-platform-tools.sh",
-    "release:manifest": "node scripts/generate-latest-json.mjs",
-    "build:windows:portable": "node scripts/package-windows-portable.mjs"
+    "release:manifest": "node scripts/generate-latest-json.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
