@@ -1,3 +1,4 @@
+import { getVersion } from "@tauri-apps/api/app";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { confirm } from "@tauri-apps/plugin-dialog";
@@ -1031,6 +1032,13 @@ async function installPendingUpdate() {
 }
 
 async function init() {
+  try {
+    const version = await getVersion();
+    $("app-version").textContent = `4uTools V${version}`;
+  } catch {
+    /* dev in browser */
+  }
+
   hideSerialCheck.addEventListener("change", () => {
     if (currentSummary) renderSummary(currentSummary);
   });
