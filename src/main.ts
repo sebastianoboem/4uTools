@@ -862,6 +862,18 @@ function setPartnerProgress(tool: PartnerToolConfig, percent: number | null) {
   }
 }
 
+function markPartnerUpToDate(tool: PartnerToolConfig) {
+  const status = partnerStatus.get(tool.id);
+  if (!status) return;
+  partnerStatus.set(tool.id, {
+    ...status,
+    installed: true,
+    update_available: false,
+    installed_version: status.latest_version ?? status.installed_version,
+  });
+  setPartnerBadge(tool, false);
+}
+
 async function refreshPartnerTool(tool: PartnerToolConfig) {
   if (partnerInstalling.has(tool.id)) return;
   try {
@@ -902,8 +914,9 @@ async function handlePartnerTool(tool: PartnerToolConfig) {
     setPartnerProgress(tool, 0);
     try {
       await invoke(tool.installCmd);
-      await refreshPartnerTool(tool);
+      markPartnerUpToDate(tool);
       setPartnerProgress(tool, null);
+      void refreshPartnerTool(tool);
       await invoke(tool.launchCmd);
     } catch (e) {
       setPartnerProgress(tool, null);
@@ -927,8 +940,9 @@ async function handlePartnerTool(tool: PartnerToolConfig) {
     setPartnerProgress(tool, 0);
     try {
       await invoke(tool.installCmd);
-      await refreshPartnerTool(tool);
+      markPartnerUpToDate(tool);
       setPartnerProgress(tool, null);
+      void refreshPartnerTool(tool);
       await invoke(tool.launchCmd);
     } catch (e) {
       setPartnerProgress(tool, null);

@@ -46,6 +46,8 @@ pub struct PartnerInstallProgress {
 pub struct ReleaseAsset {
     pub name: String,
     pub browser_download_url: String,
+    #[serde(default)]
+    pub digest: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -55,10 +57,22 @@ struct ReleaseInfo {
 }
 
 pub enum InstallKind {
-    AppTarGz { url: String, name: String },
-    LegacyBinary { url: String, name: String },
+    AppTarGz {
+        url: String,
+        name: String,
+        digest: Option<String>,
+    },
+    LegacyBinary {
+        url: String,
+        name: String,
+        digest: Option<String>,
+    },
     #[cfg_attr(not(target_os = "windows"), allow(dead_code))]
-    WindowsSetup { url: String, name: String },
+    WindowsSetup {
+        url: String,
+        name: String,
+        digest: Option<String>,
+    },
 }
 
 #[derive(Clone, Copy)]
@@ -316,15 +330,20 @@ pub fn normalize_version_tag(tag: &str) -> String {
     tag.trim().trim_start_matches('v').to_string()
 }
 
+fn version_components(v: &str) -> Vec<u32> {
+    let mut parts: Vec<u32> = normalize_version_tag(v)
+        .split('.')
+        .filter_map(|p| p.parse().ok())
+        .collect();
+    while parts.len() > 1 && parts.last() == Some(&0) {
+        parts.pop();
+    }
+    parts
+}
+
 pub fn version_gt(a: &str, b: &str) -> bool {
-    let parse = |v: &str| -> Vec<u32> {
-        normalize_version_tag(v)
-            .split('.')
-            .filter_map(|p| p.parse().ok())
-            .collect()
-    };
-    let av = parse(a);
-    let bv = parse(b);
+    let av = version_components(a);
+    let bv = version_components(b);
     let len = av.len().max(bv.len());
     for i in 0..len {
         let ai = av.get(i).copied().unwrap_or(0);
@@ -334,6 +353,34 @@ pub fn version_gt(a: &str, b: &str) -> bool {
         }
     }
     false
+}
+
+fn is_legacy_install(
+    config: &PartnerAppConfig,
+    app: &AppHandle,
+    opts: ResolveOptions,
+) -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        if resolve_windows_exe(config, app).is_some() {
+            return false;
+        }
+        return resolve_installed(config, app, opts).is_some();
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if let Some(path) = resolve_installed(config, app, opts) {
+            return path.is_file();
+        }
+        return false;
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+    {
+        let _ = (config, app, opts);
+        false
+    }
 }
 
 fn read_plist_version(text: &str) -> Option<String> {
@@ -357,17 +404,37 @@ fn read_windows_registry_version(product_folder: &str) -> Option<String> {
     use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
     use winreg::RegKey;
 
-    let subkey = format!(r"Software\Microsoft\Windows\CurrentVersion\Uninstall\{product_folder}");
     for hive in [HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE] {
-        let Ok(key) = RegKey::predef(hive).open_subkey(&subkey) else {
+        let Ok(uninstall) =
+            RegKey::predef(hive).open_subkey(r"Software\Microsoft\Windows\CurrentVersion\Uninstall")
+        else {
             continue;
         };
-        if let Ok(version) = key.get_value::<String, _>("DisplayVersion") {
-            if !version.trim().is_empty() {
-                return Some(version);
+
+        for key_name in uninstall.enum_keys().flatten() {
+            let Ok(key) = uninstall.open_subkey(&key_name) else {
+                continue;
+            };
+            let display_name = key
+                .get_value::<String, _>("DisplayName")
+                .unwrap_or_default();
+            let matches = key_name.eq_ignore_ascii_case(product_folder)
+                || display_name.eq_ignore_ascii_case(product_folder)
+                || display_name
+                    .to_ascii_lowercase()
+                    .contains(&product_folder.to_ascii_lowercase());
+            if !matches {
+                continue;
+            }
+            if let Ok(version) = key.get_value::<String, _>("DisplayVersion") {
+                let version = version.trim();
+                if !version.is_empty() {
+                    return Some(normalize_version_tag(version));
+                }
             }
         }
     }
+
     None
 }
 
@@ -451,8 +518,7 @@ pub fn check_update_status(
     } else if let (Some(ref latest_v), Some(ref installed_v)) = (&latest_version, &installed_version)
     {
         version_gt(latest_v, installed_v)
-    } else if status.installed {
-        // Installazione legacy o versione non leggibile: riprova se esiste un asset per questa piattaforma.
+    } else if is_legacy_install(config, app, opts) {
         latest
             .as_ref()
             .is_some_and(|(_, assets)| has_platform_install_asset(assets))
@@ -480,11 +546,34 @@ fn emit_progress(app: &AppHandle, app_id: &str, phase: &str, percent: f64) {
     );
 }
 
+fn verify_file_digest(path: &Path, digest: Option<&str>) -> Result<(), String> {
+    let Some(digest) = digest else {
+        return Ok(());
+    };
+    let expected = digest
+        .strip_prefix("sha256:")
+        .ok_or_else(|| format!("Digest non supportato: {digest}"))?
+        .to_ascii_lowercase();
+
+    use sha2::{Digest, Sha256};
+    let bytes = fs::read(path).map_err(|e| e.to_string())?;
+    let actual = Sha256::digest(bytes)
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect::<String>();
+
+    if actual != expected {
+        return Err("Verifica integrità download fallita (hash GitHub non corrispondente)".into());
+    }
+    Ok(())
+}
+
 pub fn download_file_with_progress(
     url: &str,
     dest: &Path,
     app: &AppHandle,
     app_id: &str,
+    digest: Option<&str>,
 ) -> Result<(), String> {
     let client = reqwest::blocking::Client::builder()
         .user_agent("4uTools")
@@ -532,6 +621,8 @@ pub fn download_file_with_progress(
         }
     }
     fs::rename(&tmp, dest).map_err(|e| e.to_string())?;
+
+    verify_file_digest(dest, digest)?;
 
     #[cfg(unix)]
     if dest.is_file() {
@@ -592,6 +683,15 @@ pub fn install_windows_setup(
         return Err("Installazione silenziosa fallita".into());
     }
 
+    for attempt in 0..12 {
+        if let Some(path) = resolve_windows_exe(config, app) {
+            return Ok(path);
+        }
+        if attempt < 11 {
+            std::thread::sleep(std::time::Duration::from_millis(250));
+        }
+    }
+
     resolve_windows_exe(config, app).ok_or_else(|| restart_hint.to_string())
 }
 
@@ -605,9 +705,9 @@ pub fn install_from_kind_with_progress(
     let dest_dir = install_dir(config, app)?;
 
     let result = match kind {
-        InstallKind::AppTarGz { url, name } => {
-            let archive_path = dest_dir.join(name);
-            download_file_with_progress(&url, &archive_path, app, app_id)?;
+        InstallKind::AppTarGz { url, name, digest } => {
+            let archive_path = dest_dir.join(&name);
+            download_file_with_progress(&url, &archive_path, app, app_id, digest.as_deref())?;
             emit_progress(app, app_id, "install", 85.0);
             #[cfg(target_os = "macos")]
             {
@@ -621,9 +721,9 @@ pub fn install_from_kind_with_progress(
                 Err("Archivio .app supportato solo su macOS".into())
             }
         }
-        InstallKind::WindowsSetup { url, name } => {
-            let installer = dest_dir.join(name);
-            download_file_with_progress(&url, &installer, app, app_id)?;
+        InstallKind::WindowsSetup { url, name, digest } => {
+            let installer = dest_dir.join(&name);
+            download_file_with_progress(&url, &installer, app, app_id, digest.as_deref())?;
             emit_progress(app, app_id, "install", 85.0);
             #[cfg(target_os = "windows")]
             {
@@ -637,9 +737,9 @@ pub fn install_from_kind_with_progress(
                 Err("Setup Windows supportato solo su Windows".into())
             }
         }
-        InstallKind::LegacyBinary { url, name } => {
-            let dest = dest_dir.join(name);
-            download_file_with_progress(&url, &dest, app, app_id)?;
+        InstallKind::LegacyBinary { url, name, digest } => {
+            let dest = dest_dir.join(&name);
+            download_file_with_progress(&url, &dest, app, app_id, digest.as_deref())?;
             emit_progress(app, app_id, "install", 90.0);
             Ok(dest)
         }

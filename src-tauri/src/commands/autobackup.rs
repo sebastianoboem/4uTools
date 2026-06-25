@@ -42,6 +42,7 @@ fn pick_install_asset(assets: Vec<ReleaseAsset>) -> Result<InstallKind, String> 
                 return Ok(InstallKind::WindowsSetup {
                     url: asset.browser_download_url.clone(),
                     name: asset.name.clone(),
+                    digest: asset.digest.clone(),
                 });
             }
             #[cfg(not(target_os = "windows"))]
@@ -49,6 +50,7 @@ fn pick_install_asset(assets: Vec<ReleaseAsset>) -> Result<InstallKind, String> 
                 return Ok(InstallKind::AppTarGz {
                     url: asset.browser_download_url.clone(),
                     name: asset.name.clone(),
+                    digest: asset.digest.clone(),
                 });
             }
         }
@@ -60,6 +62,7 @@ fn pick_install_asset(assets: Vec<ReleaseAsset>) -> Result<InstallKind, String> 
             return Ok(InstallKind::WindowsSetup {
                 url: asset.browser_download_url.clone(),
                 name: asset.name.clone(),
+                digest: asset.digest.clone(),
             });
         }
         if let Some(name) = CONFIG.legacy_win_binary {
@@ -67,6 +70,7 @@ fn pick_install_asset(assets: Vec<ReleaseAsset>) -> Result<InstallKind, String> 
                 return Ok(InstallKind::LegacyBinary {
                     url: asset.browser_download_url.clone(),
                     name: asset.name.clone(),
+                    digest: asset.digest.clone(),
                 });
             }
         }
@@ -79,6 +83,7 @@ fn pick_install_asset(assets: Vec<ReleaseAsset>) -> Result<InstallKind, String> 
                 return Ok(InstallKind::LegacyBinary {
                     url: asset.browser_download_url.clone(),
                     name: asset.name.clone(),
+                    digest: asset.digest.clone(),
                 });
             }
         }

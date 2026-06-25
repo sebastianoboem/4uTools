@@ -11,7 +11,40 @@
  *     --darwin-x86_64 src-tauri/target/x86_64-apple-darwin/release/bundle/macos/4uTools.app.tar.gz.sig \
  *     --windows-x86_64 src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/4uTools_1.0.1_x64-setup.exe.sig
  */
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdtempSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { tmpdir } from "node:os";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
+function loadUpdaterPubkey() {
+  const conf = JSON.parse(readFileSync(join(root, "src-tauri/tauri.conf.json"), "utf8"));
+  return conf.plugins?.updater?.pubkey ?? "";
+}
+
+function verifyMinisign(artifactPath, sigPath, pubkeyB64) {
+  if (!pubkeyB64) return;
+  const pubkey = Buffer.from(pubkeyB64, "base64").toString("utf8");
+  const pubkeyDir = mkdtempSync(join(tmpdir(), "4utools-pubkey-"));
+  const pubkeyFile = join(pubkeyDir, "key.pub");
+  writeFileSync(pubkeyFile, pubkey);
+  const result = spawnSync(
+    "minisign",
+    ["-Vm", artifactPath, "-P", pubkeyFile, "-x", sigPath],
+    { encoding: "utf8" },
+  );
+  if (result.error?.code === "ENOENT") {
+    console.warn("minisign non trovato: salto verifica firma (installa con brew install minisign)");
+    return;
+  }
+  if (result.status !== 0) {
+    console.error(`Firma non valida per ${artifactPath}:\n${result.stderr || result.stdout}`);
+    process.exit(1);
+  }
+  console.log(`Firma OK: ${artifactPath}`);
+}
 
 const args = process.argv.slice(2);
 const opts = {
@@ -43,6 +76,8 @@ const artifactNames = {
   "windows-x86_64": `4uTools_${opts.version}_x64-setup.exe`,
 };
 
+const pubkey = loadUpdaterPubkey();
+
 const platforms = {};
 for (const [platform, sigPath] of Object.entries(opts.platforms)) {
   const artifact = artifactNames[platform];
@@ -50,6 +85,12 @@ for (const [platform, sigPath] of Object.entries(opts.platforms)) {
     console.error(`Piattaforma sconosciuta: ${platform}`);
     process.exit(1);
   }
+  const artifactPath = sigPath.replace(/\.sig$/, "");
+  if (!existsSync(artifactPath)) {
+    console.error(`Artefatto mancante: ${artifactPath}`);
+    process.exit(1);
+  }
+  verifyMinisign(artifactPath, sigPath, pubkey);
   const signature = readFileSync(sigPath, "utf8").trim();
   platforms[platform] = {
     signature,

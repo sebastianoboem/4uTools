@@ -61,6 +61,7 @@ fn latest_install_kind() -> Result<InstallKind, String> {
         return Ok(InstallKind::WindowsSetup {
             url: asset.browser_download_url,
             name: asset.name,
+            digest: asset.digest,
         });
     }
 
@@ -69,6 +70,7 @@ fn latest_install_kind() -> Result<InstallKind, String> {
         Ok(InstallKind::AppTarGz {
             url: asset.browser_download_url,
             name: asset.name,
+            digest: asset.digest,
         })
     }
 }
