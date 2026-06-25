@@ -1,8 +1,11 @@
 use crate::partner_app::{
-    check_installed, fetch_release_assets, install_from_kind, launch_installed, resolve_path_or_error,
-    InstallKind, PartnerAppConfig, PartnerStatus, ReleaseAsset, ResolveOptions,
+    check_update_status, fetch_release_assets, install_from_kind_with_progress, launch_installed,
+    resolve_path_or_error, InstallKind, PartnerAppConfig, PartnerUpdateStatus, ReleaseAsset,
+    ResolveOptions,
 };
 use tauri::AppHandle;
+
+const APP_ID: &str = "autobackup";
 
 const CONFIG: PartnerAppConfig = PartnerAppConfig {
     install_folder: "AutoBackup",
@@ -20,7 +23,7 @@ const RESOLVE_OPTS: ResolveOptions = ResolveOptions {
     allow_files: true,
 };
 
-pub type AutoBackupStatus = PartnerStatus;
+pub type AutoBackupStatus = PartnerUpdateStatus;
 
 fn pick_install_asset(assets: Vec<ReleaseAsset>) -> Result<InstallKind, String> {
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
@@ -86,14 +89,15 @@ fn pick_install_asset(assets: Vec<ReleaseAsset>) -> Result<InstallKind, String> 
 
 #[tauri::command(rename_all = "snake_case")]
 pub fn check_autobackup(app: AppHandle) -> Result<AutoBackupStatus, String> {
-    Ok(check_installed(&CONFIG, &app, RESOLVE_OPTS))
+    Ok(check_update_status(&CONFIG, &app, RESOLVE_OPTS))
 }
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn install_autobackup(app: AppHandle) -> Result<String, String> {
-    if check_autobackup(app.clone())?.installed {
+    let status = check_autobackup(app.clone())?;
+    if status.installed && !status.update_available {
         return Ok(
-            resolve_path_or_error(&CONFIG, &app, RESOLVE_OPTS, "AutoBackup già installato")?
+            resolve_path_or_error(&CONFIG, &app, RESOLVE_OPTS, "AutoBackup già aggiornato")?
                 .to_string_lossy()
                 .into_owned(),
         );
@@ -103,11 +107,12 @@ pub async fn install_autobackup(app: AppHandle) -> Result<String, String> {
     let kind = pick_install_asset(assets)?;
     let app_handle = app.clone();
     let installed = tauri::async_runtime::spawn_blocking(move || {
-        install_from_kind(
+        install_from_kind_with_progress(
             &CONFIG,
             &app_handle,
             kind,
-            "Installazione completata ma eseguibile non trovato. Riavvia Backup/Restore.",
+            "Installazione completata ma eseguibile non trovato. Riavvia AutoBackup.",
+            APP_ID,
         )
     })
     .await

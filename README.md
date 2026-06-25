@@ -15,8 +15,8 @@ Pensato per **riparatori**, **rivenditori** e **utenti avanzati** che vogliono c
 | **Batteria** | Livello, salute, cicli di carica e dettagli estesi |
 | **Storage** | Spazio usato/libero con ripartizione per app, foto, sistema, ecc. |
 | **Verification Report** | Report di verifica componenti con punteggio riepilogativo |
-| **Backup/Restore** | Avvia [AutoBackup](https://github.com/sebastianoboem/AutoBackup) per backup dati (installazione guidata se mancante) |
-| **AppManager** | Avvia [AndroidAdwareCleaner](https://github.com/sebastianoboem/AndroidAdwareCleaner) per analizzare e rimuovere app sospette |
+| **AutoBackup** | Avvia [AutoBackup](https://github.com/sebastianoboem/AutoBackup) per backup dati (installazione guidata se mancante) |
+| **AndroidAdwareCleaner** | Avvia [AndroidAdwareCleaner](https://github.com/sebastianoboem/AndroidAdwareCleaner) per analizzare e rimuovere app sospette |
 
 Puoi anche **riavviare** o **spegnere** il telefono, **nascondere serial/IMEI** a schermo e **cercare aggiornamenti** dell'app.
 
@@ -50,7 +50,7 @@ All'avvio rileva il dispositivo autorizzato e mostra la dashboard **Overview**. 
 
 ### 3. Strumenti collegati
 
-- **Backup/Restore** e **AppManager** aprono programmi companion: al primo click, se non installati, 4uTools propone di scaricarli da GitHub.
+- **AutoBackup** e **AndroidAdwareCleaner** aprono programmi companion: al primo click, se non installati, 4uTools propone di scaricarli da GitHub.
 
 ---
 

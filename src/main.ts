@@ -783,35 +783,162 @@ async function loadDevices() {
   }
 }
 
-async function handleBackupRestore() {
-  try {
-    const status = await invoke<{ installed: boolean }>("check_autobackup");
-    if (!status.installed) {
-      const install = await confirm(
-        "AutoBackup non è installato. Vuoi scaricarlo da GitHub e installarlo ora?",
-        { title: "Installa AutoBackup", kind: "info", okLabel: "Installa", cancelLabel: "Annulla" },
-      );
-      if (!install) return;
-      await invoke("install_autobackup");
-    }
-    await invoke("launch_autobackup");
-  } catch (e) {
-    showError(String(e));
+interface PartnerUpdateStatus {
+  installed: boolean;
+  path?: string | null;
+  update_available: boolean;
+  installed_version?: string | null;
+  latest_version?: string | null;
+}
+
+interface PartnerInstallProgress {
+  app_id: string;
+  phase: string;
+  percent: number;
+}
+
+interface PartnerToolConfig {
+  id: string;
+  checkCmd: string;
+  installCmd: string;
+  launchCmd: string;
+  buttonId: string;
+  badgeId: string;
+  progressId: string;
+}
+
+const PARTNER_TOOLS: PartnerToolConfig[] = [
+  {
+    id: "autobackup",
+    checkCmd: "check_autobackup",
+    installCmd: "install_autobackup",
+    launchCmd: "launch_autobackup",
+    buttonId: "qa-backup",
+    badgeId: "badge-backup",
+    progressId: "progress-backup",
+  },
+  {
+    id: "app_manager",
+    checkCmd: "check_app_manager",
+    installCmd: "install_app_manager",
+    launchCmd: "launch_app_manager",
+    buttonId: "qa-app-manager",
+    badgeId: "badge-app-manager",
+    progressId: "progress-app-manager",
+  },
+];
+
+const partnerStatus = new Map<string, PartnerUpdateStatus>();
+const partnerInstalling = new Set<string>();
+const QA_PROGRESS_CIRC = 2 * Math.PI * 8;
+
+function setPartnerBadge(tool: PartnerToolConfig, updateAvailable: boolean) {
+  const badge = $(tool.badgeId);
+  badge.classList.toggle("hidden", !updateAvailable || partnerInstalling.has(tool.id));
+}
+
+function setPartnerProgress(tool: PartnerToolConfig, percent: number | null) {
+  const progress = $(tool.progressId);
+  const badge = $(tool.badgeId);
+  const btn = $(tool.buttonId) as HTMLButtonElement;
+  const arc = progress.querySelector(".qa-progress-arc") as SVGCircleElement | null;
+
+  if (percent === null) {
+    progress.classList.add("hidden");
+    btn.disabled = false;
+    partnerInstalling.delete(tool.id);
+    const status = partnerStatus.get(tool.id);
+    setPartnerBadge(tool, status?.update_available ?? false);
+    return;
+  }
+
+  partnerInstalling.add(tool.id);
+  badge.classList.add("hidden");
+  progress.classList.remove("hidden");
+  btn.disabled = true;
+  if (arc) {
+    const offset = QA_PROGRESS_CIRC - (percent / 100) * QA_PROGRESS_CIRC;
+    arc.style.strokeDashoffset = String(offset);
   }
 }
 
-async function handleAppManager() {
+async function refreshPartnerTool(tool: PartnerToolConfig) {
+  if (partnerInstalling.has(tool.id)) return;
   try {
-    const status = await invoke<{ installed: boolean }>("check_app_manager");
-    if (!status.installed) {
-      const install = await confirm(
-        "AndroidAdwareCleaner non è installato. Vuoi scaricarlo da GitHub e installarlo ora?",
-        { title: "Installa AppManager", kind: "info", okLabel: "Installa", cancelLabel: "Annulla" },
-      );
-      if (!install) return;
-      await invoke("install_app_manager");
+    const status = await invoke<PartnerUpdateStatus>(tool.checkCmd);
+    partnerStatus.set(tool.id, status);
+    setPartnerBadge(tool, status.update_available);
+  } catch {
+    partnerStatus.delete(tool.id);
+    setPartnerBadge(tool, false);
+  }
+}
+
+async function refreshPartnerTools() {
+  await Promise.all(PARTNER_TOOLS.map((tool) => refreshPartnerTool(tool)));
+}
+
+function onPartnerInstallProgress(ev: PartnerInstallProgress) {
+  const tool = PARTNER_TOOLS.find((t) => t.id === ev.app_id);
+  if (!tool) return;
+  setPartnerProgress(tool, ev.percent);
+}
+
+async function handlePartnerTool(tool: PartnerToolConfig) {
+  if (partnerInstalling.has(tool.id)) return;
+
+  let status = partnerStatus.get(tool.id);
+  if (!status) {
+    try {
+      status = await invoke<PartnerUpdateStatus>(tool.checkCmd);
+      partnerStatus.set(tool.id, status);
+    } catch (e) {
+      showError(String(e));
+      return;
     }
-    await invoke("launch_app_manager");
+  }
+
+  if (status.update_available) {
+    setPartnerProgress(tool, 0);
+    try {
+      await invoke(tool.installCmd);
+      await refreshPartnerTool(tool);
+      setPartnerProgress(tool, null);
+      await invoke(tool.launchCmd);
+    } catch (e) {
+      setPartnerProgress(tool, null);
+      showError(String(e));
+    }
+    return;
+  }
+
+  if (!status.installed) {
+    const label = tool.id === "autobackup" ? "AutoBackup" : "AndroidAdwareCleaner";
+    const install = await confirm(
+      `${label} non è installato. Vuoi scaricarlo da GitHub e installarlo ora?`,
+      {
+        title: `Installa ${label}`,
+        kind: "info",
+        okLabel: "Installa",
+        cancelLabel: "Annulla",
+      },
+    );
+    if (!install) return;
+    setPartnerProgress(tool, 0);
+    try {
+      await invoke(tool.installCmd);
+      await refreshPartnerTool(tool);
+      setPartnerProgress(tool, null);
+      await invoke(tool.launchCmd);
+    } catch (e) {
+      setPartnerProgress(tool, null);
+      showError(String(e));
+    }
+    return;
+  }
+
+  try {
+    await invoke(tool.launchCmd);
   } catch (e) {
     showError(String(e));
   }
@@ -967,12 +1094,22 @@ async function init() {
   document.querySelectorAll(".quick-action").forEach((btn) => {
     btn.addEventListener("click", () => {
       const action = (btn as HTMLElement).dataset.action;
-      if (action === "backup") void handleBackupRestore();
-      else if (action === "app-manager") void handleAppManager();
+      const tool = PARTNER_TOOLS.find(
+        (t) =>
+          (action === "backup" && t.id === "autobackup") ||
+          (action === "app-manager" && t.id === "app_manager"),
+      );
+      if (tool) void handlePartnerTool(tool);
     });
   });
 
   initAppTooltips();
+
+  await listen<PartnerInstallProgress>("partner-install-progress", (ev) =>
+    onPartnerInstallProgress(ev.payload),
+  );
+
+  void refreshPartnerTools();
 
   await checkForAppUpdatesOnStartup();
 

@@ -101,11 +101,29 @@
         </main>
 
       <footer class="quick-actions" id="quick-actions">
-        <button type="button" class="quick-action" data-action="backup">
-          <span class="qa-icon">📦</span><span>Backup/Restore</span>
+        <button type="button" class="quick-action" data-action="backup" id="qa-backup">
+          <span class="qa-icon-wrap">
+            <span class="qa-icon" aria-hidden="true">📦</span>
+            <span class="qa-badge qa-badge--download hidden" id="badge-backup" aria-hidden="true" title="Aggiornamento disponibile">
+              <svg viewBox="0 0 16 16" fill="none"><path d="M8 2v7M8 9l3-3M8 9L5 6M3 11v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="qa-badge qa-badge--progress hidden" id="progress-backup" aria-hidden="true">
+              <svg viewBox="0 0 20 20"><circle class="qa-progress-track" cx="10" cy="10" r="8" fill="none" stroke-width="2.5"/><circle class="qa-progress-arc" cx="10" cy="10" r="8" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="50.27" stroke-dashoffset="50.27"/></svg>
+            </span>
+          </span>
+          <span>AutoBackup</span>
         </button>
-        <button type="button" class="quick-action" data-action="app-manager">
-          <span class="qa-icon">🛡</span><span>AppManager</span>
+        <button type="button" class="quick-action" data-action="app-manager" id="qa-app-manager">
+          <span class="qa-icon-wrap">
+            <span class="qa-icon" aria-hidden="true">🛡</span>
+            <span class="qa-badge qa-badge--download hidden" id="badge-app-manager" aria-hidden="true" title="Aggiornamento disponibile">
+              <svg viewBox="0 0 16 16" fill="none"><path d="M8 2v7M8 9l3-3M8 9L5 6M3 11v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="qa-badge qa-badge--progress hidden" id="progress-app-manager" aria-hidden="true">
+              <svg viewBox="0 0 20 20"><circle class="qa-progress-track" cx="10" cy="10" r="8" fill="none" stroke-width="2.5"/><circle class="qa-progress-arc" cx="10" cy="10" r="8" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="50.27" stroke-dashoffset="50.27"/></svg>
+            </span>
+          </span>
+          <span>AndroidAdwareCleaner</span>
         </button>
       </footer>
 
@@ -115,7 +133,7 @@
           Hide Serial / IMEI
         </label>
         <button type="button" id="btn-check-update" class="footer-link">Cerca aggiornamenti</button>
-        <span>4uTools V1.0.1</span>
+        <span>4uTools V1.1.2</span>
       </footer>
     </div>
 
