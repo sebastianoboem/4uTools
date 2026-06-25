@@ -32,11 +32,38 @@ npm run tauri dev
 
 ## Build release
 
+Gli installer vengono compilati **in locale** e caricati su GitHub Releases (non via CI).
+
 ```bash
-npm run tauri build
+npm install
+npm run release
 ```
 
-Artifact in `src-tauri/target/release/bundle/`.
+Lo script `scripts/release.sh`:
+1. legge la versione da `src-tauri/tauri.conf.json`
+2. esegue `npm run tauri build`
+3. raccoglie `.dmg` (macOS) e/o `.msi`/`.exe` (Windows) da `target/release/bundle/`
+4. crea o aggiorna la release `vX.Y.Z` con `gh release`
+
+Opzioni utili:
+
+```bash
+npm run release -- --skip-build    # solo upload di artifact già compilati
+npm run release -- --draft         # release in bozza
+npm run release -- --notes FILE.md # note personalizzate
+```
+
+**macOS:** `npm run tauri build` produce il `.dmg` in `target/release/bundle/dmg/`.
+
+**Windows:** compilare su una macchina Windows (`npm run tauri build`), poi caricare con `npm run release -- --skip-build` oppure:
+
+```bash
+gh release upload vX.Y.Z path/to/AutoBackup_x.y.z_x64-setup.exe --clobber
+```
+
+Prerequisito: [GitHub CLI](https://cli.github.com/) autenticato (`gh auth login`).
+
+La CI GitHub esegue solo test (`cargo test`, `npm run build`), senza pubblicare binari.
 
 ## Struttura
 
