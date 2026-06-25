@@ -234,6 +234,7 @@ fn resolve_scan_roots_windows(whitelist_paths: &[String], destination_mount: &st
     let disks = Disks::new_with_refreshed_list();
     let mut fixed_drives: Vec<String> = disks
         .list()
+        .iter()
         .filter(|d| !d.is_removable())
         .map(|d| d.mount_point().to_string_lossy().to_string())
         .collect();
