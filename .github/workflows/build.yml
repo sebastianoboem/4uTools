@@ -2,90 +2,61 @@ name: Build AutoBackup
 
 on:
   push:
-    branches: [ "main", "master" ]
-    tags: [ "v*" ]
+    branches: [main, master]
+    tags: ["v*"]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [main, master]
 
 permissions:
   contents: write
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  test-rust:
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        
-    - name: Download Gum (Windows)
-      run: |
-        Invoke-WebRequest -Uri "https://github.com/charmbracelet/gum/releases/download/v0.17.0/gum_0.17.0_Windows_x86_64.zip" -OutFile "gum.zip"
-        Expand-Archive gum.zip -DestinationPath gum_extracted
-        Copy-Item gum_extracted/gum_0.17.0_Windows_x86_64/gum.exe -Destination .
-        
-    - name: Build with PyInstaller
-      run: python build_exe.py
-      
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: AutoBackupPC-ANDROID
-        path: dist/AutoBackupPC-ANDROID.exe
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test -p autobackup-core
 
-  build-macos:
-    runs-on: macos-latest
+  build-tauri:
+    needs: test-rust
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+          - platform: windows-latest
+            args: ""
+    runs-on: ${{ matrix.platform }}
     steps:
-    - uses: actions/checkout@v3
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        
-    - name: Install Gum (macOS)
-      run: brew install gum
-      
-    - name: Build with PyInstaller
-      run: python build_mac.py
-      
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: AutoBackupMAC
-        path: dist/AutoBackupMAC
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v__VERSION__
+          releaseName: AutoBackup v__VERSION__
+          releaseBody: Desktop release for macOS and Windows.
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}
 
   release:
-    needs: [build-windows, build-macos]
+    needs: build-tauri
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - name: Download Windows Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: AutoBackupPC-ANDROID
-          path: release_assets
-
-      - name: Download macOS Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: AutoBackupMAC
-          path: release_assets
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: release_assets/*
+      - run: echo "Release handled by tauri-action"

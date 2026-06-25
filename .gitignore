@@ -1,23 +1,28 @@
-# Python
+# Python (legacy)
 __pycache__/
 *.py[cod]
 *$py.class
-
-# Virtual Environment
 .venv/
 env/
 venv/
-
-# Distribution / Packaging
-build/
-dist/
-*.spec
-
-# Application Specific
-backup_errors.log
-
-# Pytest
+venvsource/
 .pytest_cache/
 .coverage
 htmlcov/
 .tox/
+
+# Rust
+/target/
+**/target/
+
+# Node / Tauri
+node_modules/
+dist/
+
+# Distribution
+build/
+*.spec
+
+# App
+backup_errors.log
+.DS_Store
