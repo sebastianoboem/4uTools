@@ -89,7 +89,7 @@ const $ = <T extends HTMLElement>(id: string) =>
 
 const screenEmpty = $("screen-empty");
 const screenDashboard = $("screen-dashboard");
-const errorBanner = $("error-banner");
+const appToast = $("app-toast");
 const hideSerialCheck = $<HTMLInputElement>("hide-serial");
 const mirrorImg = $<HTMLImageElement>("mirror-img");
 const phoneScreen = $("phone-screen");
@@ -129,12 +129,12 @@ function escapeHtml(s: string): string {
 
 function showError(msg: string) {
   if (!msg) {
-    errorBanner.classList.add("hidden");
-    errorBanner.textContent = "";
+    appToast.classList.add("hidden");
+    appToast.textContent = "";
     return;
   }
-  errorBanner.textContent = msg;
-  errorBanner.classList.remove("hidden");
+  appToast.textContent = msg;
+  appToast.classList.remove("hidden");
 }
 
 function hideAllScreens() {
@@ -1011,7 +1011,7 @@ async function installPendingUpdate() {
     });
     await relaunch();
   } catch (e) {
-    showError(`Aggiornamento fallito: ${e}`);
+    showError(`Aggiornamento fallito: ${e}. Se persiste, scarica l'installer da GitHub Releases.`);
     closeUpdateDialog();
   }
 }

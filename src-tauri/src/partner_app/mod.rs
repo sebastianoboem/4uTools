@@ -413,6 +413,24 @@ pub fn fetch_release_assets(url: &str) -> Result<Vec<ReleaseAsset>, String> {
     Ok(fetch_latest_release(url)?.1)
 }
 
+fn has_platform_install_asset(assets: &[ReleaseAsset]) -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        return assets.iter().any(|a| {
+            a.name.ends_with("-setup.exe") || a.name.ends_with("x64-setup.exe")
+        });
+    }
+    #[cfg(target_os = "macos")]
+    {
+        return assets.iter().any(|a| a.name.ends_with(".app.tar.gz"));
+    }
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+    {
+        let _ = assets;
+        false
+    }
+}
+
 pub fn check_update_status(
     config: &PartnerAppConfig,
     app: &AppHandle,
@@ -433,6 +451,11 @@ pub fn check_update_status(
     } else if let (Some(ref latest_v), Some(ref installed_v)) = (&latest_version, &installed_version)
     {
         version_gt(latest_v, installed_v)
+    } else if status.installed {
+        // Installazione legacy o versione non leggibile: riprova se esiste un asset per questa piattaforma.
+        latest
+            .as_ref()
+            .is_some_and(|(_, assets)| has_platform_install_asset(assets))
     } else {
         false
     };
@@ -704,6 +727,9 @@ pub fn launch_installed(
     #[cfg(target_os = "windows")]
     {
         if let Some(path) = resolve_windows_exe(config, app) {
+            return launch_path(config, &path);
+        }
+        if let Some(path) = resolve_installed(config, app, opts) {
             return launch_path(config, &path);
         }
     }

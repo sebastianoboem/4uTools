@@ -84,7 +84,11 @@ fn pick_install_asset(assets: Vec<ReleaseAsset>) -> Result<InstallKind, String> 
         }
     }
 
-    Err("Nessun asset compatibile trovato nella release AutoBackup".into())
+    Err(
+        "Nessun installer Windows trovato nella release AutoBackup su GitHub. \
+         Pubblica prima AutoBackup_*_x64-setup.exe nella release."
+            .into(),
+    )
 }
 
 #[tauri::command(rename_all = "snake_case")]
