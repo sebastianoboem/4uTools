@@ -1,11 +1,11 @@
 use crate::controller::BackupController;
+use crate::process_util::hidden_command;
 use crate::exclusions::{is_excluded_android, android_default_exceptions, android_system_folders};
 use crate::models::{AndroidDevice, FileEntry, ScanProgress};
 use crate::scanner::compile_extensions;
 use std::path::Path;
 use std::process::Stdio;
 use tokio::io::{AsyncBufReadExt, BufReader};
-use tokio::process::Command;
 
 pub fn find_adb() -> Option<String> {
     if let Some(path) = which_adb() {
@@ -39,7 +39,7 @@ fn which_adb() -> Option<String> {
 }
 
 pub async fn get_devices(adb: &str) -> Vec<AndroidDevice> {
-    let output = match Command::new(adb)
+    let output = match hidden_command(adb)
         .args(["devices", "-l"])
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -123,7 +123,7 @@ pub async fn scan_android_files(
             "find '{folder}' \\( -path '*/.thumbnails' -o -path '*/.cache' -o -path '*/Android/data' \\) -prune -o -type f -exec stat -c '%s|%n' {{}} +"
         );
 
-        let output = Command::new(adb)
+        let output = hidden_command(adb)
             .args(["-s", device_id, "shell", &stat_cmd])
             .stdout(Stdio::piped())
             .stderr(Stdio::null())
@@ -136,7 +136,7 @@ pub async fn scan_android_files(
                 let find_cmd = format!(
                     "find '{folder}' \\( -path '*/.thumbnails' -o -path '*/.cache' -o -path '*/Android/data' \\) -prune -o -type f -print"
                 );
-                if let Ok(o) = Command::new(adb)
+                if let Ok(o) = hidden_command(adb)
                     .args(["-s", device_id, "shell", &find_cmd])
                     .stdout(Stdio::piped())
                     .output()
@@ -170,7 +170,7 @@ pub async fn scan_android_files(
 }
 
 async fn list_android_folders(adb: &str, device_id: &str, base_path: &str) -> Vec<String> {
-    let output = Command::new(adb)
+    let output = hidden_command(adb)
         .args(["-s", device_id, "shell", "ls", "-1", base_path])
         .stdout(Stdio::piped())
         .output()
@@ -368,7 +368,7 @@ pub async fn copy_android_files(
             });
         }
 
-        let status = Command::new(adb)
+        let status = hidden_command(adb)
             .args([
                 "-s",
                 device_id,
@@ -415,7 +415,7 @@ pub async fn read_android_file_prefix(
 ) -> Result<Vec<u8>, String> {
     let escaped = remote_path.replace('\'', "'\\''");
     let cmd = format!("head -c {max_bytes} '{escaped}'");
-    let output = Command::new(adb)
+    let output = hidden_command(adb)
         .args(["-s", device_id, "exec-out", "sh", "-c", &cmd])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -441,7 +441,7 @@ pub async fn read_android_file(
 ) -> Result<Vec<u8>, String> {
     let escaped = remote_path.replace('\'', "'\\''");
     let stat_cmd = format!("stat -c %s '{escaped}'");
-    let stat_output = Command::new(adb)
+    let stat_output = hidden_command(adb)
         .args(["-s", device_id, "shell", &stat_cmd])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -464,7 +464,7 @@ pub async fn read_android_file(
         return Err("File troppo grande per l'anteprima.".into());
     }
 
-    let output = Command::new(adb)
+    let output = hidden_command(adb)
         .args(["-s", device_id, "exec-out", "cat", remote_path])
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
