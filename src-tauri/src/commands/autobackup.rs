@@ -17,6 +17,7 @@ const CONFIG: PartnerAppConfig = PartnerAppConfig {
     legacy_win_binary: Some("AutoBackupPC-ANDROID.exe"),
     windows_exe_basenames: &["AutoBackup", "autobackup", "AutoBackupPC-ANDROID"],
     not_installed_error: "AutoBackup non è installato",
+    dev_electron: false,
 };
 
 const RESOLVE_OPTS: ResolveOptions = ResolveOptions {

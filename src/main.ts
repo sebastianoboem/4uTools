@@ -800,6 +800,7 @@ interface PartnerInstallProgress {
 
 interface PartnerToolConfig {
   id: string;
+  label: string;
   checkCmd: string;
   installCmd: string;
   launchCmd: string;
@@ -811,6 +812,7 @@ interface PartnerToolConfig {
 const PARTNER_TOOLS: PartnerToolConfig[] = [
   {
     id: "autobackup",
+    label: "AutoBackup",
     checkCmd: "check_autobackup",
     installCmd: "install_autobackup",
     launchCmd: "launch_autobackup",
@@ -820,12 +822,23 @@ const PARTNER_TOOLS: PartnerToolConfig[] = [
   },
   {
     id: "app_manager",
+    label: "AndroidAdwareCleaner",
     checkCmd: "check_app_manager",
     installCmd: "install_app_manager",
     launchCmd: "launch_app_manager",
     buttonId: "qa-app-manager",
     badgeId: "badge-app-manager",
     progressId: "progress-app-manager",
+  },
+  {
+    id: "google_foto_manager",
+    label: "GoogleFotoManager",
+    checkCmd: "check_google_foto_manager",
+    installCmd: "install_google_foto_manager",
+    launchCmd: "launch_google_foto_manager",
+    buttonId: "qa-google-foto-manager",
+    badgeId: "badge-google-foto-manager",
+    progressId: "progress-google-foto-manager",
   },
 ];
 
@@ -927,11 +940,10 @@ async function handlePartnerTool(tool: PartnerToolConfig) {
   }
 
   if (!status.installed) {
-    const label = tool.id === "autobackup" ? "AutoBackup" : "AndroidAdwareCleaner";
     const install = await confirm(
-      `${label} non è installato. Vuoi scaricarlo da GitHub e installarlo ora?`,
+      `${tool.label} non è installato. Vuoi scaricarlo da GitHub e installarlo ora?`,
       {
-        title: `Installa ${label}`,
+        title: `Installa ${tool.label}`,
         kind: "info",
         okLabel: "Installa",
         cancelLabel: "Annulla",
@@ -1119,7 +1131,8 @@ async function init() {
       const tool = PARTNER_TOOLS.find(
         (t) =>
           (action === "backup" && t.id === "autobackup") ||
-          (action === "app-manager" && t.id === "app_manager"),
+          (action === "app-manager" && t.id === "app_manager") ||
+          (action === "google-foto-manager" && t.id === "google_foto_manager"),
       );
       if (tool) void handlePartnerTool(tool);
     });

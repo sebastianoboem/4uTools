@@ -17,6 +17,7 @@ const CONFIG: PartnerAppConfig = PartnerAppConfig {
     legacy_win_binary: None,
     windows_exe_basenames: &["AndroidAdwareCleaner", "android-adware-cleaner"],
     not_installed_error: "AndroidAdwareCleaner non è installato",
+    dev_electron: false,
 };
 
 const RESOLVE_OPTS: ResolveOptions = ResolveOptions {

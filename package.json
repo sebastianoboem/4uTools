@@ -1,14 +1,15 @@
 {
   "name": "4utools",
   "private": true,
-  "version": "1.1.4",
+  "version": "1.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
     "tauri": "tauri",
     "setup:adb": "bash scripts/download-platform-tools.sh",
-    "release:manifest": "node scripts/generate-latest-json.mjs"
+    "release:manifest": "node scripts/generate-latest-json.mjs",
+    "release:build": "bash scripts/release-build.sh"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

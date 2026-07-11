@@ -6,6 +6,7 @@ use tauri::{AppHandle, Emitter};
 
 pub mod app_manager;
 pub mod autobackup;
+pub mod google_foto_manager;
 
 #[derive(Debug, Serialize)]
 pub struct AdbStatus {

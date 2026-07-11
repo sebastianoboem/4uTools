@@ -18,6 +18,7 @@ pub struct PartnerAppConfig {
     #[cfg_attr(not(target_os = "windows"), allow(dead_code))]
     pub windows_exe_basenames: &'static [&'static str],
     pub not_installed_error: &'static str,
+    pub dev_electron: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -73,6 +74,12 @@ pub enum InstallKind {
         name: String,
         digest: Option<String>,
     },
+    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+    Dmg {
+        url: String,
+        name: String,
+        digest: Option<String>,
+    },
 }
 
 #[derive(Clone, Copy)]
@@ -98,6 +105,12 @@ pub fn dev_project_root(config: &PartnerAppConfig) -> Option<PathBuf> {
         .ok()
         .map(PathBuf::from)
         .or_else(|| config.dev_default_path.map(PathBuf::from))?;
+    if config.dev_electron {
+        if path.join("package.json").is_file() {
+            return Some(path);
+        }
+        return None;
+    }
     if path.join("src-tauri").join("Cargo.toml").is_file() {
         Some(path)
     } else {
@@ -107,6 +120,20 @@ pub fn dev_project_root(config: &PartnerAppConfig) -> Option<PathBuf> {
 
 pub fn dev_built_app(config: &PartnerAppConfig) -> Option<PathBuf> {
     let root = dev_project_root(config)?;
+    if config.dev_electron {
+        for dir in [
+            "release/mac-arm64",
+            "release/mac",
+            "release/mac-universal",
+            "release/mac-x64",
+        ] {
+            let app = root.join(dir).join(config.app_bundle_name);
+            if app.is_dir() {
+                return Some(app);
+            }
+        }
+        return None;
+    }
     for profile in ["debug", "release"] {
         for base in ["target", "src-tauri/target"] {
             let app = root.join(format!(
@@ -484,12 +511,16 @@ fn has_platform_install_asset(assets: &[ReleaseAsset]) -> bool {
     #[cfg(target_os = "windows")]
     {
         return assets.iter().any(|a| {
-            a.name.ends_with("-setup.exe") || a.name.ends_with("x64-setup.exe")
+            a.name.ends_with("-setup.exe")
+                || a.name.ends_with("x64-setup.exe")
+                || (a.name.ends_with(".exe") && !a.name.ends_with(".blockmap"))
         });
     }
     #[cfg(target_os = "macos")]
     {
-        return assets.iter().any(|a| a.name.ends_with(".app.tar.gz"));
+        return assets.iter().any(|a| {
+            a.name.ends_with(".app.tar.gz") || a.name.ends_with(".dmg")
+        });
     }
     #[cfg(not(any(target_os = "windows", target_os = "macos")))]
     {
@@ -667,6 +698,80 @@ pub fn install_macos_app(
     Ok(app_bundle)
 }
 
+#[cfg(target_os = "macos")]
+pub fn install_macos_dmg(
+    config: &PartnerAppConfig,
+    app: &AppHandle,
+    dmg_path: &Path,
+) -> Result<PathBuf, String> {
+    let dest = install_dir(config, app)?;
+    let app_bundle = dest.join(config.app_bundle_name);
+    if app_bundle.is_dir() {
+        fs::remove_dir_all(&app_bundle).map_err(|e| e.to_string())?;
+    }
+
+    let dmg_str = dmg_path
+        .to_str()
+        .ok_or_else(|| "Percorso DMG non valido".to_string())?;
+
+    let output = std::process::Command::new("hdiutil")
+        .args(["attach", "-nobrowse", "-readonly", dmg_str])
+        .output()
+        .map_err(|e| format!("Mount DMG fallito: {e}"))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(format!("Mount DMG fallito: {stderr}"));
+    }
+
+    let mount_point = String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .filter_map(|line| line.split('\t').last().map(str::trim))
+        .filter(|p| Path::new(p).starts_with("/Volumes/"))
+        .last()
+        .ok_or_else(|| "Punto di mount DMG non trovato".to_string())?
+        .to_string();
+
+    let mount_path = PathBuf::from(&mount_point);
+    let source = mount_path.join(config.app_bundle_name);
+    let source = if source.is_dir() {
+        source
+    } else {
+        fs::read_dir(&mount_path)
+            .map_err(|e| format!("Lettura volume DMG fallita: {e}"))?
+            .filter_map(|e| e.ok())
+            .map(|e| e.path())
+            .find(|p| {
+                p.file_name()
+                    .is_some_and(|n| n.to_string_lossy().ends_with(".app"))
+            })
+            .ok_or_else(|| format!("{} non trovato nel DMG", config.app_bundle_name))?
+    };
+
+    let status = std::process::Command::new("ditto")
+        .arg(&source)
+        .arg(&app_bundle)
+        .status()
+        .map_err(|e| format!("Copia app fallita: {e}"))?;
+
+    let _ = std::process::Command::new("hdiutil")
+        .args(["detach", &mount_point])
+        .status();
+
+    if !status.success() {
+        return Err("Copia app dal DMG fallita".into());
+    }
+
+    if !app_bundle.is_dir() {
+        return Err(format!(
+            "{} non trovato dopo l'installazione",
+            config.app_bundle_name
+        ));
+    }
+
+    Ok(app_bundle)
+}
+
 #[cfg(target_os = "windows")]
 pub fn install_windows_setup(
     config: &PartnerAppConfig,
@@ -743,6 +848,22 @@ pub fn install_from_kind_with_progress(
             emit_progress(app, app_id, "install", 90.0);
             Ok(dest)
         }
+        InstallKind::Dmg { url, name, digest } => {
+            let dmg_path = dest_dir.join(&name);
+            download_file_with_progress(&url, &dmg_path, app, app_id, digest.as_deref())?;
+            emit_progress(app, app_id, "install", 85.0);
+            #[cfg(target_os = "macos")]
+            {
+                let installed = install_macos_dmg(config, app, &dmg_path)?;
+                let _ = fs::remove_file(&dmg_path);
+                Ok(installed)
+            }
+            #[cfg(not(target_os = "macos"))]
+            {
+                let _ = dmg_path;
+                Err("DMG supportato solo su macOS".into())
+            }
+        }
     };
 
     if result.is_ok() {
@@ -773,7 +894,12 @@ pub fn launch_dev_project(config: &PartnerAppConfig, label: &str) -> Result<(), 
     let root_str = root
         .to_str()
         .ok_or_else(|| "Percorso dev non valido".to_string())?;
-    let cmd = format!("cd \"{root_str}\" && npm run tauri dev");
+    let npm_cmd = if config.dev_electron {
+        "npm run dev"
+    } else {
+        "npm run tauri dev"
+    };
+    let cmd = format!("cd \"{root_str}\" && {npm_cmd}");
     let script = format!(
         "tell application \"Terminal\" to do script \"{}\"",
         cmd.replace('\\', "\\\\").replace('"', "\\\"")

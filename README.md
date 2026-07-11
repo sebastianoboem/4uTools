@@ -17,6 +17,7 @@ Pensato per **riparatori**, **rivenditori** e **utenti avanzati** che vogliono c
 | **Verification Report** | Report di verifica componenti con punteggio riepilogativo |
 | **AutoBackup** | Avvia [AutoBackup](https://github.com/sebastianoboem/AutoBackup) per backup dati (installazione guidata se mancante) |
 | **AndroidAdwareCleaner** | Avvia [AndroidAdwareCleaner](https://github.com/sebastianoboem/AndroidAdwareCleaner) per analizzare e rimuovere app sospette |
+| **GoogleFotoManager** | Avvia [GoogleFotoManager](https://github.com/sebastianoboem/GoogleFotoManager) per selezionare automaticamente le foto in Google Foto (installazione guidata se mancante) |
 
 Puoi anche **riavviare** o **spegnere** il telefono, **nascondere serial/IMEI** a schermo e **cercare aggiornamenti** dell'app.
 
@@ -28,8 +29,9 @@ Scarica l'installer dalla pagina **[Releases](https://github.com/sebastianoboem/
 
 | Piattaforma | File |
 | ----------- | ---- |
-| macOS (Apple Silicon) | `4uTools_*_aarch64.dmg` |
-| Windows | `4uTools_*_x64-setup.exe` *(quando disponibile)* |
+| macOS (Apple Silicon) | `4uTools_<versione>_arm64.dmg` |
+| macOS (Intel) | `4uTools_<versione>_x64.dmg` |
+| Windows | `4uTools_<versione>_x64.exe` |
 
 L'app controlla automaticamente all'avvio se esiste una versione più recente su GitHub e propone l'installazione.
 
@@ -50,7 +52,7 @@ All'avvio rileva il dispositivo autorizzato e mostra la dashboard **Overview**. 
 
 ### 3. Strumenti collegati
 
-- **AutoBackup** e **AndroidAdwareCleaner** aprono programmi companion: al primo click, se non installati, 4uTools propone di scaricarli da GitHub.
+- **AutoBackup**, **AndroidAdwareCleaner** e **GoogleFotoManager** aprono programmi companion: al primo click, se non installati, 4uTools propone di scaricarli da GitHub.
 
 ---
 

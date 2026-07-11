@@ -23,6 +23,9 @@ pub fn run() {
             commands::app_manager::check_app_manager,
             commands::app_manager::install_app_manager,
             commands::app_manager::launch_app_manager,
+            commands::google_foto_manager::check_google_foto_manager,
+            commands::google_foto_manager::install_google_foto_manager,
+            commands::google_foto_manager::launch_google_foto_manager,
         ])
         .setup(|app| {
             let handle = app.handle().clone();
