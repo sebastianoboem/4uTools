@@ -18,19 +18,24 @@ Build signed release artifacts locally and publish them to GitHub + SourceForge.
 
 Options:
   --skip-build        Upload existing artifacts without rebuilding
+  --skip-windows      Skip Windows cross-compile (macOS host only)
   --skip-sourceforge  Skip SourceForge SFTP upload
   --notes FILE        Release notes file (default: generated)
   --draft             Create/update GitHub release as draft
   -h, --help          Show this help
 
+On macOS, Windows installers are built locally with cargo-xwin (no GitHub Actions).
+
 Requirements:
   - npm, Rust, gh CLI (authenticated)
   - SSH access to SourceForge FRS
   - TAURI_SIGNING_PRIVATE_KEY[_PATH] (default: ~/.tauri/autobackup.key)
+  - macOS Windows cross-build: brew install llvm nsis && cargo install --locked cargo-xwin
 EOF
 }
 
 SKIP_BUILD=0
+SKIP_WINDOWS=0
 SKIP_SF=0
 DRAFT=0
 NOTES_FILE=""
@@ -38,6 +43,7 @@ NOTES_FILE=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-build) SKIP_BUILD=1; shift ;;
+    --skip-windows) SKIP_WINDOWS=1; shift ;;
     --skip-sourceforge) SKIP_SF=1; shift ;;
     --draft) DRAFT=1; shift ;;
     --notes)
@@ -76,7 +82,13 @@ collect_artifacts() {
     "target/release/bundle/msi/*.msi.sig" \
     "target/release/bundle/nsis/*.exe" \
     "target/release/bundle/nsis/*.nsis.zip" \
-    "target/release/bundle/nsis/*.nsis.zip.sig"
+    "target/release/bundle/nsis/*.nsis.zip.sig" \
+    "target/x86_64-pc-windows-msvc/release/bundle/msi/*${VERSION}*.msi" \
+    "target/x86_64-pc-windows-msvc/release/bundle/msi/*${VERSION}*.msi.sig" \
+    "target/x86_64-pc-windows-msvc/release/bundle/nsis/*${VERSION}*.exe" \
+    "target/x86_64-pc-windows-msvc/release/bundle/nsis/*${VERSION}*.exe.sig" \
+    "target/x86_64-pc-windows-msvc/release/bundle/nsis/*${VERSION}*.nsis.zip" \
+    "target/x86_64-pc-windows-msvc/release/bundle/nsis/*${VERSION}*.nsis.zip.sig"
   do
     for file in $pattern; do
       ARTIFACTS+=("$file")
@@ -85,7 +97,7 @@ collect_artifacts() {
   shopt -u nullglob
 
   if [[ ${#ARTIFACTS[@]} -eq 0 ]]; then
-    echo "No release artifacts found under target/release/bundle/." >&2
+    echo "No release artifacts found under target/**/release/bundle/." >&2
     exit 1
   fi
 }
@@ -104,7 +116,7 @@ detect_platform_key() {
         echo "darwin-x86_64"
       fi
       ;;
-    *.nsis.zip|*.msi)
+    *-setup.exe|*.nsis.zip|*.msi)
       echo "windows-x86_64"
       ;;
     *)
@@ -130,22 +142,31 @@ write_latest_json() {
     fi
   fi
 
-  local file sig platform url signature name
+  local file sig platform url name
   for file in "${ARTIFACTS[@]}"; do
-    [[ "$file" == *.sig ]] && continue
+    case "$file" in
+      *.sig) continue ;;
+    esac
     platform="$(detect_platform_key "$file")"
-    [[ -z "$platform" ]] && continue
+    if [[ -z "$platform" ]]; then
+      echo "  skip (unknown platform): $file"
+      continue
+    fi
     sig="${file}.sig"
-    [[ -f "$sig" ]] || continue
+    if [[ ! -f "$sig" ]]; then
+      echo "  skip (missing .sig): $file"
+      continue
+    fi
     name="$(basename "$file")"
     url="${SF_DOWNLOAD_BASE}/${name}/download"
-    signature="$(tr -d '\n' < "$sig")"
     node -e '
       const fs = require("fs");
       const platforms = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-      platforms[process.argv[2]] = { url: process.argv[3], signature: process.argv[4] };
+      const signature = fs.readFileSync(process.argv[4], "utf8").replace(/\n/g, "");
+      platforms[process.argv[2]] = { url: process.argv[3], signature };
       fs.writeFileSync(process.argv[1], JSON.stringify(platforms));
-    ' "$tmp_platforms" "$platform" "$url" "$signature"
+      console.log("  +", process.argv[2], process.argv[3]);
+    ' "$tmp_platforms" "$platform" "$url" "$sig"
   done
 
   node -e '
@@ -170,6 +191,9 @@ write_latest_json() {
 if [[ "$SKIP_BUILD" -eq 0 ]]; then
   echo "Building AutoBackup ${VERSION} (signed updater artifacts)..."
   npm run tauri build
+  if [[ "$(uname -s)" == "Darwin" && "$SKIP_WINDOWS" -eq 0 ]]; then
+    bash "$ROOT/scripts/build-windows.sh"
+  fi
 fi
 
 collect_artifacts

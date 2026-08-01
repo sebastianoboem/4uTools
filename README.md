@@ -81,7 +81,15 @@ La pubkey è embedded in `src-tauri/tauri.conf.json`.
 - SourceForge: `https://sourceforge.net/projects/autobkup/files/releases/`
 - Update endpoints (ordine): SourceForge `latest.json` → GitHub `latest.json`
 
-**Windows:** compilare su una macchina Windows, poi `npm run release -- --skip-build` (oppure caricare i file Windows in un secondo passaggio).
+**Windows da macOS** (cross-compile locale, senza GitHub Actions):
+
+```bash
+brew install llvm nsis
+cargo install --locked cargo-xwin
+npm run build:windows
+```
+
+`npm run release` su Mac esegue automaticamente anche la build Windows via `cargo-xwin`.
 
 Prerequisiti: [GitHub CLI](https://cli.github.com/) autenticato e SSH verso SourceForge FRS.
 
