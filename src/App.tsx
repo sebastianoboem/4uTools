@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { PreviewByCategory } from "./components/PreviewByCategory";
+import { UpdateBanner } from "./components/UpdateBanner";
 import { api, BackupResult, CategoryInfo, CopyProgress, DriveInfo, FileEntry, ScanProgress, formatBytes } from "./lib/api";
 import { prefetchImageThumbnails } from "./lib/previewCache";
 import "./App.css";
@@ -269,6 +270,9 @@ function App() {
 
   return (
     <div className="app">
+      <header className="app-header">
+        <UpdateBanner />
+      </header>
       <main className={`content${step === 1 ? " content-centered" : ""}`}>
         {error && <div className="error">{error}</div>}
 

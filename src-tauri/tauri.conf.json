@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "AutoBackup",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "identifier": "com.autobackup.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -22,7 +22,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' ipc: http://ipc.localhost; connect-src 'self' http://localhost:1420 ws://localhost:1420; img-src 'self' asset: http://asset.localhost https://asset.localhost blob: data:; media-src 'self' asset: http://asset.localhost https://asset.localhost blob: data:; style-src 'self' 'unsafe-inline'",
+      "csp": "default-src 'self' ipc: http://ipc.localhost; connect-src 'self' http://localhost:1420 ws://localhost:1420 https://sourceforge.net https://*.sourceforge.net https://downloads.sourceforge.net https://github.com https://objects.githubusercontent.com https://release-assets.githubusercontent.com; img-src 'self' asset: http://asset.localhost https://asset.localhost blob: data:; media-src 'self' asset: http://asset.localhost https://asset.localhost blob: data:; style-src 'self' 'unsafe-inline'",
       "assetProtocol": {
         "enable": true,
         "scope": {
@@ -46,6 +46,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -53,5 +54,14 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI3MEMwNjUyNENCQ0E4NTEKUldSUnFMeE1VZ1lNdDBhRlBGQnJmSUNXQTZXRmVMTXdZV2x1NUVRMUVqc2lQYW5YYzlJVFF1WUMK",
+      "endpoints": [
+        "https://sourceforge.net/projects/autobkup/files/releases/latest.json/download",
+        "https://github.com/sebastianoboem/AutoBackup/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

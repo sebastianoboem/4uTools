@@ -1,8 +1,0 @@
-psutil
-colorama
-tqdm
-InquirerPy
-pyinstaller
-pytest
-pytest-mock
-pytest-cov

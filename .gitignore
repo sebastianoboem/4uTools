@@ -26,3 +26,9 @@ build/
 # App
 backup_errors.log
 .DS_Store
+
+# Updater signing keys (never commit)
+*.key
+*.key.pub
+.env
+.env.*
