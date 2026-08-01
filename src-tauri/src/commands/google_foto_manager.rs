@@ -9,6 +9,12 @@ const APP_ID: &str = "google_foto_manager";
 
 const CONFIG: PartnerAppConfig = PartnerAppConfig {
     install_folder: "GoogleFotoManager",
+    sourceforge_latest_url: Some(
+        "https://sourceforge.net/projects/googlefotomanager/files/releases/latest.yml/download",
+    ),
+    sourceforge_files_base: Some(
+        "https://sourceforge.net/projects/googlefotomanager/files/releases",
+    ),
     github_latest_url:
         "https://api.github.com/repos/sebastianoboem/GoogleFotoManager/releases/latest",
     app_bundle_name: "Google Foto Manager.app",
@@ -88,8 +94,8 @@ fn pick_install_asset(assets: Vec<ReleaseAsset>) -> Result<InstallKind, String> 
     }
 
     Err(
-        "Nessun installer trovato nella release GoogleFotoManager su GitHub. \
-         Pubblica prima gli artefatti per la tua piattaforma."
+        "Nessun installer trovato nella release GoogleFotoManager \
+         (SourceForge/GitHub). Pubblica prima gli artefatti per la tua piattaforma."
             .into(),
     )
 }
@@ -113,7 +119,7 @@ pub async fn install_google_foto_manager(app: AppHandle) -> Result<String, Strin
         .into_owned());
     }
 
-    let assets = fetch_release_assets(CONFIG.github_latest_url)?;
+    let assets = fetch_release_assets(&CONFIG)?;
     let kind = pick_install_asset(assets)?;
     let app_handle = app.clone();
     let installed = tauri::async_runtime::spawn_blocking(move || {

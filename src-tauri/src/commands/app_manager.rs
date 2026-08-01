@@ -8,6 +8,10 @@ const APP_ID: &str = "app_manager";
 
 const CONFIG: PartnerAppConfig = PartnerAppConfig {
     install_folder: "AndroidAdwareCleaner",
+    sourceforge_latest_url: Some(
+        "https://sourceforge.net/projects/androidadwarecleaner/files/releases/latest.json/download",
+    ),
+    sourceforge_files_base: None,
     github_latest_url:
         "https://api.github.com/repos/sebastianoboem/AndroidAdwareCleaner/releases/latest",
     app_bundle_name: "AndroidAdwareCleaner.app",
@@ -51,7 +55,7 @@ fn latest_install_kind() -> Result<InstallKind, String> {
         return Err("Piattaforma non supportata".into());
     }
 
-    let assets = fetch_release_assets(CONFIG.github_latest_url)?;
+    let assets = fetch_release_assets(&CONFIG)?;
     let asset = assets
         .into_iter()
         .find(|a| a.name.ends_with(suffix))

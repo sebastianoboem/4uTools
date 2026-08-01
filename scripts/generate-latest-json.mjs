@@ -1,15 +1,23 @@
 #!/usr/bin/env node
 /**
- * Genera latest.json per Tauri updater (GitHub Releases).
+ * Genera latest.json per Tauri updater.
  *
- * Esempio:
+ * Dual publish (SourceForge + GitHub): usa --base-url SourceForge così i
+ * download/stats vanno su SF. Lo stesso file va caricato anche sulla GitHub
+ * Release (fallback updater) e sul path stabile SF via
+ * scripts/publish-sourceforge-latest.mjs.
+ *
+ * Esempio (SourceForge — preferito):
  *   node scripts/generate-latest-json.mjs \
  *     --version 1.0.1 \
  *     --notes "Correzioni e miglioramenti" \
- *     --base-url https://github.com/sebastianoboem/4uTools/releases/download/v1.0.1 \
+ *     --base-url https://sourceforge.net/projects/forutools/files/releases/v1.0.1 \
  *     --darwin-aarch64 src-tauri/target/release/bundle/macos/4uTools.app.tar.gz.sig \
  *     --darwin-x86_64 src-tauri/target/x86_64-apple-darwin/release/bundle/macos/4uTools.app.tar.gz.sig \
  *     --windows-x86_64 src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/4uTools_1.0.1_x64-setup.exe.sig
+ *
+ * Esempio (GitHub only, legacy):
+ *   ... --base-url https://github.com/sebastianoboem/4uTools/releases/download/v1.0.1
  */
 import { readFileSync, writeFileSync, existsSync, mkdtempSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -92,9 +100,13 @@ for (const [platform, sigPath] of Object.entries(opts.platforms)) {
   }
   verifyMinisign(artifactPath, sigPath, pubkey);
   const signature = readFileSync(sigPath, "utf8").trim();
+  const isSourceForge = opts.baseUrl.includes("sourceforge.net");
+  const url = isSourceForge
+    ? `${opts.baseUrl}/${artifact}/download`
+    : `${opts.baseUrl}/${artifact}`;
   platforms[platform] = {
     signature,
-    url: `${opts.baseUrl}/${artifact}`,
+    url,
   };
 }
 

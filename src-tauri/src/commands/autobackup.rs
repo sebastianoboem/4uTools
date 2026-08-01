@@ -9,6 +9,10 @@ const APP_ID: &str = "autobackup";
 
 const CONFIG: PartnerAppConfig = PartnerAppConfig {
     install_folder: "AutoBackup",
+    sourceforge_latest_url: Some(
+        "https://sourceforge.net/projects/autobkup/files/releases/latest.json/download",
+    ),
+    sourceforge_files_base: None,
     github_latest_url: "https://api.github.com/repos/sebastianoboem/AutoBackup/releases/latest",
     app_bundle_name: "AutoBackup.app",
     dev_env_var: "AUTOBACKUP_DEV",
@@ -91,8 +95,8 @@ fn pick_install_asset(assets: Vec<ReleaseAsset>) -> Result<InstallKind, String> 
     }
 
     Err(
-        "Nessun installer Windows trovato nella release AutoBackup su GitHub. \
-         Pubblica prima AutoBackup_*_x64-setup.exe nella release."
+        "Nessun installer trovato nella release AutoBackup (SourceForge/GitHub). \
+         Pubblica prima gli artefatti per la tua piattaforma."
             .into(),
     )
 }
@@ -113,7 +117,7 @@ pub async fn install_autobackup(app: AppHandle) -> Result<String, String> {
         );
     }
 
-    let assets = fetch_release_assets(CONFIG.github_latest_url)?;
+    let assets = fetch_release_assets(&CONFIG)?;
     let kind = pick_install_asset(assets)?;
     let app_handle = app.clone();
     let installed = tauri::async_runtime::spawn_blocking(move || {

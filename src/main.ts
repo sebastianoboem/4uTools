@@ -941,7 +941,7 @@ async function handlePartnerTool(tool: PartnerToolConfig) {
 
   if (!status.installed) {
     const install = await confirm(
-      `${tool.label} non è installato. Vuoi scaricarlo da GitHub e installarlo ora?`,
+      `${tool.label} non è installato. Vuoi scaricarlo e installarlo ora?`,
       {
         title: `Installa ${tool.label}`,
         kind: "info",
@@ -1001,7 +1001,7 @@ async function checkForAppUpdatesOnStartup() {
       continueAfterUpdateCheck = resolve;
     });
   } catch {
-    // offline o release non ancora pubblicata su GitHub
+    // offline o release non ancora pubblicata
   }
 }
 
@@ -1038,7 +1038,7 @@ async function installPendingUpdate() {
     });
     await relaunch();
   } catch (e) {
-    showError(`Aggiornamento fallito: ${e}. Se persiste, scarica l'installer da GitHub Releases.`);
+    showError(`Aggiornamento fallito: ${e}. Se persiste, scarica l'installer da SourceForge o GitHub Releases.`);
     closeUpdateDialog();
   }
 }

@@ -7,6 +7,10 @@ use tauri::{AppHandle, Emitter, Manager};
 #[derive(Clone, Copy)]
 pub struct PartnerAppConfig {
     pub install_folder: &'static str,
+    /// Feed SourceForge primario (`latest.json` Tauri o `latest.yml` Electron).
+    pub sourceforge_latest_url: Option<&'static str>,
+    /// Directory files SF usata per costruire URL download da `latest.yml` (trailing slash).
+    pub sourceforge_files_base: Option<&'static str>,
     pub github_latest_url: &'static str,
     pub app_bundle_name: &'static str,
     pub dev_env_var: &'static str,
@@ -55,6 +59,18 @@ pub struct ReleaseAsset {
 struct ReleaseInfo {
     tag_name: String,
     assets: Vec<ReleaseAsset>,
+}
+
+#[derive(Debug, Deserialize)]
+struct TauriPlatformAsset {
+    url: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct TauriLatestManifest {
+    version: String,
+    #[serde(default)]
+    platforms: std::collections::HashMap<String, TauriPlatformAsset>,
 }
 
 pub enum InstallKind {
@@ -487,11 +503,140 @@ pub fn installed_version(
     None
 }
 
-pub fn fetch_latest_release(url: &str) -> Result<(String, Vec<ReleaseAsset>), String> {
-    let client = reqwest::blocking::Client::builder()
+fn http_client() -> Result<reqwest::blocking::Client, String> {
+    reqwest::blocking::Client::builder()
         .user_agent("4uTools")
         .build()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| e.to_string())
+}
+
+fn fetch_text(url: &str) -> Result<String, String> {
+    let client = http_client()?;
+    let response = client
+        .get(url)
+        .send()
+        .map_err(|e| format!("Impossibile contattare {url}: {e}"))?
+        .error_for_status()
+        .map_err(|e| format!("Feed non trovato ({url}): {e}"))?;
+    response
+        .text()
+        .map_err(|e| format!("Risposta non leggibile ({url}): {e}"))
+}
+
+fn asset_name_from_url(url: &str) -> String {
+    let trimmed = url.trim_end_matches('/').trim_end_matches("/download");
+    trimmed
+        .rsplit('/')
+        .next()
+        .unwrap_or(trimmed)
+        .to_string()
+}
+
+fn parse_tauri_latest_json(body: &str) -> Result<(String, Vec<ReleaseAsset>), String> {
+    let manifest: TauriLatestManifest = serde_json::from_str(body)
+        .map_err(|e| format!("Manifest Tauri non valido: {e}"))?;
+    if manifest.version.trim().is_empty() {
+        return Err("Manifest Tauri senza version".into());
+    }
+    let version = normalize_version_tag(&manifest.version);
+    let assets = manifest
+        .platforms
+        .into_values()
+        .map(|p| ReleaseAsset {
+            name: asset_name_from_url(&p.url),
+            browser_download_url: p.url,
+            digest: None,
+        })
+        .collect::<Vec<_>>();
+    if assets.is_empty() {
+        return Err("Manifest Tauri senza piattaforme".into());
+    }
+    Ok((version, assets))
+}
+
+/// Minimal Electron `latest.yml` parser (version + files[].url / path).
+fn parse_electron_latest_yml(
+    body: &str,
+    files_base: &str,
+) -> Result<(String, Vec<ReleaseAsset>), String> {
+    let mut version = None::<String>;
+    let mut names = Vec::<String>::new();
+    let mut in_files = false;
+
+    for raw in body.lines() {
+        let line = raw.trim_end();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        let trimmed = line.trim_start();
+        let indent = line.len() - trimmed.len();
+
+        if indent == 0 {
+            in_files = false;
+            if let Some(rest) = trimmed.strip_prefix("version:") {
+                version = Some(rest.trim().trim_matches('"').trim_matches('\'').to_string());
+            } else if trimmed == "files:" || trimmed.starts_with("files:") {
+                in_files = true;
+            } else if let Some(rest) = trimmed.strip_prefix("path:") {
+                let name = rest.trim().trim_matches('"').trim_matches('\'').to_string();
+                if !name.is_empty() && !names.iter().any(|n| n == &name) {
+                    names.push(name);
+                }
+            }
+            continue;
+        }
+
+        if in_files {
+            if let Some(rest) = trimmed.strip_prefix("- url:") {
+                let name = rest.trim().trim_matches('"').trim_matches('\'').to_string();
+                if !name.is_empty() && !names.iter().any(|n| n == &name) {
+                    names.push(name);
+                }
+            } else if let Some(rest) = trimmed.strip_prefix("url:") {
+                let name = rest.trim().trim_matches('"').trim_matches('\'').to_string();
+                if !name.is_empty() && !names.iter().any(|n| n == &name) {
+                    names.push(name);
+                }
+            }
+        }
+    }
+
+    let version = version.filter(|v| !v.is_empty()).ok_or_else(|| {
+        "latest.yml senza version".to_string()
+    })?;
+    if names.is_empty() {
+        return Err("latest.yml senza file".into());
+    }
+
+    let base = files_base.trim_end_matches('/');
+    let assets = names
+        .into_iter()
+        .map(|name| ReleaseAsset {
+            browser_download_url: format!("{base}/{name}/download"),
+            name,
+            digest: None,
+        })
+        .collect();
+    Ok((normalize_version_tag(&version), assets))
+}
+
+fn fetch_sourceforge_latest(
+    url: &str,
+    files_base: Option<&str>,
+) -> Result<(String, Vec<ReleaseAsset>), String> {
+    let body = fetch_text(url)?;
+    let trimmed = body.trim_start();
+    if trimmed.starts_with('{') {
+        return parse_tauri_latest_json(&body);
+    }
+    let base = files_base.ok_or_else(|| {
+        "sourceforge_files_base richiesto per feed latest.yml".to_string()
+    })?;
+    parse_electron_latest_yml(&body, base)
+}
+
+pub fn fetch_github_latest_release(url: &str) -> Result<(String, Vec<ReleaseAsset>), String> {
+    let client = http_client()?;
     let release: ReleaseInfo = client
         .get(url)
         .send()
@@ -503,8 +648,42 @@ pub fn fetch_latest_release(url: &str) -> Result<(String, Vec<ReleaseAsset>), St
     Ok((normalize_version_tag(&release.tag_name), release.assets))
 }
 
-pub fn fetch_release_assets(url: &str) -> Result<Vec<ReleaseAsset>, String> {
-    Ok(fetch_latest_release(url)?.1)
+/// SourceForge first (se configurato), altrimenti GitHub Releases API.
+/// Se SF risponde ma senza asset installabili per la piattaforma corrente,
+/// riusa la versione SF e prova gli asset da GitHub.
+pub fn fetch_latest_release(
+    config: &PartnerAppConfig,
+) -> Result<(String, Vec<ReleaseAsset>), String> {
+    let mut sf_err = None;
+    if let Some(sf_url) = config.sourceforge_latest_url {
+        match fetch_sourceforge_latest(sf_url, config.sourceforge_files_base) {
+            Ok((ver, assets)) if has_platform_install_asset(&assets) => {
+                return Ok((ver, assets));
+            }
+            Ok((ver, assets)) => {
+                if let Ok((_, gh_assets)) = fetch_github_latest_release(config.github_latest_url) {
+                    if has_platform_install_asset(&gh_assets) {
+                        return Ok((ver, gh_assets));
+                    }
+                }
+                return Ok((ver, assets));
+            }
+            Err(e) => sf_err = Some(e),
+        }
+    }
+    match fetch_github_latest_release(config.github_latest_url) {
+        Ok(release) => Ok(release),
+        Err(gh_err) => Err(match sf_err {
+            Some(sf) => {
+                format!("SourceForge e GitHub non raggiungibili. SF: {sf}; GitHub: {gh_err}")
+            }
+            None => gh_err,
+        }),
+    }
+}
+
+pub fn fetch_release_assets(config: &PartnerAppConfig) -> Result<Vec<ReleaseAsset>, String> {
+    Ok(fetch_latest_release(config)?.1)
 }
 
 fn has_platform_install_asset(assets: &[ReleaseAsset]) -> bool {
@@ -541,7 +720,7 @@ pub fn check_update_status(
         None
     };
 
-    let latest = fetch_latest_release(config.github_latest_url).ok();
+    let latest = fetch_latest_release(config).ok();
     let latest_version = latest.as_ref().map(|(v, _)| v.clone());
 
     let update_available = if !status.installed {
@@ -594,7 +773,7 @@ fn verify_file_digest(path: &Path, digest: Option<&str>) -> Result<(), String> {
         .collect::<String>();
 
     if actual != expected {
-        return Err("Verifica integrità download fallita (hash GitHub non corrispondente)".into());
+        return Err("Verifica integrità download fallita (hash non corrispondente)".into());
     }
     Ok(())
 }
@@ -994,4 +1173,68 @@ pub fn resolve_path_or_error(
             }
         })
         .ok_or_else(|| already_installed_msg.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_tauri_latest_json() {
+        let body = r#"{
+          "version": "1.2.3",
+          "platforms": {
+            "darwin-aarch64": {
+              "url": "https://sourceforge.net/projects/autobkup/files/releases/AutoBackup_1.2.3_aarch64.app.tar.gz/download"
+            },
+            "windows-x86_64": {
+              "url": "https://sourceforge.net/projects/autobkup/files/releases/AutoBackup_1.2.3_x64-setup.exe/download"
+            }
+          }
+        }"#;
+        let (ver, assets) = parse_tauri_latest_json(body).unwrap();
+        assert_eq!(ver, "1.2.3");
+        assert_eq!(assets.len(), 2);
+        assert!(assets.iter().any(|a| a.name.ends_with("aarch64.app.tar.gz")));
+        assert!(assets
+            .iter()
+            .any(|a| a.browser_download_url.ends_with("/download")));
+    }
+
+    #[test]
+    fn parses_electron_latest_yml() {
+        let body = r#"version: 0.9.1
+files:
+  - url: GoogleFotoManager-0.9.1-arm64-AppleSilicon.dmg
+    sha512: abc
+    size: 1
+  - url: GoogleFotoManager-0.9.1-x64-Intel.dmg
+    sha512: def
+    size: 2
+path: GoogleFotoManager-0.9.1-arm64-AppleSilicon.dmg
+sha512: abc
+releaseDate: '2026-01-01T00:00:00.000Z'
+"#;
+        let (ver, assets) = parse_electron_latest_yml(
+            body,
+            "https://sourceforge.net/projects/googlefotomanager/files/releases",
+        )
+        .unwrap();
+        assert_eq!(ver, "0.9.1");
+        assert_eq!(assets.len(), 2);
+        assert_eq!(
+            assets[0].browser_download_url,
+            "https://sourceforge.net/projects/googlefotomanager/files/releases/GoogleFotoManager-0.9.1-arm64-AppleSilicon.dmg/download"
+        );
+    }
+
+    #[test]
+    fn asset_name_strips_download_suffix() {
+        assert_eq!(
+            asset_name_from_url(
+                "https://sourceforge.net/projects/forutools/files/releases/v1.0.0/4uTools_1.0.0_x64-setup.exe/download"
+            ),
+            "4uTools_1.0.0_x64-setup.exe"
+        );
+    }
 }
