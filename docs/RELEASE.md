@@ -21,12 +21,12 @@ In `src-tauri/tauri.conf.json` (ordine = priorità):
 
 ```json
 "endpoints": [
-  "https://sourceforge.net/projects/forutools/files/releases/latest.json/download",
+  "https://downloads.sourceforge.net/project/forutools/releases/latest.json",
   "https://github.com/sebastianoboem/4uTools/releases/latest/download/latest.json"
 ]
 ```
 
-Entrambi devono restituire **JSON grezzo**, non HTML. Il fallback Tauri scatta solo su HTTP non-2XX; una landing HTML 200 su SF **bloccherebbe** il fallback.
+Entrambi devono restituire **JSON grezzo**, non HTML. Usa il CDN `downloads.sourceforge.net` (non `/files/.../download`, che su forutools può rispondere con una landing HTML 200 e bloccare il fallback Tauri).
 
 ## Versioning
 
@@ -105,7 +105,7 @@ Layout atteso:
 npm run release:manifest -- \
   --version X.Y.Z \
   --notes "Descrizione release" \
-  --base-url https://sourceforge.net/projects/forutools/files/releases/vX.Y.Z \
+  --base-url https://downloads.sourceforge.net/project/forutools/releases/vX.Y.Z \
   --darwin-aarch64 src-tauri/target/release/bundle/macos/4uTools.app.tar.gz.sig \
   --darwin-x86_64 src-tauri/target/x86_64-apple-darwin/release/bundle/macos/4uTools.app.tar.gz.sig \
   --windows-x86_64 src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/4uTools_X.Y.Z_x64-setup.exe.sig
@@ -133,7 +133,7 @@ Remoto: `sebastianoboem@frs.sourceforge.net:/home/frs/project/forutools/releases
 Endpoint pubblico:
 
 ```
-https://sourceforge.net/projects/forutools/files/releases/latest.json/download
+https://downloads.sourceforge.net/project/forutools/releases/latest.json
 ```
 
 ### 6. Verifica
@@ -141,7 +141,7 @@ https://sourceforge.net/projects/forutools/files/releases/latest.json/download
 ```bash
 # SourceForge (primario) — deve essere JSON, non HTML
 curl -fsSL \
-  "https://sourceforge.net/projects/forutools/files/releases/latest.json/download" \
+  "https://downloads.sourceforge.net/project/forutools/releases/latest.json" \
   | head
 
 # GitHub (fallback)

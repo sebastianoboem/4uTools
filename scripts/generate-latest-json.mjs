@@ -7,11 +7,11 @@
  * Release (fallback updater) e sul path stabile SF via
  * scripts/publish-sourceforge-latest.mjs.
  *
- * Esempio (SourceForge — preferito):
+ * Esempio (SourceForge — preferito, CDN diretto):
  *   node scripts/generate-latest-json.mjs \
  *     --version 1.0.1 \
  *     --notes "Correzioni e miglioramenti" \
- *     --base-url https://sourceforge.net/projects/forutools/files/releases/v1.0.1 \
+ *     --base-url https://downloads.sourceforge.net/project/forutools/releases/v1.0.1 \
  *     --darwin-aarch64 src-tauri/target/release/bundle/macos/4uTools.app.tar.gz.sig \
  *     --darwin-x86_64 src-tauri/target/x86_64-apple-darwin/release/bundle/macos/4uTools.app.tar.gz.sig \
  *     --windows-x86_64 src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/4uTools_1.0.1_x64-setup.exe.sig
@@ -100,10 +100,15 @@ for (const [platform, sigPath] of Object.entries(opts.platforms)) {
   }
   verifyMinisign(artifactPath, sigPath, pubkey);
   const signature = readFileSync(sigPath, "utf8").trim();
-  const isSourceForge = opts.baseUrl.includes("sourceforge.net");
-  const url = isSourceForge
-    ? `${opts.baseUrl}/${artifact}/download`
-    : `${opts.baseUrl}/${artifact}`;
+  // downloads.sourceforge.net serves the file directly; /files/.../download
+  // can return an HTML landing page (blocks Tauri fallback on HTTP 200).
+  const isDownloadsCdn = opts.baseUrl.includes("downloads.sourceforge.net");
+  const isSourceForgeFiles = opts.baseUrl.includes("sourceforge.net/projects/");
+  const url = isDownloadsCdn
+    ? `${opts.baseUrl}/${artifact}`
+    : isSourceForgeFiles
+      ? `${opts.baseUrl}/${artifact}/download`
+      : `${opts.baseUrl}/${artifact}`;
   platforms[platform] = {
     signature,
     url,
