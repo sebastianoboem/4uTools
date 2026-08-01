@@ -53,11 +53,13 @@ VERSION="$(node -p "require('./src-tauri/tauri.conf.json').version")"
 TAG="v${VERSION}"
 GH_REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "$GH_REPO_DEFAULT")"
 
-if [[ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" && -z "${TAURI_SIGNING_PRIVATE_KEY_PATH:-}" ]]; then
-  if [[ -f "$PRIVATE_KEY_DEFAULT" ]]; then
-    export TAURI_SIGNING_PRIVATE_KEY_PATH="$PRIVATE_KEY_DEFAULT"
+if [[ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
+  KEY_PATH="${TAURI_SIGNING_PRIVATE_KEY_PATH:-$PRIVATE_KEY_DEFAULT}"
+  if [[ -f "$KEY_PATH" ]]; then
+    export TAURI_SIGNING_PRIVATE_KEY
+    TAURI_SIGNING_PRIVATE_KEY="$(cat "$KEY_PATH")"
   else
-    echo "Missing updater signing key. Set TAURI_SIGNING_PRIVATE_KEY_PATH or create $PRIVATE_KEY_DEFAULT" >&2
+    echo "Missing updater signing key. Set TAURI_SIGNING_PRIVATE_KEY or create $PRIVATE_KEY_DEFAULT" >&2
     exit 1
   fi
 fi
