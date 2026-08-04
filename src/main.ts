@@ -129,7 +129,18 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;");
 }
 
+function escapeAttr(s: string): string {
+  return escapeHtml(s).replace(/"/g, "&quot;");
+}
+
+let toastClearTimer: number | undefined;
+
 function showError(msg: string) {
+  if (toastClearTimer !== undefined) {
+    window.clearTimeout(toastClearTimer);
+    toastClearTimer = undefined;
+  }
+  appToast.classList.remove("app-toast--ok");
   if (!msg) {
     appToast.classList.add("hidden");
     appToast.textContent = "";
@@ -137,6 +148,41 @@ function showError(msg: string) {
   }
   appToast.textContent = msg;
   appToast.classList.remove("hidden");
+}
+
+function showCopyToast(label: string) {
+  if (toastClearTimer !== undefined) {
+    window.clearTimeout(toastClearTimer);
+  }
+  appToast.classList.add("app-toast--ok");
+  appToast.textContent = `${label} copiato negli appunti`;
+  appToast.classList.remove("hidden");
+  toastClearTimer = window.setTimeout(() => {
+    toastClearTimer = undefined;
+    appToast.classList.add("hidden");
+    appToast.classList.remove("app-toast--ok");
+    appToast.textContent = "";
+  }, 1800);
+}
+
+function isCopyableId(value: string): boolean {
+  return Boolean(value) && value !== "N/A";
+}
+
+function copyableValueHtml(display: string, raw: string, label: string): string {
+  if (!isCopyableId(raw)) {
+    return `<span>${escapeHtml(display)}</span>`;
+  }
+  return `<span class="copyable-value" data-copy="${escapeAttr(raw)}" data-copy-label="${escapeAttr(label)}" title="Clicca per copiare">${escapeHtml(display)}</span>`;
+}
+
+async function copyToClipboard(text: string, label: string) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showCopyToast(label);
+  } catch {
+    showError(`Impossibile copiare ${label}`);
+  }
 }
 
 function hideAllScreens() {
@@ -421,6 +467,7 @@ function renderStorageLegend(b: StorageBreakdown) {
 
 function renderDetailSections(sections: DetailSection[], maskLabels = false) {
   const sensitive = /serial|imei|address|id/i;
+  const copyLabel = /^(serial number|imei(?:\s*2)?)$/i;
   return sections
     .map(
       (sec) => `
@@ -431,11 +478,14 @@ function renderDetailSections(sections: DetailSection[], maskLabels = false) {
           .map((r) => {
             const val =
               maskLabels && sensitive.test(r.label) ? mask(r.value) : r.value;
-            return `<div class="spec-row"><span>${escapeHtml(r.label)}</span><span>${escapeHtml(val)}${
-              r.note
-                ? `<span class="detail-note" title="${escapeHtml(r.note)}">${escapeHtml(r.note)}</span>`
-                : ""
-            }</span></div>`;
+            const noteHtml = r.note
+              ? `<span class="detail-note" title="${escapeAttr(r.note)}">${escapeHtml(r.note)}</span>`
+              : "";
+            const valueInner =
+              copyLabel.test(r.label) && isCopyableId(r.value)
+                ? copyableValueHtml(val, r.value, r.label)
+                : escapeHtml(val);
+            return `<div class="spec-row"><span>${escapeHtml(r.label)}</span><span>${valueInner}${noteHtml}</span></div>`;
           })
           .join("")}
       </div>
@@ -479,12 +529,13 @@ function renderVerificationTable(checks: VerificationCheck[]) {
 }
 
 function renderSpecs(s: DeviceSummary) {
-  const rows = [
+  type SpecRow = [string, string, string?];
+  const rows: SpecRow[] = [
     ["OS Version", `Android ${s.androidVersion}`],
     ["Security Patch", s.securityPatch],
-    ["Serial Number", mask(s.serial)],
-    ["IMEI", mask(s.imei)],
-    ["IMEI 2", mask(s.imei2)],
+    ["Serial Number", mask(s.serial), s.serial],
+    ["IMEI", mask(s.imei), s.imei],
+    ["IMEI 2", mask(s.imei2), s.imei2],
     ["Model", s.model],
     ["Product", s.product],
     ["Sales Region", s.region],
@@ -495,10 +546,12 @@ function renderSpecs(s: DeviceSummary) {
     ["Manufacturing Date", s.manufacturingDate],
   ];
   $("spec-rows").innerHTML = rows
-    .map(
-      ([label, value]) =>
-        `<div class="spec-row"><span>${label}</span><span>${escapeHtml(value)}</span></div>`,
-    )
+    .map(([label, display, raw]) => {
+      const valueHtml = raw
+        ? copyableValueHtml(display, raw, label)
+        : `<span>${escapeHtml(display)}</span>`;
+      return `<div class="spec-row"><span>${label}</span>${valueHtml}</div>`;
+    })
     .join("");
 }
 
@@ -1187,6 +1240,18 @@ async function init() {
   });
 
   initAppTooltips();
+
+  document.addEventListener("click", (e) => {
+    const el = (e.target as HTMLElement | null)?.closest?.(
+      ".copyable-value",
+    ) as HTMLElement | null;
+    if (!el) return;
+    const text = el.dataset.copy;
+    if (!text) return;
+    e.preventDefault();
+    e.stopPropagation();
+    void copyToClipboard(text, el.dataset.copyLabel || "Valore");
+  });
 
   await listen<PartnerInstallProgress>("partner-install-progress", (ev) =>
     onPartnerInstallProgress(ev.payload),

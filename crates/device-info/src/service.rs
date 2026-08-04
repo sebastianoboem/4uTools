@@ -1,8 +1,9 @@
 use adb_bridge::AdbBridge;
 
 use crate::battery::{
-    capacity_health_percent, format_temperature, merge_battery_sysfs, merged_health,
-    parse_dumpsys_battery, parse_sysfs_battery,
+    capacity_health_percent, estimate_full_from_charge_counter, format_temperature,
+    is_plausible_full_capacity, merge_battery_sysfs, merged_health, parse_dumpsys_battery,
+    parse_sysfs_battery,
 };
 use crate::battery_catalog::lookup_design_capacity;
 use crate::details::{
@@ -200,7 +201,7 @@ pub fn load_device_summary(serial: &str) -> Result<DeviceSummary, String> {
     } else {
         sysfs.design_capacity
     };
-    let max_capacity = if dumpsys.full_charge_capacity > 0 {
+    let mut max_capacity = if dumpsys.full_charge_capacity > 0 {
         dumpsys.full_charge_capacity
     } else {
         sysfs.full_charge_capacity
@@ -211,6 +212,19 @@ pub fn load_device_summary(serial: &str) -> Result<DeviceSummary, String> {
             design_capacity = mah;
             design_from_catalog = true;
             dumpsys.design_capacity = mah;
+        }
+    }
+    if !is_plausible_full_capacity(max_capacity, design_capacity, dumpsys.charge_counter_mah) {
+        max_capacity = 0;
+    }
+    if max_capacity == 0 {
+        if let Some(est) =
+            estimate_full_from_charge_counter(dumpsys.charge_counter_mah, dumpsys.level)
+        {
+            if is_plausible_full_capacity(est, design_capacity, dumpsys.charge_counter_mah) {
+                max_capacity = est;
+                dumpsys.full_charge_capacity = est;
+            }
         }
     }
     let health = if max_capacity > 0 && design_capacity > 0 {

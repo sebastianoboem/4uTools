@@ -168,18 +168,50 @@ fn device_keys(brand: &str, model: &str, product: &str) -> Vec<String> {
     if !b.is_empty() && !m.is_empty() {
         keys.push(format!("{b}{m}"));
     }
-    if !p.is_empty() {
-        keys.push(p);
+    for variant in product_key_variants(&p) {
+        keys.push(variant);
     }
     // Strip common brand prefixes duplicated in model ("POCO F4 GT" with brand Xiaomi/POCO)
-    for prefix in ["poco", "redmi", "xiaomi", "samsung", "galaxy", "google", "pixel"] {
+    for prefix in [
+        "poco", "redmi", "xiaomi", "samsung", "galaxy", "google", "pixel", "oneplus", "oppo",
+        "realme", "vivo", "honor", "huawei", "motorola", "nokia", "asus", "nothing",
+    ] {
         if let Some(rest) = m.strip_prefix(prefix) {
             if rest.len() >= 4 {
                 keys.push(rest.to_string());
             }
         }
+        if let Some(rest) = p.strip_prefix(prefix) {
+            if rest.len() >= 4 {
+                keys.push(rest.to_string());
+                for variant in product_key_variants(rest) {
+                    keys.push(variant);
+                }
+            }
+        }
     }
     keys
+}
+
+/// Product names often include sales-region suffixes (`OnePlus8Pro_EEA` → `oneplus8proeea`).
+fn product_key_variants(normalized_product: &str) -> Vec<String> {
+    let mut out = Vec::new();
+    if normalized_product.is_empty() {
+        return out;
+    }
+    out.push(normalized_product.to_string());
+    const REGION_SUFFIXES: &[&str] = &[
+        "eea", "eur", "eu", "global", "glo", "row", "china", "cn", "in", "india", "na", "usa",
+        "us", "jp", "kr", "tw", "hk", "ru", "tr", "latam", "mea",
+    ];
+    for suf in REGION_SUFFIXES {
+        if let Some(rest) = normalized_product.strip_suffix(suf) {
+            if rest.len() >= 4 {
+                out.push(rest.to_string());
+            }
+        }
+    }
+    out
 }
 
 #[cfg(test)]
@@ -233,5 +265,27 @@ mod tests {
         let c = sample_catalog();
         assert_eq!(c.lookup("Xiaomi", "2206123SC", "psyche"), None);
         assert_eq!(c.lookup("Xiaomi", "12X", "psyche"), Some(4500));
+    }
+
+    #[test]
+    fn finds_oneplus_8_pro_from_product_codename() {
+        let c = BatteryCatalog::from_file(BatteryCatalogFile {
+            version: 1,
+            updated_at: "test".into(),
+            source: "test".into(),
+            entries: vec![BatteryCatalogEntry {
+                slug: "oneplus-8-pro".into(),
+                marca: "OnePlus".into(),
+                nome: "8 Pro".into(),
+                batteria_mah: 4510,
+            }],
+        });
+        // ADB model is IN2023; marketing name is only in product.
+        assert_eq!(
+            c.lookup("OnePlus", "IN2023", "OnePlus8Pro_EEA"),
+            Some(4510)
+        );
+        assert_eq!(c.lookup("OnePlus", "IN2023", "OnePlus8Pro"), Some(4510));
+        assert_eq!(c.lookup("OnePlus", "IN2023", "lemonade"), None);
     }
 }

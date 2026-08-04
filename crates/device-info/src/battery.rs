@@ -175,6 +175,34 @@ pub fn capacity_health_percent(max_mah: u32, design_mah: u32) -> u32 {
     }
 }
 
+/// Reject nonsense full-charge readings (e.g. cycle count leaking as 50 mAh).
+pub fn is_plausible_full_capacity(full_mah: u32, design_mah: u32, charge_counter_mah: u32) -> bool {
+    if full_mah < 500 {
+        return false;
+    }
+    if charge_counter_mah > 0 && full_mah < charge_counter_mah {
+        return false;
+    }
+    if design_mah > 0 {
+        if full_mah > design_mah.saturating_mul(2) {
+            return false;
+        }
+        if full_mah * 5 < design_mah {
+            return false;
+        }
+    }
+    true
+}
+
+/// Estimate full-charge mAh from remaining charge counter and battery %.
+pub fn estimate_full_from_charge_counter(charge_counter_mah: u32, level_percent: u32) -> Option<u32> {
+    if charge_counter_mah == 0 || !(5..=100).contains(&level_percent) {
+        return None;
+    }
+    let est = ((charge_counter_mah as f64) * 100.0 / level_percent as f64).round() as u32;
+    Some(est)
+}
+
 fn capacity_level_label(level: u32) -> String {
     match level {
         1 => "Critical".to_string(),
@@ -237,5 +265,17 @@ mod tests {
         assert_eq!(b.design_capacity, 4455);
         assert_eq!(b.health, 98);
         assert_eq!(b.voltage_mv, 4332);
+    }
+
+    #[test]
+    fn rejects_cycle_count_as_full_capacity() {
+        assert!(!is_plausible_full_capacity(50, 4510, 1948));
+        assert!(is_plausible_full_capacity(4058, 4510, 1948));
+    }
+
+    #[test]
+    fn estimates_full_from_charge_counter() {
+        assert_eq!(estimate_full_from_charge_counter(1948, 48), Some(4058));
+        assert_eq!(estimate_full_from_charge_counter(1948, 0), None);
     }
 }
