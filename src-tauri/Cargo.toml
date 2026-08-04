@@ -1,6 +1,6 @@
 [package]
 name = "fourutools"
-version = "1.3.1"
+version = "1.3.2"
 description = "Android device management suite"
 authors = ["ilpano"]
 edition = "2021"
@@ -8,6 +8,10 @@ edition = "2021"
 [lib]
 name = "fourutools_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "build-battery-catalog"
+path = "src/bin/build_battery_catalog.rs"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -18,8 +22,9 @@ tauri-plugin-dialog = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
 serde = { workspace = true }
-serde_json = "1"
-reqwest = { version = "0.12", default-features = false, features = ["json", "blocking", "rustls-tls"] }
+serde_json = { workspace = true }
+reqwest = { workspace = true }
+regex = { workspace = true }
 dirs = "6"
 adb-bridge = { path = "../crates/adb-bridge" }
 device-info = { path = "../crates/device-info" }

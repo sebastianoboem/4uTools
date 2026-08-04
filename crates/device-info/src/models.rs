@@ -73,6 +73,8 @@ pub struct DeviceSummary {
     pub battery_health: u32,
     pub battery_design_capacity_mah: u32,
     pub battery_max_capacity_mah: u32,
+    #[serde(default)]
+    pub battery_design_from_catalog: bool,
     pub battery_temperature: String,
     pub battery_charging_power: String,
     pub battery_technology: String,

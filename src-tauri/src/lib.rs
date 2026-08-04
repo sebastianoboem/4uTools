@@ -1,3 +1,4 @@
+mod battery_catalog_sync;
 mod commands;
 mod mirror;
 mod partner_app;
@@ -17,6 +18,8 @@ pub fn run() {
             commands::start_mirror_preview,
             commands::stop_mirror_preview,
             commands::mirror_tap,
+            commands::battery_catalog_status,
+            commands::update_battery_catalog,
             commands::autobackup::check_autobackup,
             commands::autobackup::install_autobackup,
             commands::autobackup::launch_autobackup,
@@ -28,6 +31,7 @@ pub fn run() {
             commands::google_foto_manager::launch_google_foto_manager,
         ])
         .setup(|app| {
+            battery_catalog_sync::init_battery_catalog(app.handle());
             let handle = app.handle().clone();
             commands::start_device_poller(handle);
             Ok(())

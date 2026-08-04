@@ -167,7 +167,7 @@ fn micro_ah_to_mah(micro_ah: u32) -> u32 {
     }
 }
 
-fn capacity_health_percent(max_mah: u32, design_mah: u32) -> u32 {
+pub fn capacity_health_percent(max_mah: u32, design_mah: u32) -> u32 {
     if max_mah > 0 && design_mah > 0 {
         ((max_mah as f64 / design_mah as f64) * 100.0).round() as u32
     } else {

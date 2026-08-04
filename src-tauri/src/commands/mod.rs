@@ -1,3 +1,4 @@
+use crate::battery_catalog_sync::{self, BatteryCatalogStatus};
 use crate::mirror;
 use adb_bridge::{AdbBridge, AdbDevice, DeviceState};
 use device_info::DeviceSummary;
@@ -77,6 +78,18 @@ pub fn mirror_tap(
     let tx = ((x / display_width) * device_width as f64).round() as i32;
     let ty = ((y / display_height) * device_height as f64).round() as i32;
     mirror::mirror_tap(&serial, tx, ty)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub fn battery_catalog_status(app: AppHandle) -> Result<BatteryCatalogStatus, String> {
+    battery_catalog_sync::catalog_status(&app)
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn update_battery_catalog(app: AppHandle) -> Result<BatteryCatalogStatus, String> {
+    tauri::async_runtime::spawn_blocking(move || battery_catalog_sync::sync_battery_catalog(&app))
+        .await
+        .map_err(|e| e.to_string())?
 }
 
 pub fn start_device_poller(app: AppHandle) {

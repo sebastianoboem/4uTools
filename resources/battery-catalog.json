@@ -1,0 +1,5731 @@
+{
+  "entries": [
+    {
+      "batteriaMah": 2870,
+      "marca": "Acer",
+      "nome": "Acer Liquid Jade Primo",
+      "slug": "acer-liquid-jade-primo"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Acer",
+      "nome": "Acer Liquid Z630S",
+      "slug": "acer-liquid-z630s"
+    },
+    {
+      "batteriaMah": 2460,
+      "marca": "Alcatel",
+      "nome": "Alcatel 1x",
+      "slug": "alcatel-1x"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Alcatel",
+      "nome": "Alcatel 3",
+      "slug": "alcatel-3"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Alcatel",
+      "nome": "Alcatel 3v",
+      "slug": "alcatel-3v"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Alcatel",
+      "nome": "Alcatel 3x",
+      "slug": "alcatel-3x"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Alcatel",
+      "nome": "Alcatel 5",
+      "slug": "alcatel-5"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Alcatel",
+      "nome": "Alcatel Idol 4s",
+      "slug": "alcatel-idol-4s"
+    },
+    {
+      "batteriaMah": 2460,
+      "marca": "Alcatel",
+      "nome": "Alcatel SHINE LITE",
+      "slug": "alcatel-shine-lite"
+    },
+    {
+      "batteriaMah": 8827,
+      "marca": "Apple",
+      "nome": "Apple iPad 9.7\\'\\' (2018)",
+      "slug": "apple-ipad-9-7-2018"
+    },
+    {
+      "batteriaMah": 30,
+      "marca": "Apple",
+      "nome": "Apple iPad Pro 10.5",
+      "slug": "apple-ipad-pro-10-5"
+    },
+    {
+      "batteriaMah": 37,
+      "marca": "Apple",
+      "nome": "Apple iPad Pro 12.9 (2018)",
+      "slug": "apple-ipad-pro-12-9-2018"
+    },
+    {
+      "batteriaMah": 3046,
+      "marca": "Apple",
+      "nome": "iPhone 11",
+      "slug": "apple-iphone-11"
+    },
+    {
+      "batteriaMah": 3079,
+      "marca": "Apple",
+      "nome": "Apple iPhone 11 Pro",
+      "slug": "apple-iphone-11-pro"
+    },
+    {
+      "batteriaMah": 3969,
+      "marca": "Apple",
+      "nome": "iPhone 11 Pro Max",
+      "slug": "apple-iphone-11-pro-max"
+    },
+    {
+      "batteriaMah": 2815,
+      "marca": "Apple",
+      "nome": "iPhone 12",
+      "slug": "apple-iphone-12"
+    },
+    {
+      "batteriaMah": 2227,
+      "marca": "Apple",
+      "nome": "iPhone 12 Mini",
+      "slug": "apple-iphone-12-mini"
+    },
+    {
+      "batteriaMah": 2815,
+      "marca": "Apple",
+      "nome": "iPhone 12 Pro",
+      "slug": "apple-iphone-12-pro"
+    },
+    {
+      "batteriaMah": 3687,
+      "marca": "Apple",
+      "nome": "iPhone 12 Pro Max",
+      "slug": "apple-iphone-12-pro-max"
+    },
+    {
+      "batteriaMah": 3240,
+      "marca": "Apple",
+      "nome": "iPhone 13",
+      "slug": "apple-iphone-13"
+    },
+    {
+      "batteriaMah": 2438,
+      "marca": "Apple",
+      "nome": "iPhone 13 mini",
+      "slug": "apple-iphone-13-mini"
+    },
+    {
+      "batteriaMah": 3125,
+      "marca": "Apple",
+      "nome": "iPhone 13 Pro",
+      "slug": "apple-iphone-13-pro"
+    },
+    {
+      "batteriaMah": 4352,
+      "marca": "Apple",
+      "nome": "iPhone 13 Pro Max",
+      "slug": "apple-iphone-13-pro-max"
+    },
+    {
+      "batteriaMah": 3279,
+      "marca": "Apple",
+      "nome": "iPhone 14",
+      "slug": "apple-iphone-14"
+    },
+    {
+      "batteriaMah": 4323,
+      "marca": "Apple",
+      "nome": "iPhone 14 Plus",
+      "slug": "apple-iphone-14-plus"
+    },
+    {
+      "batteriaMah": 3200,
+      "marca": "Apple",
+      "nome": "iPhone 14 Pro",
+      "slug": "apple-iphone-14-pro"
+    },
+    {
+      "batteriaMah": 4323,
+      "marca": "Apple",
+      "nome": "iPhone 14 Pro Max",
+      "slug": "apple-iphone-14-pro-max"
+    },
+    {
+      "batteriaMah": 4383,
+      "marca": "Apple",
+      "nome": "iPhone 15 Plus",
+      "slug": "apple-iphone-15-plus"
+    },
+    {
+      "batteriaMah": 3692,
+      "marca": "Apple",
+      "nome": "iPhone 17",
+      "slug": "apple-iphone-17"
+    },
+    {
+      "batteriaMah": 3988,
+      "marca": "Apple",
+      "nome": "iPhone 17 Pro",
+      "slug": "apple-iphone-17-pro"
+    },
+    {
+      "batteriaMah": 4823,
+      "marca": "Apple",
+      "nome": "iPhone 17 Pro Max",
+      "slug": "apple-iphone-17-pro-max"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Apple",
+      "nome": "iPhone 17e",
+      "slug": "apple-iphone-17e"
+    },
+    {
+      "batteriaMah": 1715,
+      "marca": "Apple",
+      "nome": "Apple iPhone 6s",
+      "slug": "apple-iphone-6s"
+    },
+    {
+      "batteriaMah": 1960,
+      "marca": "Apple",
+      "nome": "Apple iPhone 7",
+      "slug": "apple-iphone-7"
+    },
+    {
+      "batteriaMah": 2900,
+      "marca": "Apple",
+      "nome": "Apple iPhone 7 Plus",
+      "slug": "apple-iphone-7-plus"
+    },
+    {
+      "batteriaMah": 1821,
+      "marca": "Apple",
+      "nome": "Apple iPhone 8",
+      "slug": "apple-iphone-8"
+    },
+    {
+      "batteriaMah": 2675,
+      "marca": "Apple",
+      "nome": "Apple iPhone 8 Plus",
+      "slug": "apple-iphone-8-plus"
+    },
+    {
+      "batteriaMah": 3149,
+      "marca": "Apple",
+      "nome": "iPhone Air",
+      "slug": "apple-iphone-air"
+    },
+    {
+      "batteriaMah": 1624,
+      "marca": "Apple",
+      "nome": "Apple iPhone SE",
+      "slug": "apple-iphone-se"
+    },
+    {
+      "batteriaMah": 1821,
+      "marca": "Apple",
+      "nome": "iPhone SE 2020",
+      "slug": "apple-iphone-se-2020"
+    },
+    {
+      "batteriaMah": 2716,
+      "marca": "Apple",
+      "nome": "Apple iPhone X",
+      "slug": "apple-iphone-x"
+    },
+    {
+      "batteriaMah": 2942,
+      "marca": "Apple",
+      "nome": "Apple iPhone XR",
+      "slug": "apple-iphone-xr"
+    },
+    {
+      "batteriaMah": 2658,
+      "marca": "Apple",
+      "nome": "iPhone Xs",
+      "slug": "apple-iphone-xs"
+    },
+    {
+      "batteriaMah": 3174,
+      "marca": "Apple",
+      "nome": "Apple iPhone XS Max",
+      "slug": "apple-iphone-xs-max"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Ulefone",
+      "nome": "Armor",
+      "slug": "armor"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Asus",
+      "nome": "Asus ROG Phone",
+      "slug": "asus-rog-phone"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Asus",
+      "nome": "Rog Phone 2",
+      "slug": "asus-rog-phone-2"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Asus",
+      "nome": "Rog Phone 3",
+      "slug": "asus-rog-phone-3"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Asus",
+      "nome": "ROG Phone 5s Pro",
+      "slug": "asus-rog-phone-5s-pro"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Asus",
+      "nome": "ROG Phone 6 Pro",
+      "slug": "asus-rog-phone-6-pro"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Asus",
+      "nome": "ROG Phone 7 Ultimate",
+      "slug": "asus-rog-phone-7-ultimate"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "Asus",
+      "nome": "ROG Phone 8 Pro",
+      "slug": "asus-rog-phone-8-pro"
+    },
+    {
+      "batteriaMah": 5800,
+      "marca": "Asus",
+      "nome": "ROG Phone 9 Pro",
+      "slug": "asus-rog-phone-9-pro"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Asus",
+      "nome": "Zenfone 10",
+      "slug": "asus-zenfone-10"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "Asus",
+      "nome": "Zenfone 12 Ultra",
+      "slug": "asus-zenfone-12-ultra"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Asus",
+      "nome": "Asus ZenFone 3",
+      "slug": "asus-zenfone-3"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Asus",
+      "nome": "Asus ZenFone 3 Deluxe",
+      "slug": "asus-zenfone-3-deluxe"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Asus",
+      "nome": "Asus ZenFone 3 Laser",
+      "slug": "asus-zenfone-3-laser"
+    },
+    {
+      "batteriaMah": 4130,
+      "marca": "Asus",
+      "nome": "Asus Zenfone 3 Max",
+      "slug": "asus-zenfone-3-max"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Asus",
+      "nome": "Asus ZenFone 4",
+      "slug": "asus-zenfone-4"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Asus",
+      "nome": "Asus ZenFone 5",
+      "slug": "asus-zenfone-5"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Asus",
+      "nome": "Asus ZenFone 5z",
+      "slug": "asus-zenfone-5z"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Asus",
+      "nome": "Asus ZenFone 6",
+      "slug": "asus-zenfone-6"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Asus",
+      "nome": "Zenfone 7",
+      "slug": "asus-zenfone-7"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Asus",
+      "nome": "Zenfone 8",
+      "slug": "asus-zenfone-8"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Asus",
+      "nome": "Zenfone 8 Flip",
+      "slug": "asus-zenfone-8-flip"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Asus",
+      "nome": "Zenfone 9",
+      "slug": "asus-zenfone-9"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Asus",
+      "nome": "Asus ZenFone AR",
+      "slug": "asus-zenfone-ar"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Asus",
+      "nome": "Asus ZenFone Max",
+      "slug": "asus-zenfone-max"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Asus",
+      "nome": "Asus ZenFone Max (M2)",
+      "slug": "asus-zenfone-max-m2"
+    },
+    {
+      "batteriaMah": 4130,
+      "marca": "Asus",
+      "nome": "Asus ZenFone Max Plus",
+      "slug": "asus-zenfone-max-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Asus",
+      "nome": "Asus ZenFone Max Pro (M2)",
+      "slug": "asus-zenfone-max-pro-m2"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Asus",
+      "nome": "Asus ZenFone Zoom",
+      "slug": "asus-zenfone-zoom"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Asus",
+      "nome": "Asus ZenFone Zoom S",
+      "slug": "asus-zenfone-zoom-s"
+    },
+    {
+      "batteriaMah": 2610,
+      "marca": "BlackBerry",
+      "nome": "BlackBerry DTEK50",
+      "slug": "blackberry-dtek50"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "BlackBerry",
+      "nome": "BlackBerry KEY2",
+      "slug": "blackberry-key2"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Blackberry",
+      "nome": "Key2 LE",
+      "slug": "blackberry-key2-le"
+    },
+    {
+      "batteriaMah": 3505,
+      "marca": "BlackBerry",
+      "nome": "BlackBerry KEYone",
+      "slug": "blackberry-keyone"
+    },
+    {
+      "batteriaMah": 3505,
+      "marca": "BlackBerry",
+      "nome": "BlackBerry KEYone Black Edition",
+      "slug": "blackberry-keyone-black-edition"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "BlackBerry",
+      "nome": "BlackBerry Motion",
+      "slug": "blackberry-motion"
+    },
+    {
+      "batteriaMah": 3410,
+      "marca": "BlackBerry",
+      "nome": "BlackBerry Priv",
+      "slug": "blackberry-priv"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Blackview",
+      "nome": "Blackview BV6000",
+      "slug": "blackview-bv6000"
+    },
+    {
+      "batteriaMah": 6180,
+      "marca": "Blackview",
+      "nome": "Blackview P6000",
+      "slug": "blackview-p6000"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Blackview",
+      "nome": "Blackview R7",
+      "slug": "blackview-r7"
+    },
+    {
+      "batteriaMah": 3050,
+      "marca": "BQ",
+      "nome": "BQ Aquaris U Plus",
+      "slug": "bq-aquaris-u-plus"
+    },
+    {
+      "batteriaMah": 3100,
+      "marca": "BQ",
+      "nome": "BQ Aquaris X",
+      "slug": "bq-aquaris-x"
+    },
+    {
+      "batteriaMah": 3100,
+      "marca": "BQ",
+      "nome": "BQ Aquaris X Pro",
+      "slug": "bq-aquaris-x-pro"
+    },
+    {
+      "batteriaMah": 2900,
+      "marca": "BQ",
+      "nome": "BQ Aquaris X5",
+      "slug": "bq-aquaris-x5"
+    },
+    {
+      "batteriaMah": 3200,
+      "marca": "BQ",
+      "nome": "BQ Aquaris X5 Plus",
+      "slug": "bq-aquaris-x5-plus"
+    },
+    {
+      "batteriaMah": 4180,
+      "marca": "Blackview",
+      "nome": "bv9000pro",
+      "slug": "bv9000pro"
+    },
+    {
+      "batteriaMah": 3800,
+      "marca": "CAT",
+      "nome": "CAT S60",
+      "slug": "cat-s60"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Cat",
+      "nome": "S61",
+      "slug": "cat-s61"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "CMF",
+      "nome": "Phone 1",
+      "slug": "cmf-phone-1"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "CMF",
+      "nome": "Phone 2 Pro",
+      "slug": "cmf-phone-2-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Crosscall",
+      "nome": "Core M5",
+      "slug": "crosscall-core-m5"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Crosscall",
+      "nome": "Crosscall Trekker X3",
+      "slug": "crosscall-trekker-x3"
+    },
+    {
+      "batteriaMah": 4400,
+      "marca": "Crosscall",
+      "nome": "Trekker X4",
+      "slug": "crosscall-trekker-x4"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Doogee",
+      "nome": "V20",
+      "slug": "doogee-v20"
+    },
+    {
+      "batteriaMah": 8680,
+      "marca": "Doogee",
+      "nome": "V40 Pro",
+      "slug": "doogee-v40-pro"
+    },
+    {
+      "batteriaMah": 3040,
+      "marca": "Essential",
+      "nome": "Essential Phone",
+      "slug": "essential-phone"
+    },
+    {
+      "batteriaMah": 3905,
+      "marca": "Fairphone",
+      "nome": "4",
+      "slug": "fairphone-4"
+    },
+    {
+      "batteriaMah": 4415,
+      "marca": "Fairphone",
+      "nome": "6",
+      "slug": "fairphone-6"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Samsung",
+      "nome": "Galaxy A6 Plus",
+      "slug": "galaxy-a6-plus"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "General Mobile",
+      "nome": "General Mobile GM6",
+      "slug": "general-mobile-gm6"
+    },
+    {
+      "batteriaMah": 2770,
+      "marca": "Google",
+      "nome": "Google Pixel",
+      "slug": "google-pixel"
+    },
+    {
+      "batteriaMah": 4970,
+      "marca": "Google",
+      "nome": "Pixel 10",
+      "slug": "google-pixel-10"
+    },
+    {
+      "batteriaMah": 4870,
+      "marca": "Google",
+      "nome": "Pixel 10 Pro",
+      "slug": "google-pixel-10-pro"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Google",
+      "nome": "Pixel 10 Pro XL",
+      "slug": "google-pixel-10-pro-xl"
+    },
+    {
+      "batteriaMah": 5100,
+      "marca": "Google",
+      "nome": "Pixel 10a",
+      "slug": "google-pixel-10a"
+    },
+    {
+      "batteriaMah": 2700,
+      "marca": "Google",
+      "nome": "Google Pixel 2",
+      "slug": "google-pixel-2"
+    },
+    {
+      "batteriaMah": 3520,
+      "marca": "Google",
+      "nome": "Google Pixel 2 XL",
+      "slug": "google-pixel-2-xl"
+    },
+    {
+      "batteriaMah": 2915,
+      "marca": "Google",
+      "nome": "Pixel 3",
+      "slug": "google-pixel-3"
+    },
+    {
+      "batteriaMah": 3430,
+      "marca": "Google",
+      "nome": "Pixel 3 XL",
+      "slug": "google-pixel-3-xl"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Google",
+      "nome": "Google Pixel 3a",
+      "slug": "google-pixel-3a"
+    },
+    {
+      "batteriaMah": 3700,
+      "marca": "Google",
+      "nome": "Pixel 3a XL",
+      "slug": "google-pixel-3a-xl"
+    },
+    {
+      "batteriaMah": 2800,
+      "marca": "Google",
+      "nome": "Pixel 4",
+      "slug": "google-pixel-4"
+    },
+    {
+      "batteriaMah": 3700,
+      "marca": "Google",
+      "nome": "Pixel 4 XL",
+      "slug": "google-pixel-4-xl"
+    },
+    {
+      "batteriaMah": 3140,
+      "marca": "Google",
+      "nome": "Pixel 4a",
+      "slug": "google-pixel-4a"
+    },
+    {
+      "batteriaMah": 4080,
+      "marca": "Google",
+      "nome": "Pixel 5",
+      "slug": "google-pixel-5"
+    },
+    {
+      "batteriaMah": 4613,
+      "marca": "Google",
+      "nome": "Pixel 6",
+      "slug": "google-pixel-6"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Google",
+      "nome": "Pixel 6 Pro",
+      "slug": "google-pixel-6-pro"
+    },
+    {
+      "batteriaMah": 4400,
+      "marca": "Google",
+      "nome": "Pixel 6a",
+      "slug": "google-pixel-6a"
+    },
+    {
+      "batteriaMah": 4355,
+      "marca": "Google",
+      "nome": "Pixel 7",
+      "slug": "google-pixel-7"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Google",
+      "nome": "Pixel 7 Pro",
+      "slug": "google-pixel-7-pro"
+    },
+    {
+      "batteriaMah": 4385,
+      "marca": "Google",
+      "nome": "Pixel 7a",
+      "slug": "google-pixel-7a"
+    },
+    {
+      "batteriaMah": 4575,
+      "marca": "Google",
+      "nome": "Pixel 8",
+      "slug": "google-pixel-8"
+    },
+    {
+      "batteriaMah": 5050,
+      "marca": "Google",
+      "nome": "Pixel 8 Pro",
+      "slug": "google-pixel-8-pro"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Google",
+      "nome": "Pixel 8a",
+      "slug": "google-pixel-8a"
+    },
+    {
+      "batteriaMah": 4700,
+      "marca": "Google",
+      "nome": "Pixel 9",
+      "slug": "google-pixel-9"
+    },
+    {
+      "batteriaMah": 4700,
+      "marca": "Google",
+      "nome": "Pixel 9 Pro",
+      "slug": "google-pixel-9-pro"
+    },
+    {
+      "batteriaMah": 5100,
+      "marca": "Google",
+      "nome": "Pixel 9a",
+      "slug": "google-pixel-9a"
+    },
+    {
+      "batteriaMah": 3450,
+      "marca": "Google",
+      "nome": "Google Pixel XL",
+      "slug": "google-pixel-xl"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "Honor",
+      "nome": "Honor 10",
+      "slug": "honor-10"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "Honor",
+      "nome": "10 Lite",
+      "slug": "honor-10-lite"
+    },
+    {
+      "batteriaMah": 3750,
+      "marca": "Honor",
+      "nome": "20",
+      "slug": "honor-20"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "Honor",
+      "nome": "20 lite",
+      "slug": "honor-20-lite"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Honor",
+      "nome": "20 Pro",
+      "slug": "honor-20-pro"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Honor",
+      "nome": "200",
+      "slug": "honor-200"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Honor",
+      "nome": "200 Lite",
+      "slug": "honor-200-lite"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Honor",
+      "nome": "200 Pro",
+      "slug": "honor-200-pro"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Honor",
+      "nome": "200 Smart",
+      "slug": "honor-200-smart"
+    },
+    {
+      "batteriaMah": 5300,
+      "marca": "Honor",
+      "nome": "400",
+      "slug": "honor-400"
+    },
+    {
+      "batteriaMah": 5230,
+      "marca": "Honor",
+      "nome": "400 Lite",
+      "slug": "honor-400-lite"
+    },
+    {
+      "batteriaMah": 5300,
+      "marca": "Honor",
+      "nome": "400 Pro",
+      "slug": "honor-400-pro"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Honor",
+      "nome": "Honor 50",
+      "slug": "honor-50"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Honor",
+      "nome": "50 Lite",
+      "slug": "honor-50-lite"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "honor",
+      "nome": "honor 5C",
+      "slug": "honor-5c"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "honor",
+      "nome": "honor 5X",
+      "slug": "honor-5x"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Honor",
+      "nome": "600",
+      "slug": "honor-600"
+    },
+    {
+      "batteriaMah": 6520,
+      "marca": "Honor",
+      "nome": "600 Lite",
+      "slug": "honor-600-lite"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Honor",
+      "nome": "600 Pro",
+      "slug": "honor-600-pro"
+    },
+    {
+      "batteriaMah": 3020,
+      "marca": "Honor",
+      "nome": "Honor 6A",
+      "slug": "honor-6a"
+    },
+    {
+      "batteriaMah": 3020,
+      "marca": "Honor",
+      "nome": "Honor 6C",
+      "slug": "honor-6c"
+    },
+    {
+      "batteriaMah": 3020,
+      "marca": "Honor",
+      "nome": "Honor 6C Pro",
+      "slug": "honor-6c-pro"
+    },
+    {
+      "batteriaMah": 3340,
+      "marca": "Honor",
+      "nome": "Honor 6x",
+      "slug": "honor-6x"
+    },
+    {
+      "batteriaMah": 4800,
+      "marca": "Honor",
+      "nome": "70",
+      "slug": "honor-70"
+    },
+    {
+      "batteriaMah": 3340,
+      "marca": "Honor",
+      "nome": "Honor 7X",
+      "slug": "honor-7x"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "honor",
+      "nome": "honor 8",
+      "slug": "honor-8"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Honor",
+      "nome": "Honor 8 Pro",
+      "slug": "honor-8-pro"
+    },
+    {
+      "batteriaMah": 3200,
+      "marca": "Honor",
+      "nome": "Honor 9",
+      "slug": "honor-9"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Honor",
+      "nome": "Honor 9 Lite",
+      "slug": "honor-9-lite"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Honor",
+      "nome": "90",
+      "slug": "honor-90"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Honor",
+      "nome": "9A",
+      "slug": "honor-9a"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Honor",
+      "nome": "9X",
+      "slug": "honor-9x"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Honor",
+      "nome": "9X Pro",
+      "slug": "honor-9x-pro"
+    },
+    {
+      "batteriaMah": 2900,
+      "marca": "Honor",
+      "nome": "Honor Magic",
+      "slug": "honor-magic"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Honor",
+      "nome": "Magic 2",
+      "slug": "honor-magic-2"
+    },
+    {
+      "batteriaMah": 4600,
+      "marca": "Honor",
+      "nome": "Magic 3",
+      "slug": "honor-magic-3"
+    },
+    {
+      "batteriaMah": 4600,
+      "marca": "Honor",
+      "nome": "Magic 3 Pro",
+      "slug": "honor-magic-3-pro"
+    },
+    {
+      "batteriaMah": 4600,
+      "marca": "Honor",
+      "nome": "Magic 3 Pro Plus",
+      "slug": "honor-magic-3-pro-plus"
+    },
+    {
+      "batteriaMah": 4800,
+      "marca": "Honor",
+      "nome": "Magic 4 Lite 5G",
+      "slug": "honor-magic-4-lite-5g"
+    },
+    {
+      "batteriaMah": 5300,
+      "marca": "Honor",
+      "nome": "Magic 6 Lite",
+      "slug": "honor-magic-6-lite"
+    },
+    {
+      "batteriaMah": 5600,
+      "marca": "Honor",
+      "nome": "Magic 6 Pro",
+      "slug": "honor-magic-6-pro"
+    },
+    {
+      "batteriaMah": 7500,
+      "marca": "Honor",
+      "nome": "Magic 8 Lite",
+      "slug": "honor-magic-8-lite"
+    },
+    {
+      "batteriaMah": 7100,
+      "marca": "Honor",
+      "nome": "Magic 8 Pro",
+      "slug": "honor-magic-8-pro"
+    },
+    {
+      "batteriaMah": 4750,
+      "marca": "Honor",
+      "nome": "Magic V",
+      "slug": "honor-magic-v"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Honor",
+      "nome": "Magic V2",
+      "slug": "honor-magic-v2"
+    },
+    {
+      "batteriaMah": 5150,
+      "marca": "Honor",
+      "nome": "Magic V3",
+      "slug": "honor-magic-v3"
+    },
+    {
+      "batteriaMah": 5820,
+      "marca": "Honor",
+      "nome": "Magic V5",
+      "slug": "honor-magic-v5"
+    },
+    {
+      "batteriaMah": 6660,
+      "marca": "Honor",
+      "nome": "Magic V6",
+      "slug": "honor-magic-v6"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Honor",
+      "nome": "Magic Vs",
+      "slug": "honor-magic-vs"
+    },
+    {
+      "batteriaMah": 4800,
+      "marca": "Honor",
+      "nome": "Magic4",
+      "slug": "honor-magic4"
+    },
+    {
+      "batteriaMah": 4600,
+      "marca": "Honor",
+      "nome": "Magic4 Pro",
+      "slug": "honor-magic4-pro"
+    },
+    {
+      "batteriaMah": 5100,
+      "marca": "Honor",
+      "nome": "Magic5 Lite",
+      "slug": "honor-magic5-lite"
+    },
+    {
+      "batteriaMah": 5100,
+      "marca": "Honor",
+      "nome": "Magic5 Pro",
+      "slug": "honor-magic5-pro"
+    },
+    {
+      "batteriaMah": 6600,
+      "marca": "Honor",
+      "nome": "Magic7 Lite",
+      "slug": "honor-magic7-lite"
+    },
+    {
+      "batteriaMah": 5850,
+      "marca": "Honor",
+      "nome": "Magic7 Pro",
+      "slug": "honor-magic7-pro"
+    },
+    {
+      "batteriaMah": 3750,
+      "marca": "Honor",
+      "nome": "Honor Play",
+      "slug": "honor-play"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Honor",
+      "nome": "Honor V8",
+      "slug": "honor-v8"
+    },
+    {
+      "batteriaMah": 3750,
+      "marca": "Honor",
+      "nome": "Honor View 10 Lite",
+      "slug": "honor-view-10-lite"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Honor",
+      "nome": "View 20",
+      "slug": "honor-view-20"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Honor",
+      "nome": "X7",
+      "slug": "honor-x7"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Honor",
+      "nome": "X8",
+      "slug": "honor-x8"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Honor",
+      "nome": "X8b",
+      "slug": "honor-x8b"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "HTC",
+      "nome": "HTC 10",
+      "slug": "htc-10"
+    },
+    {
+      "batteriaMah": 2700,
+      "marca": "HTC",
+      "nome": "HTC Desire 10 lifestyle",
+      "slug": "htc-desire-10-lifestyle"
+    },
+    {
+      "batteriaMah": 2300,
+      "marca": "HTC",
+      "nome": "HTC One A9s",
+      "slug": "htc-one-a9s"
+    },
+    {
+      "batteriaMah": 2500,
+      "marca": "HTC",
+      "nome": "HTC U Play",
+      "slug": "htc-u-play"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "HTC",
+      "nome": "HTC U Ultra",
+      "slug": "htc-u-ultra"
+    },
+    {
+      "batteriaMah": 3930,
+      "marca": "HTC",
+      "nome": "HTC U11+",
+      "slug": "htc-u11"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "HTC",
+      "nome": "HTC U12+",
+      "slug": "htc-u12"
+    },
+    {
+      "batteriaMah": 3750,
+      "marca": "Honor",
+      "nome": "Huawei Honor View 10",
+      "slug": "huawei-honor-view-10"
+    },
+    {
+      "batteriaMah": 3340,
+      "marca": "Huawei",
+      "nome": "Huawei Mate 10 Lite",
+      "slug": "huawei-mate-10-lite"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Huawei",
+      "nome": "Huawei Mate 10 Pro",
+      "slug": "huawei-mate-10-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Huawei",
+      "nome": "Huawei Mate 20",
+      "slug": "huawei-mate-20"
+    },
+    {
+      "batteriaMah": 3750,
+      "marca": "Huawei",
+      "nome": "Huawei Mate 20 lite",
+      "slug": "huawei-mate-20-lite"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Huawei",
+      "nome": "Huawei Mate 20 Pro",
+      "slug": "huawei-mate-20-pro"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Huawei",
+      "nome": "Mate 20 X 5G",
+      "slug": "huawei-mate-20-x-5g"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Huawei",
+      "nome": "Mate 30",
+      "slug": "huawei-mate-30"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Huawei",
+      "nome": "Mate 30 Pro",
+      "slug": "huawei-mate-30-pro"
+    },
+    {
+      "batteriaMah": 4400,
+      "marca": "huawei",
+      "nome": "Mate 40 Pro",
+      "slug": "huawei-mate-40-pro"
+    },
+    {
+      "batteriaMah": 4700,
+      "marca": "Huawei",
+      "nome": "Mate 50 Pro",
+      "slug": "huawei-mate-50-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Huawei",
+      "nome": "Huawei Mate 8",
+      "slug": "huawei-mate-8"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Huawei",
+      "nome": "Huawei Mate 9",
+      "slug": "huawei-mate-9"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Huawei",
+      "nome": "Huawei Mate 9 Porsche Design",
+      "slug": "huawei-mate-9-porsche-design"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Huawei",
+      "nome": "Huawei Mate 9 Pro",
+      "slug": "huawei-mate-9-pro"
+    },
+    {
+      "batteriaMah": 2700,
+      "marca": "Huawei",
+      "nome": "Huawei Mate S",
+      "slug": "huawei-mate-s"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Huawei",
+      "nome": "Mate X",
+      "slug": "huawei-mate-x"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Huawei",
+      "nome": "Mate XS",
+      "slug": "huawei-mate-xs"
+    },
+    {
+      "batteriaMah": 7250,
+      "marca": "Huawei",
+      "nome": "MatePad Pro",
+      "slug": "huawei-matepad-pro"
+    },
+    {
+      "batteriaMah": 5100,
+      "marca": "Huawei",
+      "nome": "Huawei MediaPad M3",
+      "slug": "huawei-mediapad-m3"
+    },
+    {
+      "batteriaMah": 7500,
+      "marca": "Huawei",
+      "nome": "Huawei MediaPad M5 10",
+      "slug": "huawei-mediapad-m5-10"
+    },
+    {
+      "batteriaMah": 3020,
+      "marca": "Huawei",
+      "nome": "Huawei Nova",
+      "slug": "huawei-nova"
+    },
+    {
+      "batteriaMah": 3750,
+      "marca": "huawei",
+      "nome": "Nova 5t",
+      "slug": "huawei-nova-5t"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Huawei",
+      "nome": "nova 9",
+      "slug": "huawei-nova-9"
+    },
+    {
+      "batteriaMah": 3340,
+      "marca": "Huawei",
+      "nome": "Huawei Nova plus",
+      "slug": "huawei-nova-plus"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Huawei",
+      "nome": "Huawei P Smart",
+      "slug": "huawei-p-smart"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "Huawei",
+      "nome": "Huawei P Smart+ (2019)",
+      "slug": "huawei-p-smart-2019"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Huawei",
+      "nome": "P Smart 2021",
+      "slug": "huawei-p-smart-2021"
+    },
+    {
+      "batteriaMah": 3340,
+      "marca": "Huawei",
+      "nome": "Huawei P smart Plus",
+      "slug": "huawei-p-smart-plus"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Huawei",
+      "nome": "Huawei P Smart Z",
+      "slug": "huawei-p-smart-z"
+    },
+    {
+      "batteriaMah": 3200,
+      "marca": "Huawei",
+      "nome": "Huawei P10",
+      "slug": "huawei-p10"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Huawei",
+      "nome": "Huawei P10 Lite",
+      "slug": "huawei-p10-lite"
+    },
+    {
+      "batteriaMah": 3750,
+      "marca": "Huawei",
+      "nome": "Huawei P10 Plus",
+      "slug": "huawei-p10-plus"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "Huawei",
+      "nome": "Huawei P20",
+      "slug": "huawei-p20"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Huawei",
+      "nome": "Huawei P20 Lite",
+      "slug": "huawei-p20-lite"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Huawei",
+      "nome": "Huawei P20 Pro",
+      "slug": "huawei-p20-pro"
+    },
+    {
+      "batteriaMah": 3650,
+      "marca": "Huawei",
+      "nome": "P30",
+      "slug": "huawei-p30"
+    },
+    {
+      "batteriaMah": 3340,
+      "marca": "Huawei",
+      "nome": "Huawei P30 Lite",
+      "slug": "huawei-p30-lite"
+    },
+    {
+      "batteriaMah": 3340,
+      "marca": "Huawei",
+      "nome": "P30 Lite New Edition",
+      "slug": "huawei-p30-lite-new-edition"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Huawei P30 Pro",
+      "nome": "Huawei P30 Pro",
+      "slug": "huawei-p30-pro"
+    },
+    {
+      "batteriaMah": 3800,
+      "marca": "Huawei",
+      "nome": "P40",
+      "slug": "huawei-p40"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Huawei",
+      "nome": "P40 Lite",
+      "slug": "huawei-p40-lite"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Huawei",
+      "nome": "P40 Lite 5G",
+      "slug": "huawei-p40-lite-5g"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Huawei",
+      "nome": "P40 Lite E",
+      "slug": "huawei-p40-lite-e"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Huawei",
+      "nome": "P40 Pro",
+      "slug": "huawei-p40-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Huawei",
+      "nome": "P50 Pocket",
+      "slug": "huawei-p50-pocket"
+    },
+    {
+      "batteriaMah": 4360,
+      "marca": "Huawei",
+      "nome": "P50 Pro",
+      "slug": "huawei-p50-pro"
+    },
+    {
+      "batteriaMah": 4815,
+      "marca": "Huawei",
+      "nome": "P60 Pro",
+      "slug": "huawei-p60-pro"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Huawei",
+      "nome": "Huawei P8 lite (2017)",
+      "slug": "huawei-p8-lite-2017"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Huawei",
+      "nome": "Huawei P9",
+      "slug": "huawei-p9"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Huawei",
+      "nome": "Huawei P9 lite",
+      "slug": "huawei-p9-lite"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "Huawei",
+      "nome": "Huawei P9 Plus",
+      "slug": "huawei-p9-plus"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Huawei",
+      "nome": "Pura 70 Ultra",
+      "slug": "huawei-pura-70-ultra"
+    },
+    {
+      "batteriaMah": 5170,
+      "marca": "Huawei",
+      "nome": "Pura 80 Ultra",
+      "slug": "huawei-pura-80-ultra"
+    },
+    {
+      "batteriaMah": 4720,
+      "marca": "Huawei",
+      "nome": "Pura X",
+      "slug": "huawei-pura-x"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Kodak",
+      "nome": "Kodak Ektra",
+      "slug": "kodak-ektra"
+    },
+    {
+      "batteriaMah": 4070,
+      "marca": "LeEco",
+      "nome": "Le Pro3",
+      "slug": "le-pro3"
+    },
+    {
+      "batteriaMah": 6300,
+      "marca": "Leagoo",
+      "nome": "Leagoo Shark 1",
+      "slug": "leagoo-shark-1"
+    },
+    {
+      "batteriaMah": 4060,
+      "marca": "LeEco",
+      "nome": "LeEco Cool1 dual",
+      "slug": "leeco-cool1-dual"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "LeEco",
+      "nome": "LeEco Le 2",
+      "slug": "leeco-le-2"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Lenovo",
+      "nome": "Lenovo K6",
+      "slug": "lenovo-k6"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "lenovo",
+      "nome": "Legion Phone Duel",
+      "slug": "lenovo-legion-phone-duel"
+    },
+    {
+      "batteriaMah": 48,
+      "marca": "Lenovo",
+      "nome": "Miix630",
+      "slug": "lenovo-miix630"
+    },
+    {
+      "batteriaMah": 5100,
+      "marca": "Lenovo",
+      "nome": "Lenovo P2",
+      "slug": "lenovo-p2"
+    },
+    {
+      "batteriaMah": 2750,
+      "marca": "Lenovo",
+      "nome": "Lenovo Vibe K5",
+      "slug": "lenovo-vibe-k5"
+    },
+    {
+      "batteriaMah": 3350,
+      "marca": "Lenovo",
+      "nome": "Z5 Pro GT",
+      "slug": "lenovo-z5-pro-gt"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Lenovo",
+      "nome": "Lenovo ZUK Z2",
+      "slug": "lenovo-zuk-z2"
+    },
+    {
+      "batteriaMah": 3100,
+      "marca": "Lenovo",
+      "nome": "Lenovo ZUK Z2 Pro",
+      "slug": "lenovo-zuk-z2-pro"
+    },
+    {
+      "batteriaMah": 2800,
+      "marca": "LG",
+      "nome": "LG G5",
+      "slug": "lg-g5"
+    },
+    {
+      "batteriaMah": 2800,
+      "marca": "LG",
+      "nome": "LG G5 SE",
+      "slug": "lg-g5-se"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "LG",
+      "nome": "LG G6",
+      "slug": "lg-g6"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "LG",
+      "nome": "G7 Fit",
+      "slug": "lg-g7-fit"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "LG",
+      "nome": "LG G7 ThinQ",
+      "slug": "lg-g7-thinq"
+    },
+    {
+      "batteriaMah": 3550,
+      "marca": "LG",
+      "nome": "G8 ThinQ",
+      "slug": "lg-g8-thinq"
+    },
+    {
+      "batteriaMah": 3550,
+      "marca": "LG",
+      "nome": "G8s ThinQ",
+      "slug": "lg-g8s-thinq"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "LG",
+      "nome": "G8X ThinQ",
+      "slug": "lg-g8x-thinq"
+    },
+    {
+      "batteriaMah": 2300,
+      "marca": "LG",
+      "nome": "LG K10",
+      "slug": "lg-k10"
+    },
+    {
+      "batteriaMah": 2800,
+      "marca": "LG",
+      "nome": "LG K10 2017",
+      "slug": "lg-k10-2017"
+    },
+    {
+      "batteriaMah": 2125,
+      "marca": "LG",
+      "nome": "LG K8",
+      "slug": "lg-k8"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "LG",
+      "nome": "LG Q6",
+      "slug": "lg-q6"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "LG",
+      "nome": "LG Q8",
+      "slug": "lg-q8"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "LG",
+      "nome": "LG Stylus 2",
+      "slug": "lg-stylus-2"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "LG",
+      "nome": "LG V10",
+      "slug": "lg-v10"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "LG",
+      "nome": "LG V30",
+      "slug": "lg-v30"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "LG",
+      "nome": "LG V30 Plus",
+      "slug": "lg-v30-plus"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "LG",
+      "nome": "LG V40 ThinQ",
+      "slug": "lg-v40-thinq"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "LG",
+      "nome": "V50 ThinQ 5G",
+      "slug": "lg-v50-thinq-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "LG",
+      "nome": "V60 ThinQ",
+      "slug": "lg-v60-thinq"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "LG",
+      "nome": "Velvet",
+      "slug": "lg-velvet"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "LG",
+      "nome": "Wing",
+      "slug": "lg-wing"
+    },
+    {
+      "batteriaMah": 4100,
+      "marca": "LG",
+      "nome": "LG X Power",
+      "slug": "lg-x-power"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "LG",
+      "nome": "LG X power 2",
+      "slug": "lg-x-power-2"
+    },
+    {
+      "batteriaMah": 2300,
+      "marca": "LG",
+      "nome": "LG X screen",
+      "slug": "lg-x-screen"
+    },
+    {
+      "batteriaMah": 2050,
+      "marca": "LG",
+      "nome": "LG Zero",
+      "slug": "lg-zero"
+    },
+    {
+      "batteriaMah": 3010,
+      "marca": "Meizu",
+      "nome": "Meizu 16th",
+      "slug": "meizu-16th"
+    },
+    {
+      "batteriaMah": 3140,
+      "marca": "Meizu",
+      "nome": "Meizu m1 metal",
+      "slug": "meizu-m1-metal"
+    },
+    {
+      "batteriaMah": 4100,
+      "marca": "Meizu",
+      "nome": "Meizu M3 Max",
+      "slug": "meizu-m3-max"
+    },
+    {
+      "batteriaMah": 4100,
+      "marca": "Meizu",
+      "nome": "Meizu M3 Note",
+      "slug": "meizu-m3-note"
+    },
+    {
+      "batteriaMah": 3100,
+      "marca": "Meizu",
+      "nome": "Meizu m3e",
+      "slug": "meizu-m3e"
+    },
+    {
+      "batteriaMah": 3020,
+      "marca": "Meizu",
+      "nome": "Meizu m3s",
+      "slug": "meizu-m3s"
+    },
+    {
+      "batteriaMah": 3070,
+      "marca": "Meizu",
+      "nome": "Meizu M5",
+      "slug": "meizu-m5"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Meizu",
+      "nome": "Meizu M5 Note",
+      "slug": "meizu-m5-note"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Meizu",
+      "nome": "Meizu M5c",
+      "slug": "meizu-m5c"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Meizu",
+      "nome": "Meizu M5s",
+      "slug": "meizu-m5s"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Meizu",
+      "nome": "Meizu M6 Note",
+      "slug": "meizu-m6-note"
+    },
+    {
+      "batteriaMah": 3060,
+      "marca": "Meizu",
+      "nome": "Meizu MX6",
+      "slug": "meizu-mx6"
+    },
+    {
+      "batteriaMah": 3050,
+      "marca": "Meizu",
+      "nome": "Meizu PRO 5",
+      "slug": "meizu-pro-5"
+    },
+    {
+      "batteriaMah": 2560,
+      "marca": "Meizu",
+      "nome": "Meizu Pro 6",
+      "slug": "meizu-pro-6"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "Meizu",
+      "nome": "Meizu PRO 6 Plus",
+      "slug": "meizu-pro-6-plus"
+    },
+    {
+      "batteriaMah": 3260,
+      "marca": "Meizu",
+      "nome": "Meizu U20",
+      "slug": "meizu-u20"
+    },
+    {
+      "batteriaMah": 3210,
+      "marca": "Meizu",
+      "nome": "X8",
+      "slug": "meizu-x8"
+    },
+    {
+      "batteriaMah": 3010,
+      "marca": "Xiaomi",
+      "nome": "Mi 6X",
+      "slug": "mi-6x"
+    },
+    {
+      "batteriaMah": 2100,
+      "marca": "Microsoft",
+      "nome": "Microsoft Lumia 550",
+      "slug": "microsoft-lumia-550"
+    },
+    {
+      "batteriaMah": 2000,
+      "marca": "Microsoft",
+      "nome": "Microsoft Lumia 650",
+      "slug": "microsoft-lumia-650"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Microsoft",
+      "nome": "Microsoft Lumia 950",
+      "slug": "microsoft-lumia-950"
+    },
+    {
+      "batteriaMah": 3340,
+      "marca": "Microsoft",
+      "nome": "Microsoft Lumia 950 XL",
+      "slug": "microsoft-lumia-950-xl"
+    },
+    {
+      "batteriaMah": 3577,
+      "marca": "Microsoft",
+      "nome": "Surface Duo",
+      "slug": "microsoft-surface-duo"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Motorola",
+      "nome": "Edge",
+      "slug": "motorola-edge"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Motorola",
+      "nome": "EDGE 20",
+      "slug": "motorola-edge-20"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Edge 20 Lite",
+      "slug": "motorola-edge-20-lite"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Motorola",
+      "nome": "EDGE 20 Pro",
+      "slug": "motorola-edge-20-pro"
+    },
+    {
+      "batteriaMah": 4020,
+      "marca": "Motorola",
+      "nome": "edge 30",
+      "slug": "motorola-edge-30"
+    },
+    {
+      "batteriaMah": 4400,
+      "marca": "Motorola",
+      "nome": "EDGE 30 Fusion",
+      "slug": "motorola-edge-30-fusion"
+    },
+    {
+      "batteriaMah": 4020,
+      "marca": "Motorola",
+      "nome": "EDGE 30 Neo",
+      "slug": "motorola-edge-30-neo"
+    },
+    {
+      "batteriaMah": 4800,
+      "marca": "Motorola",
+      "nome": "edge 30 Pro",
+      "slug": "motorola-edge-30-pro"
+    },
+    {
+      "batteriaMah": 4610,
+      "marca": "Motorola",
+      "nome": "EDGE 30 Ultra",
+      "slug": "motorola-edge-30-ultra"
+    },
+    {
+      "batteriaMah": 4400,
+      "marca": "Motorola",
+      "nome": "Edge 40",
+      "slug": "motorola-edge-40"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Edge 40 Neo",
+      "slug": "motorola-edge-40-neo"
+    },
+    {
+      "batteriaMah": 4600,
+      "marca": "Motorola",
+      "nome": "Edge 40 pro",
+      "slug": "motorola-edge-40-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "edge 50",
+      "slug": "motorola-edge-50"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Edge 50 Fusion",
+      "slug": "motorola-edge-50-fusion"
+    },
+    {
+      "batteriaMah": 4310,
+      "marca": "Motorola",
+      "nome": "Edge 50 Neo",
+      "slug": "motorola-edge-50-neo"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Motorola",
+      "nome": "Edge 50 Pro",
+      "slug": "motorola-edge-50-pro"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Motorola",
+      "nome": "Edge 60",
+      "slug": "motorola-edge-60"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Motorola",
+      "nome": "edge 60 Fusion",
+      "slug": "motorola-edge-60-fusion"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Motorola",
+      "nome": "edge 60 neo",
+      "slug": "motorola-edge-60-neo"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Motorola",
+      "nome": "Edge 60 Pro",
+      "slug": "motorola-edge-60-pro"
+    },
+    {
+      "batteriaMah": 4800,
+      "marca": "Motorola",
+      "nome": "Edge 70",
+      "slug": "motorola-edge-70"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Motorola",
+      "nome": "Edge 70 Fusion",
+      "slug": "motorola-edge-70-fusion"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Motorola",
+      "nome": "G8 Plus",
+      "slug": "motorola-g8-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Motorola Moto E4 Plus",
+      "slug": "motorola-moto-e4-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto E7 Plus",
+      "slug": "motorola-moto-e7-plus"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Motorola",
+      "nome": "Moto Edge 50 Ultra",
+      "slug": "motorola-moto-edge-50-ultra"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G 50",
+      "slug": "motorola-moto-g-50"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G 5G",
+      "slug": "motorola-moto-g-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G 5G Plus",
+      "slug": "motorola-moto-g-5g-plus"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Motorola",
+      "nome": "Moto G Pro",
+      "slug": "motorola-moto-g-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G10",
+      "slug": "motorola-moto-g10"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G100",
+      "slug": "motorola-moto-g100"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G14",
+      "slug": "motorola-moto-g14"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G35",
+      "slug": "motorola-moto-g35"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Motorola",
+      "nome": "Motorola Moto G4",
+      "slug": "motorola-moto-g4"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Motorola",
+      "nome": "Motorola Moto G4 Plus",
+      "slug": "motorola-moto-g4-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G41",
+      "slug": "motorola-moto-g41"
+    },
+    {
+      "batteriaMah": 2800,
+      "marca": "Motorola",
+      "nome": "Motorola Moto G5",
+      "slug": "motorola-moto-g5"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Motorola",
+      "nome": "Motorola Moto G5 Plus",
+      "slug": "motorola-moto-g5-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G52",
+      "slug": "motorola-moto-g52"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G53",
+      "slug": "motorola-moto-g53"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G55",
+      "slug": "motorola-moto-g55"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Motorola",
+      "nome": "Moto G57 Power",
+      "slug": "motorola-moto-g57-power"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Motorola",
+      "nome": "Motorola Moto G5S Plus",
+      "slug": "motorola-moto-g5s-plus"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Motorola",
+      "nome": "Motorola Moto G6 Play",
+      "slug": "motorola-moto-g6-play"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Motorola",
+      "nome": "Moto G7 Plus",
+      "slug": "motorola-moto-g7-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Motorola Moto G7 Power",
+      "slug": "motorola-moto-g7-power"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Motorola",
+      "nome": "Moto G77",
+      "slug": "motorola-moto-g77"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G8 Power",
+      "slug": "motorola-moto-g8-power"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G84",
+      "slug": "motorola-moto-g84"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G85",
+      "slug": "motorola-moto-g85"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Motorola",
+      "nome": "Moto G86",
+      "slug": "motorola-moto-g86"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Motorola",
+      "nome": "Moto G87",
+      "slug": "motorola-moto-g87"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Moto G9 Plus",
+      "slug": "motorola-moto-g9-plus"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Motorola",
+      "nome": "Moto G9 Power",
+      "slug": "motorola-moto-g9-power"
+    },
+    {
+      "batteriaMah": 3760,
+      "marca": "Motorola",
+      "nome": "Motorola Moto X Force",
+      "slug": "motorola-moto-x-force"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Motorola",
+      "nome": "Motorola Moto X4",
+      "slug": "motorola-moto-x4"
+    },
+    {
+      "batteriaMah": 2600,
+      "marca": "Motorola",
+      "nome": "Motorola Moto Z",
+      "slug": "motorola-moto-z"
+    },
+    {
+      "batteriaMah": 3510,
+      "marca": "Motorola",
+      "nome": "Motorola Moto Z Play",
+      "slug": "motorola-moto-z-play"
+    },
+    {
+      "batteriaMah": 2730,
+      "marca": "Motorola",
+      "nome": "Motorola Moto Z2 Force Edition",
+      "slug": "motorola-moto-z2-force-edition"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Motorola",
+      "nome": "Motorola Moto Z2 Play",
+      "slug": "motorola-moto-z2-play"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Motorola",
+      "nome": "Motorola Moto Z3 Play",
+      "slug": "motorola-moto-z3-play"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Motorola",
+      "nome": "Motorola One",
+      "slug": "motorola-one"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "One Fusion +",
+      "slug": "motorola-one-fusion"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Motorola",
+      "nome": "Motorola One Vision",
+      "slug": "motorola-one-vision"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Motorola",
+      "nome": "One Zoom",
+      "slug": "motorola-one-zoom"
+    },
+    {
+      "batteriaMah": 2510,
+      "marca": "Motorola",
+      "nome": "Razr",
+      "slug": "motorola-razr"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Motorola",
+      "nome": "RAZR 2022",
+      "slug": "motorola-razr-2022"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Motorola",
+      "nome": "RAZR 40",
+      "slug": "motorola-razr-40"
+    },
+    {
+      "batteriaMah": 3800,
+      "marca": "Motorola",
+      "nome": "RAZR 40 Ultra",
+      "slug": "motorola-razr-40-ultra"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Motorola",
+      "nome": "RAZR 50 Ultra",
+      "slug": "motorola-razr-50-ultra"
+    },
+    {
+      "batteriaMah": 2800,
+      "marca": "Motorola",
+      "nome": "Razr 5G",
+      "slug": "motorola-razr-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Motorola",
+      "nome": "RAZR 60",
+      "slug": "motorola-razr-60"
+    },
+    {
+      "batteriaMah": 4700,
+      "marca": "Motorola",
+      "nome": "RAZR 60 Ultra",
+      "slug": "motorola-razr-60-ultra"
+    },
+    {
+      "batteriaMah": 4800,
+      "marca": "Motorola",
+      "nome": "Razr 70",
+      "slug": "motorola-razr-70"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Motorola",
+      "nome": "Razr 70 Plus",
+      "slug": "motorola-razr-70-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Motorola",
+      "nome": "Razr 70 Ultra",
+      "slug": "motorola-razr-70-ultra"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Motorola",
+      "nome": "Razr Fold",
+      "slug": "motorola-razr-fold"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Motorola",
+      "nome": "Signature",
+      "slug": "motorola-signature"
+    },
+    {
+      "batteriaMah": 2250,
+      "marca": "Neffos",
+      "nome": "Neffos X1",
+      "slug": "neffos-x1"
+    },
+    {
+      "batteriaMah": 2130,
+      "marca": "Neffos",
+      "nome": "Neffos Y5",
+      "slug": "neffos-y5"
+    },
+    {
+      "batteriaMah": 2680,
+      "marca": "Nextbit",
+      "nome": "Nextbit Robin",
+      "slug": "nextbit-robin"
+    },
+    {
+      "batteriaMah": 2150,
+      "marca": "Nokia",
+      "nome": "Nokia 1",
+      "slug": "nokia-1"
+    },
+    {
+      "batteriaMah": 2650,
+      "marca": "Nokia",
+      "nome": "Nokia 3",
+      "slug": "nokia-3"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Nokia",
+      "nome": "Nokia 5",
+      "slug": "nokia-5"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Nokia",
+      "nome": "Nokia 6",
+      "slug": "nokia-6"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Nokia",
+      "nome": "6.2",
+      "slug": "nokia-6-2"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Nokia",
+      "nome": "Nokia 6 (2018)",
+      "slug": "nokia-6-2018"
+    },
+    {
+      "batteriaMah": 3060,
+      "marca": "Nokia",
+      "nome": "Nokia 7.1",
+      "slug": "nokia-7-1"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Nokia",
+      "nome": "7.2",
+      "slug": "nokia-7-2"
+    },
+    {
+      "batteriaMah": 3800,
+      "marca": "Nokia",
+      "nome": "Nokia 7 plus",
+      "slug": "nokia-7-plus"
+    },
+    {
+      "batteriaMah": 3090,
+      "marca": "Nokia",
+      "nome": "Nokia 8",
+      "slug": "nokia-8"
+    },
+    {
+      "batteriaMah": 3260,
+      "marca": "Nokia",
+      "nome": "Nokia 8 Sirocco",
+      "slug": "nokia-8-sirocco"
+    },
+    {
+      "batteriaMah": 1500,
+      "marca": "Nokia",
+      "nome": "Nokia 8110 4G",
+      "slug": "nokia-8110-4g"
+    },
+    {
+      "batteriaMah": 3320,
+      "marca": "Nokia",
+      "nome": "9 PureView",
+      "slug": "nokia-9-pureview"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Nothing",
+      "nome": "Phone (1)",
+      "slug": "nothing-phone-1"
+    },
+    {
+      "batteriaMah": 4700,
+      "marca": "Nothing",
+      "nome": "Phone (2)",
+      "slug": "nothing-phone-2"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Nothing",
+      "nome": "Phone (2a)",
+      "slug": "nothing-phone-2a"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Nothing",
+      "nome": "Phone (2a) Plus",
+      "slug": "nothing-phone-2a-plus"
+    },
+    {
+      "batteriaMah": 5150,
+      "marca": "Nothing",
+      "nome": "Phone (3)",
+      "slug": "nothing-phone-3"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Nothing",
+      "nome": "Phone (3a)",
+      "slug": "nothing-phone-3a"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Nothing",
+      "nome": "Phone (3a) Lite",
+      "slug": "nothing-phone-3a-lite"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Nothing",
+      "nome": "Phone (3a) Pro",
+      "slug": "nothing-phone-3a-pro"
+    },
+    {
+      "batteriaMah": 5080,
+      "marca": "Nothing",
+      "nome": "Phone (4a)",
+      "slug": "nothing-phone-4a"
+    },
+    {
+      "batteriaMah": 5080,
+      "marca": "Nothing",
+      "nome": "Phone (4a) Pro",
+      "slug": "nothing-phone-4a-pro"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Nothing",
+      "nome": "Phone (4b)",
+      "slug": "nothing-phone-4b"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Nubia",
+      "nome": "Nubia N1",
+      "slug": "nubia-n1"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Nubia",
+      "nome": "Red Magic 5G",
+      "slug": "nubia-red-magic-5g"
+    },
+    {
+      "batteriaMah": 6500,
+      "marca": "Nubia",
+      "nome": "Red Magic 9 Pro",
+      "slug": "nubia-red-magic-9-pro"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Nubia",
+      "nome": "RedMagic 11 Air",
+      "slug": "nubia-redmagic-11-air"
+    },
+    {
+      "batteriaMah": 7500,
+      "marca": "Nubia",
+      "nome": "RedMagic 11 Pro",
+      "slug": "nubia-redmagic-11-pro"
+    },
+    {
+      "batteriaMah": 3800,
+      "marca": "Nubia",
+      "nome": "X",
+      "slug": "nubia-x"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "nubia",
+      "nome": "nubia Z11 Max",
+      "slug": "nubia-z11-max"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Nubia",
+      "nome": "Nubia Z11 mini S",
+      "slug": "nubia-z11-mini-s"
+    },
+    {
+      "batteriaMah": 2950,
+      "marca": "Nubia",
+      "nome": "Nubia Z17 Mini",
+      "slug": "nubia-z17-mini"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Nubia",
+      "nome": "Z20",
+      "slug": "nubia-z20"
+    },
+    {
+      "batteriaMah": 6600,
+      "marca": "Nubia",
+      "nome": "Z70s Ultra",
+      "slug": "nubia-z70s-ultra"
+    },
+    {
+      "batteriaMah": 7200,
+      "marca": "Nubia",
+      "nome": "Z80 Ultra",
+      "slug": "nubia-z80-ultra"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "OnePlus",
+      "nome": "10 Pro",
+      "slug": "oneplus-10-pro"
+    },
+    {
+      "batteriaMah": 4800,
+      "marca": "OnePlus",
+      "nome": "10T",
+      "slug": "oneplus-10t"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "OnePlus",
+      "nome": "11",
+      "slug": "oneplus-11"
+    },
+    {
+      "batteriaMah": 5400,
+      "marca": "OnePlus ",
+      "nome": "12",
+      "slug": "oneplus-12"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "OnePlus ",
+      "nome": "12R",
+      "slug": "oneplus-12r"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "OnePlus",
+      "nome": "13",
+      "slug": "oneplus-13"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "OnePlus",
+      "nome": "13R",
+      "slug": "oneplus-13r"
+    },
+    {
+      "batteriaMah": 7300,
+      "marca": "OnePlus",
+      "nome": "15",
+      "slug": "oneplus-15"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "OnePlus",
+      "nome": "OnePlus 3",
+      "slug": "oneplus-3"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "OnePlus",
+      "nome": "OnePlus 3T",
+      "slug": "oneplus-3t"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "OnePlus",
+      "nome": "OnePlus 5",
+      "slug": "oneplus-5"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "OnePlus",
+      "nome": "OnePlus 5T",
+      "slug": "oneplus-5t"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "OnePlus",
+      "nome": "OnePlus 6",
+      "slug": "oneplus-6"
+    },
+    {
+      "batteriaMah": 3700,
+      "marca": "OnePlus",
+      "nome": "6T",
+      "slug": "oneplus-6t"
+    },
+    {
+      "batteriaMah": 3700,
+      "marca": "Oneplus",
+      "nome": "6t McLaren Edition",
+      "slug": "oneplus-6t-mclaren-edition"
+    },
+    {
+      "batteriaMah": 3750,
+      "marca": "OnePlus",
+      "nome": "OnePlus 7",
+      "slug": "oneplus-7"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "OnePlus",
+      "nome": "7 Pro",
+      "slug": "oneplus-7-pro"
+    },
+    {
+      "batteriaMah": 3800,
+      "marca": "OnePlus",
+      "nome": "7T",
+      "slug": "oneplus-7t"
+    },
+    {
+      "batteriaMah": 4085,
+      "marca": "OnePlus",
+      "nome": "7T Pro",
+      "slug": "oneplus-7t-pro"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "OnePlus",
+      "nome": "8",
+      "slug": "oneplus-8"
+    },
+    {
+      "batteriaMah": 4510,
+      "marca": "OnePlus",
+      "nome": "8 Pro",
+      "slug": "oneplus-8-pro"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "OnePlus",
+      "nome": "8T",
+      "slug": "oneplus-8t"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "OnePlus",
+      "nome": "9",
+      "slug": "oneplus-9"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "OnePlus",
+      "nome": "9 Pro",
+      "slug": "oneplus-9-pro"
+    },
+    {
+      "batteriaMah": 4115,
+      "marca": "OnePlus",
+      "nome": "Nord",
+      "slug": "oneplus-nord"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "OnePlus",
+      "nome": "Nord 2",
+      "slug": "oneplus-nord-2"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "OnePlus",
+      "nome": "Nord 2T",
+      "slug": "oneplus-nord-2t"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "OnePlus",
+      "nome": "Nord 3",
+      "slug": "oneplus-nord-3"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "OnePlus",
+      "nome": "Nord 4",
+      "slug": "oneplus-nord-4"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "OnePlus",
+      "nome": "Nord 5",
+      "slug": "oneplus-nord-5"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "OnePlus",
+      "nome": "Nord CE 2 Lite 5G",
+      "slug": "oneplus-nord-ce-2-lite-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "OnePlus",
+      "nome": "Nord CE 3 Lite 5G",
+      "slug": "oneplus-nord-ce-3-lite-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "OnePlus",
+      "nome": "Nord CE 5G",
+      "slug": "oneplus-nord-ce-5g"
+    },
+    {
+      "batteriaMah": 5110,
+      "marca": "OnePlus",
+      "nome": "Nord CE4 Lite",
+      "slug": "oneplus-nord-ce4-lite"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "OnePlus",
+      "nome": "Nord N10 5G",
+      "slug": "oneplus-nord-n10-5g"
+    },
+    {
+      "batteriaMah": 4805,
+      "marca": "OnePlus",
+      "nome": "Open",
+      "slug": "oneplus-open"
+    },
+    {
+      "batteriaMah": 2525,
+      "marca": "OnePlus",
+      "nome": "OnePlus X",
+      "slug": "oneplus-x"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Oppo",
+      "nome": "A78 5G",
+      "slug": "oppo-a78-5g"
+    },
+    {
+      "batteriaMah": 4310,
+      "marca": "Oppo",
+      "nome": "A94 5G",
+      "slug": "oppo-a94-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Oppo",
+      "nome": "A98 5G",
+      "slug": "oppo-a98-5g"
+    },
+    {
+      "batteriaMah": 2850,
+      "marca": "Oppo",
+      "nome": "Oppo F1 Plus",
+      "slug": "oppo-f1-plus"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Oppo",
+      "nome": "Find N",
+      "slug": "oppo-find-n"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Oppo",
+      "nome": "Find N2 Flip",
+      "slug": "oppo-find-n2-flip"
+    },
+    {
+      "batteriaMah": 5600,
+      "marca": "Oppo",
+      "nome": "Find N5",
+      "slug": "oppo-find-n5"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "OPPO",
+      "nome": "OPPO Find X",
+      "slug": "oppo-find-x"
+    },
+    {
+      "batteriaMah": 4025,
+      "marca": "Oppo",
+      "nome": "Find X2 Lite",
+      "slug": "oppo-find-x2-lite"
+    },
+    {
+      "batteriaMah": 4025,
+      "marca": "Oppo",
+      "nome": "Find X2 Neo",
+      "slug": "oppo-find-x2-neo"
+    },
+    {
+      "batteriaMah": 4260,
+      "marca": "Oppo",
+      "nome": "Find X2 Pro",
+      "slug": "oppo-find-x2-pro"
+    },
+    {
+      "batteriaMah": 4260,
+      "marca": "Oppo",
+      "nome": "Find X2 Pro Lamborghini edition",
+      "slug": "oppo-find-x2-pro-lamborghini-edition"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Oppo",
+      "nome": "Find X3 Lite 5G",
+      "slug": "oppo-find-x3-lite-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Oppo",
+      "nome": "Find X3 Neo 5G",
+      "slug": "oppo-find-x3-neo-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Oppo",
+      "nome": "Find X3 Pro 5G",
+      "slug": "oppo-find-x3-pro-5g"
+    },
+    {
+      "batteriaMah": 4800,
+      "marca": "Oppo",
+      "nome": "Find X5",
+      "slug": "oppo-find-x5"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Oppo",
+      "nome": "Find X5 Lite",
+      "slug": "oppo-find-x5-lite"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Oppo",
+      "nome": "Find X5 Pro",
+      "slug": "oppo-find-x5-pro"
+    },
+    {
+      "batteriaMah": 5910,
+      "marca": "Oppo",
+      "nome": "Find X8 Pro",
+      "slug": "oppo-find-x8-pro"
+    },
+    {
+      "batteriaMah": 7025,
+      "marca": "Oppo",
+      "nome": "Find X9",
+      "slug": "oppo-find-x9"
+    },
+    {
+      "batteriaMah": 7500,
+      "marca": "Oppo",
+      "nome": "Find X9 Pro",
+      "slug": "oppo-find-x9-pro"
+    },
+    {
+      "batteriaMah": 7050,
+      "marca": "Oppo",
+      "nome": "Find X9 Ultra",
+      "slug": "oppo-find-x9-ultra"
+    },
+    {
+      "batteriaMah": 3430,
+      "marca": "OPPO",
+      "nome": "OPPO R15 Pro",
+      "slug": "oppo-r15-pro"
+    },
+    {
+      "batteriaMah": 4600,
+      "marca": "Oppo",
+      "nome": "Reno 10 Pro",
+      "slug": "oppo-reno-10-pro"
+    },
+    {
+      "batteriaMah": 4065,
+      "marca": "OPPO",
+      "nome": "OPPO Reno 10x Zoom",
+      "slug": "oppo-reno-10x-zoom"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Oppo",
+      "nome": "Reno 11F 5G",
+      "slug": "oppo-reno-11f-5g"
+    },
+    {
+      "batteriaMah": 5600,
+      "marca": "Oppo",
+      "nome": "Reno 13 5G",
+      "slug": "oppo-reno-13-5g"
+    },
+    {
+      "batteriaMah": 5800,
+      "marca": "Oppo",
+      "nome": "Reno 13 FS",
+      "slug": "oppo-reno-13-fs"
+    },
+    {
+      "batteriaMah": 5800,
+      "marca": "Oppo",
+      "nome": "Reno 13 Pro 5G",
+      "slug": "oppo-reno-13-pro-5g"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Oppo",
+      "nome": "Reno 14",
+      "slug": "oppo-reno-14"
+    },
+    {
+      "batteriaMah": 6200,
+      "marca": "Oppo",
+      "nome": "Reno 15 Pro",
+      "slug": "oppo-reno-15-pro"
+    },
+    {
+      "batteriaMah": 6700,
+      "marca": "Oppo",
+      "nome": "Reno 16 Pro",
+      "slug": "oppo-reno-16-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Oppo",
+      "nome": "Reno 2",
+      "slug": "oppo-reno-2"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Oppo",
+      "nome": "Reno 2Z",
+      "slug": "oppo-reno-2z"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Oppo",
+      "nome": "Reno 4 Pro",
+      "slug": "oppo-reno-4-pro"
+    },
+    {
+      "batteriaMah": 4065,
+      "marca": "Oppo",
+      "nome": "Reno 5G",
+      "slug": "oppo-reno-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Oppo",
+      "nome": "Reno12",
+      "slug": "oppo-reno12"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Oppo",
+      "nome": "Reno12 Pro",
+      "slug": "oppo-reno12-pro"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Oppo",
+      "nome": "Reno6 5G",
+      "slug": "oppo-reno6-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Oppo",
+      "nome": "Reno6 Pro",
+      "slug": "oppo-reno6-pro"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Oppo",
+      "nome": "Reno8 5G",
+      "slug": "oppo-reno8-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Oppo",
+      "nome": "Reno8 Lite 5G",
+      "slug": "oppo-reno8-lite-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Oppo",
+      "nome": "Reno8 Pro 5G",
+      "slug": "oppo-reno8-pro-5g"
+    },
+    {
+      "batteriaMah": 3600,
+      "marca": "Oppo",
+      "nome": "RX17 Neo",
+      "slug": "oppo-rx17-neo"
+    },
+    {
+      "batteriaMah": 3700,
+      "marca": "Oppo",
+      "nome": "RX17 Pro",
+      "slug": "oppo-rx17-pro"
+    },
+    {
+      "batteriaMah": 800,
+      "marca": "Palm",
+      "nome": "Palm",
+      "slug": "palm"
+    },
+    {
+      "batteriaMah": 4700,
+      "marca": "Poco",
+      "nome": "F2 Pro",
+      "slug": "poco-f2-pro"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "POCO",
+      "nome": "F4",
+      "slug": "poco-f4"
+    },
+    {
+      "batteriaMah": 4700,
+      "marca": "POCO",
+      "nome": "F4 GT",
+      "slug": "poco-f4-gt"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "POCO",
+      "nome": "F5",
+      "slug": "poco-f5"
+    },
+    {
+      "batteriaMah": 5160,
+      "marca": "POCO",
+      "nome": "F5 Pro",
+      "slug": "poco-f5-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "POCO",
+      "nome": "F6",
+      "slug": "poco-f6"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "POCO",
+      "nome": "F6 Pro",
+      "slug": "poco-f6-pro"
+    },
+    {
+      "batteriaMah": 6500,
+      "marca": "POCO",
+      "nome": "F7",
+      "slug": "poco-f7"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "POCO",
+      "nome": "F7 Pro",
+      "slug": "poco-f7-pro"
+    },
+    {
+      "batteriaMah": 5300,
+      "marca": "POCO",
+      "nome": "F7 Ultra",
+      "slug": "poco-f7-ultra"
+    },
+    {
+      "batteriaMah": 6500,
+      "marca": "Poco",
+      "nome": "F8 Ultra",
+      "slug": "poco-f8-ultra"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Poco",
+      "nome": "M3",
+      "slug": "poco-m3"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Poco",
+      "nome": "M3 Pro 5G",
+      "slug": "poco-m3-pro-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Poco",
+      "nome": "M4 Pro",
+      "slug": "poco-m4-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "POCO",
+      "nome": "M4 Pro 5G",
+      "slug": "poco-m4-pro-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "POCO",
+      "nome": "M5",
+      "slug": "poco-m5"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "POCO",
+      "nome": "M6 Pro",
+      "slug": "poco-m6-pro"
+    },
+    {
+      "batteriaMah": 5160,
+      "marca": "Poco",
+      "nome": "X3",
+      "slug": "poco-x3"
+    },
+    {
+      "batteriaMah": 5260,
+      "marca": "Poco",
+      "nome": "X3 Pro",
+      "slug": "poco-x3-pro"
+    },
+    {
+      "batteriaMah": 5080,
+      "marca": "POCO",
+      "nome": "X4 GT",
+      "slug": "poco-x4-gt"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Poco",
+      "nome": "X4 Pro 5G",
+      "slug": "poco-x4-pro-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "POCO",
+      "nome": "X5 Pro 5G",
+      "slug": "poco-x5-pro-5g"
+    },
+    {
+      "batteriaMah": 5100,
+      "marca": "POCO",
+      "nome": "X6 5G",
+      "slug": "poco-x6-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "POCO",
+      "nome": "X6 Pro 5G",
+      "slug": "poco-x6-pro-5g"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "POCO",
+      "nome": "X7 Pro",
+      "slug": "poco-x7-pro"
+    },
+    {
+      "batteriaMah": 8500,
+      "marca": "POCO",
+      "nome": "X8 Pro Max",
+      "slug": "poco-x8-pro-max"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Pocophone F1",
+      "slug": "pocophone-f1"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Razer",
+      "nome": "Razer Phone",
+      "slug": "razer-phone"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Razer",
+      "nome": "Razer Phone 2",
+      "slug": "razer-phone-2"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "10",
+      "slug": "realme-10"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "11 5G",
+      "slug": "realme-11-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "11 Pro",
+      "slug": "realme-11-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "11 Pro Plus",
+      "slug": "realme-11-pro-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "12+",
+      "slug": "realme-12"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "12 Pro",
+      "slug": "realme-12-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "12 Pro Plus",
+      "slug": "realme-12-pro-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "12X",
+      "slug": "realme-12x"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Realme",
+      "nome": "14 5G",
+      "slug": "realme-14-5g"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Realme",
+      "nome": "14 Pro",
+      "slug": "realme-14-pro"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Realme",
+      "nome": "14 Pro Plus",
+      "slug": "realme-14-pro-plus"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Realme",
+      "nome": "14T",
+      "slug": "realme-14t"
+    },
+    {
+      "batteriaMah": 6500,
+      "marca": "Realme",
+      "nome": "16 Pro",
+      "slug": "realme-16-pro"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Realme",
+      "nome": "16 Pro Plus",
+      "slug": "realme-16-pro-plus"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Realme",
+      "nome": "3 Pro",
+      "slug": "realme-3-pro"
+    },
+    {
+      "batteriaMah": 4035,
+      "marca": "Realme",
+      "nome": "5 Pro",
+      "slug": "realme-5-pro"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Realme",
+      "nome": "6",
+      "slug": "realme-6"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Realme",
+      "nome": "6 Pro",
+      "slug": "realme-6-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "7",
+      "slug": "realme-7"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "7 5G",
+      "slug": "realme-7-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Realme",
+      "nome": "7 Pro",
+      "slug": "realme-7-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "7i",
+      "slug": "realme-7i"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "8 5G",
+      "slug": "realme-8-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Realme",
+      "nome": "8 Pro",
+      "slug": "realme-8-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "8i",
+      "slug": "realme-8i"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "9 4G",
+      "slug": "realme-9-4g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "9 5G",
+      "slug": "realme-9-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "9 Pro",
+      "slug": "realme-9-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "9i",
+      "slug": "realme-9i"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "C55",
+      "slug": "realme-c55"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "C67 4G",
+      "slug": "realme-c67-4g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "GT 2 Pro",
+      "slug": "realme-gt-2-pro"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Realme",
+      "nome": "GT 5G",
+      "slug": "realme-gt-5g"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "Realme ",
+      "nome": "GT 6T",
+      "slug": "realme-gt-6t"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Realme",
+      "nome": "GT 7T",
+      "slug": "realme-gt-7t"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Realme",
+      "nome": "GT 8 Pro",
+      "slug": "realme-gt-8-pro"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Realme",
+      "nome": "GT Master Edition",
+      "slug": "realme-gt-master-edition"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "GT Neo 2",
+      "slug": "realme-gt-neo-2"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Realme",
+      "nome": "GT Neo 3 150W",
+      "slug": "realme-gt-neo-3-150w"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Realme",
+      "nome": "GT Neo 3T",
+      "slug": "realme-gt-neo-3t"
+    },
+    {
+      "batteriaMah": 4600,
+      "marca": "Realme",
+      "nome": "GT3",
+      "slug": "realme-gt3"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "Realme",
+      "nome": "GT6",
+      "slug": "realme-gt6"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Realme",
+      "nome": "GT7",
+      "slug": "realme-gt7"
+    },
+    {
+      "batteriaMah": 6500,
+      "marca": "Realme",
+      "nome": "GT7 Pro",
+      "slug": "realme-gt7-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Realme",
+      "nome": "X2",
+      "slug": "realme-x2"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Realme",
+      "nome": "X2 Pro",
+      "slug": "realme-x2-pro"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Realme",
+      "nome": "X3 SuperZoom",
+      "slug": "realme-x3-superzoom"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Realme",
+      "nome": "X50 5G",
+      "slug": "realme-x50-5g"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Realme",
+      "nome": "X50 Pro 5G",
+      "slug": "realme-x50-pro-5g"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Redmi",
+      "nome": "K20 Pro",
+      "slug": "redmi-k20-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Redmi",
+      "nome": "Note 10",
+      "slug": "redmi-note-10"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Redmi",
+      "nome": "Note 10 5G",
+      "slug": "redmi-note-10-5g"
+    },
+    {
+      "batteriaMah": 5020,
+      "marca": "Redmi",
+      "nome": "Note 10 Pro",
+      "slug": "redmi-note-10-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Redmi",
+      "nome": "Note 10S",
+      "slug": "redmi-note-10s"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Redmi",
+      "nome": "Note 11",
+      "slug": "redmi-note-11"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Redmi",
+      "nome": "Note 11 Pro",
+      "slug": "redmi-note-11-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Redmi",
+      "nome": "Note 11 Pro 5G",
+      "slug": "redmi-note-11-pro-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Redmi",
+      "nome": "Note 11 S",
+      "slug": "redmi-note-11-s"
+    },
+    {
+      "batteriaMah": 5020,
+      "marca": "Redmi",
+      "nome": "Note 9",
+      "slug": "redmi-note-9"
+    },
+    {
+      "batteriaMah": 5020,
+      "marca": "Redmi",
+      "nome": "Note 9 Pro",
+      "slug": "redmi-note-9-pro"
+    },
+    {
+      "batteriaMah": 5020,
+      "marca": "Redmi",
+      "nome": "Note 9S",
+      "slug": "redmi-note-9s"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Redmi",
+      "nome": "Note 9T",
+      "slug": "redmi-note-9t"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "A90 5G",
+      "slug": "samsung-a90-5g"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Samsung",
+      "nome": "Galaxy A10",
+      "slug": "samsung-galaxy-a10"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A15",
+      "slug": "samsung-galaxy-a15"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A16",
+      "slug": "samsung-galaxy-a16"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Samsung",
+      "nome": "Galaxy A20e",
+      "slug": "samsung-galaxy-a20e"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A21s",
+      "slug": "samsung-galaxy-a21s"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A25 5G",
+      "slug": "samsung-galaxy-a25-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A26",
+      "slug": "samsung-galaxy-a26"
+    },
+    {
+      "batteriaMah": 2300,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy A3 (2016)",
+      "slug": "samsung-galaxy-a3-2016"
+    },
+    {
+      "batteriaMah": 2350,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy A3 (2017)",
+      "slug": "samsung-galaxy-a3-2017"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A31",
+      "slug": "samsung-galaxy-a31"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A32 5G",
+      "slug": "samsung-galaxy-a32-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A33 5G",
+      "slug": "samsung-galaxy-a33-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A34",
+      "slug": "samsung-galaxy-a34"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A35",
+      "slug": "samsung-galaxy-a35"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A36",
+      "slug": "samsung-galaxy-a36"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A37",
+      "slug": "samsung-galaxy-a37"
+    },
+    {
+      "batteriaMah": 3100,
+      "marca": "Samsung",
+      "nome": "Galaxy A40",
+      "slug": "samsung-galaxy-a40"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Samsung",
+      "nome": "Galaxy A41",
+      "slug": "samsung-galaxy-a41"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A42 5G",
+      "slug": "samsung-galaxy-a42-5g"
+    },
+    {
+      "batteriaMah": 2900,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy A5 (2016)",
+      "slug": "samsung-galaxy-a5-2016"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy A5 (2017)",
+      "slug": "samsung-galaxy-a5-2017"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Samsung",
+      "nome": "Galaxy A50",
+      "slug": "samsung-galaxy-a50"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Samsung",
+      "nome": "Galaxy A51",
+      "slug": "samsung-galaxy-a51"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Galaxy A51 5G",
+      "slug": "samsung-galaxy-a51-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Galaxy A52",
+      "slug": "samsung-galaxy-a52"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Galaxy A52 5G",
+      "slug": "samsung-galaxy-a52-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Galaxy A52s 5G",
+      "slug": "samsung-galaxy-a52s-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A53 5G",
+      "slug": "samsung-galaxy-a53-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A54",
+      "slug": "samsung-galaxy-a54"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A55",
+      "slug": "samsung-galaxy-a55"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A56",
+      "slug": "samsung-galaxy-a56"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A57",
+      "slug": "samsung-galaxy-a57"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Samsung",
+      "nome": "Galaxy A6",
+      "slug": "samsung-galaxy-a6"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy A7 (2016)",
+      "slug": "samsung-galaxy-a7-2016"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy A7 (2018)",
+      "slug": "samsung-galaxy-a7-2018"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Galaxy A70",
+      "slug": "samsung-galaxy-a70"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Galaxy A71",
+      "slug": "samsung-galaxy-a71"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy A72",
+      "slug": "samsung-galaxy-a72"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy A8",
+      "slug": "samsung-galaxy-a8"
+    },
+    {
+      "batteriaMah": 3700,
+      "marca": "Samsung",
+      "nome": "Galaxy A80",
+      "slug": "samsung-galaxy-a80"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy A9 (2016)",
+      "slug": "samsung-galaxy-a9-2016"
+    },
+    {
+      "batteriaMah": 3800,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy A9 (2018)",
+      "slug": "samsung-galaxy-a9-2018"
+    },
+    {
+      "batteriaMah": 2600,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy C5",
+      "slug": "samsung-galaxy-c5"
+    },
+    {
+      "batteriaMah": 4380,
+      "marca": "Samsung",
+      "nome": "Galaxy Fold",
+      "slug": "samsung-galaxy-fold"
+    },
+    {
+      "batteriaMah": 2600,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy J3 (2017)",
+      "slug": "samsung-galaxy-j3-2017"
+    },
+    {
+      "batteriaMah": 2600,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy J5",
+      "slug": "samsung-galaxy-j5"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy J5 (2017) J530",
+      "slug": "samsung-galaxy-j5-2017-j530"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy J6",
+      "slug": "samsung-galaxy-j6"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy J7 (2016)",
+      "slug": "samsung-galaxy-j7-2016"
+    },
+    {
+      "batteriaMah": 3600,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy J7 (2017)",
+      "slug": "samsung-galaxy-j7-2017"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy M20",
+      "slug": "samsung-galaxy-m20"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Samsung",
+      "nome": "Galaxy M21",
+      "slug": "samsung-galaxy-m21"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy M23",
+      "slug": "samsung-galaxy-m23"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Samsung",
+      "nome": "Galaxy M31",
+      "slug": "samsung-galaxy-m31"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Samsung",
+      "nome": "Galaxy M51",
+      "slug": "samsung-galaxy-m51"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Samsung",
+      "nome": "Galaxy Note 10",
+      "slug": "samsung-galaxy-note-10"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Galaxy Note 10 Lite",
+      "slug": "samsung-galaxy-note-10-lite"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Samsung",
+      "nome": "Galaxy Note 10 Plus",
+      "slug": "samsung-galaxy-note-10-plus"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Samsung",
+      "nome": "Galaxy Note 20",
+      "slug": "samsung-galaxy-note-20"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Galaxy Note 20 Ultra",
+      "slug": "samsung-galaxy-note-20-ultra"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy Note 7",
+      "slug": "samsung-galaxy-note-7"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy Note 8",
+      "slug": "samsung-galaxy-note-8"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy Note 9",
+      "slug": "samsung-galaxy-note-9"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Samsung",
+      "nome": "Galaxy S10",
+      "slug": "samsung-galaxy-s10"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy S10 5G",
+      "slug": "samsung-galaxy-s10-5g"
+    },
+    {
+      "batteriaMah": 4100,
+      "marca": "Samsung",
+      "nome": "Galaxy S10 Plus",
+      "slug": "samsung-galaxy-s10-plus"
+    },
+    {
+      "batteriaMah": 3100,
+      "marca": "Samsung",
+      "nome": "Galaxy S10e",
+      "slug": "samsung-galaxy-s10e"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Samsung",
+      "nome": "Galaxy S20",
+      "slug": "samsung-galaxy-s20"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Galaxy S20 FE 5G",
+      "slug": "samsung-galaxy-s20-fe-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy S20 Ultra",
+      "slug": "samsung-galaxy-s20-ultra"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Samsung",
+      "nome": "Galaxy S21 5G",
+      "slug": "samsung-galaxy-s21-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Galaxy S21 FE",
+      "slug": "samsung-galaxy-s21-fe"
+    },
+    {
+      "batteriaMah": 4800,
+      "marca": "Samsung",
+      "nome": "Galaxy S21 plus 5G",
+      "slug": "samsung-galaxy-s21-plus-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy S21 Ultra 5G",
+      "slug": "samsung-galaxy-s21-ultra-5g"
+    },
+    {
+      "batteriaMah": 3700,
+      "marca": "Samsung",
+      "nome": "Galaxy S22",
+      "slug": "samsung-galaxy-s22"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy S22 Ultra",
+      "slug": "samsung-galaxy-s22-ultra"
+    },
+    {
+      "batteriaMah": 3900,
+      "marca": "Samsung",
+      "nome": "Galaxy S23",
+      "slug": "samsung-galaxy-s23"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Galaxy S23 FE",
+      "slug": "samsung-galaxy-s23-fe"
+    },
+    {
+      "batteriaMah": 4700,
+      "marca": "Samsung",
+      "nome": "Galaxy S23 Plus",
+      "slug": "samsung-galaxy-s23-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy S23 Ultra",
+      "slug": "samsung-galaxy-s23-ultra"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Samsung",
+      "nome": "Galaxy S24",
+      "slug": "samsung-galaxy-s24"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy S24 Ultra",
+      "slug": "samsung-galaxy-s24-ultra"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Samsung",
+      "nome": "Galaxy S25",
+      "slug": "samsung-galaxy-s25"
+    },
+    {
+      "batteriaMah": 3900,
+      "marca": "Samsung",
+      "nome": "Galaxy S25 Edge",
+      "slug": "samsung-galaxy-s25-edge"
+    },
+    {
+      "batteriaMah": 4900,
+      "marca": "Samsung",
+      "nome": "Galaxy S25 FE",
+      "slug": "samsung-galaxy-s25-fe"
+    },
+    {
+      "batteriaMah": 4900,
+      "marca": "Samsung",
+      "nome": "Galaxy S25 Plus",
+      "slug": "samsung-galaxy-s25-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy S25 Ultra",
+      "slug": "samsung-galaxy-s25-ultra"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Samsung",
+      "nome": "Galaxy S26 ",
+      "slug": "samsung-galaxy-s26"
+    },
+    {
+      "batteriaMah": 4900,
+      "marca": "Samsung",
+      "nome": "Galaxy S26 Plus",
+      "slug": "samsung-galaxy-s26-plus"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung",
+      "nome": "Galaxy S26 Ultra",
+      "slug": "samsung-galaxy-s26-ultra"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy S7",
+      "slug": "samsung-galaxy-s7"
+    },
+    {
+      "batteriaMah": 3600,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy S7 edge",
+      "slug": "samsung-galaxy-s7-edge"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy S8",
+      "slug": "samsung-galaxy-s8"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy S8 Plus",
+      "slug": "samsung-galaxy-s8-plus"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy S9",
+      "slug": "samsung-galaxy-s9"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy S9 Plus",
+      "slug": "samsung-galaxy-s9-plus"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Samsung",
+      "nome": "Galaxy Tab A7",
+      "slug": "samsung-galaxy-tab-a7"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy Tab S2 8.0",
+      "slug": "samsung-galaxy-tab-s2-8-0"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy Tab S3",
+      "slug": "samsung-galaxy-tab-s3"
+    },
+    {
+      "batteriaMah": 7040,
+      "marca": "Samsung",
+      "nome": "Samsung Galaxy Tab S6",
+      "slug": "samsung-galaxy-tab-s6"
+    },
+    {
+      "batteriaMah": 7040,
+      "marca": "Samsung",
+      "nome": "Galaxy Tab S6 Lite",
+      "slug": "samsung-galaxy-tab-s6-lite"
+    },
+    {
+      "batteriaMah": 8000,
+      "marca": "Samsung",
+      "nome": "Galaxy Tab S7",
+      "slug": "samsung-galaxy-tab-s7"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Flip",
+      "slug": "samsung-galaxy-z-flip"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Flip 3 5G",
+      "slug": "samsung-galaxy-z-flip-3-5g"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Flip 6",
+      "slug": "samsung-galaxy-z-flip-6"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Flip 7",
+      "slug": "samsung-galaxy-z-flip-7"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Flip 8",
+      "slug": "samsung-galaxy-z-flip-8"
+    },
+    {
+      "batteriaMah": 3700,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Flip4",
+      "slug": "samsung-galaxy-z-flip4"
+    },
+    {
+      "batteriaMah": 3700,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Flip5",
+      "slug": "samsung-galaxy-z-flip5"
+    },
+    {
+      "batteriaMah": 4400,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Fold 3 5G",
+      "slug": "samsung-galaxy-z-fold-3-5g"
+    },
+    {
+      "batteriaMah": 4400,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Fold 6",
+      "slug": "samsung-galaxy-z-fold-6"
+    },
+    {
+      "batteriaMah": 4400,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Fold 7",
+      "slug": "samsung-galaxy-z-fold-7"
+    },
+    {
+      "batteriaMah": 4800,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Fold 8",
+      "slug": "samsung-galaxy-z-fold-8"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Samsung ",
+      "nome": "Galaxy Z Fold 8 Ultra",
+      "slug": "samsung-galaxy-z-fold-8-ultra"
+    },
+    {
+      "batteriaMah": 4400,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Fold4",
+      "slug": "samsung-galaxy-z-fold4"
+    },
+    {
+      "batteriaMah": 4400,
+      "marca": "Samsung",
+      "nome": "Galaxy Z Fold5",
+      "slug": "samsung-galaxy-z-fold5"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Samsung",
+      "nome": "M30s",
+      "slug": "samsung-m30s"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "S10 Lite",
+      "slug": "samsung-s10-lite"
+    },
+    {
+      "batteriaMah": 7040,
+      "marca": "Samsung",
+      "nome": "Tab S6",
+      "slug": "samsung-tab-s6"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Samsung",
+      "nome": "Z Fold 2",
+      "slug": "samsung-z-fold-2"
+    },
+    {
+      "batteriaMah": 2300,
+      "marca": "Sony",
+      "nome": "Sony XA1",
+      "slug": "sony-xa1"
+    },
+    {
+      "batteriaMah": 2700,
+      "marca": "Sony",
+      "nome": "Sony XA1 Ultra",
+      "slug": "sony-xa1-ultra"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Sony",
+      "nome": "Xperia 1",
+      "slug": "sony-xperia-1"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Sony",
+      "nome": "Xperia 1 II",
+      "slug": "sony-xperia-1-ii"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Sony",
+      "nome": "Xperia 1 III",
+      "slug": "sony-xperia-1-iii"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Sony",
+      "nome": "Xperia 1 IV",
+      "slug": "sony-xperia-1-iv"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Sony",
+      "nome": "Xperia 1 V",
+      "slug": "sony-xperia-1-v"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Sony",
+      "nome": "Xperia 1 VI",
+      "slug": "sony-xperia-1-vi"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Sony",
+      "nome": "Xperia 1 VII",
+      "slug": "sony-xperia-1-vii"
+    },
+    {
+      "batteriaMah": 3600,
+      "marca": "Sony",
+      "nome": "Xperia 10 II",
+      "slug": "sony-xperia-10-ii"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Sony",
+      "nome": "Xperia 10 III",
+      "slug": "sony-xperia-10-iii"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Sony",
+      "nome": "Xperia 10 IV",
+      "slug": "sony-xperia-10-iv"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Sony",
+      "nome": "Xperia 10 VI",
+      "slug": "sony-xperia-10-vi"
+    },
+    {
+      "batteriaMah": 3140,
+      "marca": "Sony",
+      "nome": "Xperia 5",
+      "slug": "sony-xperia-5"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Sony",
+      "nome": "Xperia 5 II",
+      "slug": "sony-xperia-5-ii"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Sony",
+      "nome": "Xperia 5 III",
+      "slug": "sony-xperia-5-iii"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Sony",
+      "nome": "Xperia 5 IV",
+      "slug": "sony-xperia-5-iv"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Sony",
+      "nome": "Xperia 5 V",
+      "slug": "sony-xperia-5-v"
+    },
+    {
+      "batteriaMah": 2930,
+      "marca": "Sony",
+      "nome": "Sony Xperia C5 Ultra",
+      "slug": "sony-xperia-c5-ultra"
+    },
+    {
+      "batteriaMah": 2600,
+      "marca": "Sony",
+      "nome": "Sony Xperia M5",
+      "slug": "sony-xperia-m5"
+    },
+    {
+      "batteriaMah": 2620,
+      "marca": "Sony",
+      "nome": "Sony Xperia X",
+      "slug": "sony-xperia-x"
+    },
+    {
+      "batteriaMah": 2700,
+      "marca": "Sony",
+      "nome": "Sony Xperia X Compact",
+      "slug": "sony-xperia-x-compact"
+    },
+    {
+      "batteriaMah": 2700,
+      "marca": "Sony",
+      "nome": "Sony Xperia X Performance",
+      "slug": "sony-xperia-x-performance"
+    },
+    {
+      "batteriaMah": 2300,
+      "marca": "Sony",
+      "nome": "Sony Xperia XA",
+      "slug": "sony-xperia-xa"
+    },
+    {
+      "batteriaMah": 2900,
+      "marca": "Sony",
+      "nome": "Sony Xperia XZ",
+      "slug": "sony-xperia-xz"
+    },
+    {
+      "batteriaMah": 3230,
+      "marca": "Sony",
+      "nome": "Sony Xperia XZ Premium",
+      "slug": "sony-xperia-xz-premium"
+    },
+    {
+      "batteriaMah": 2700,
+      "marca": "Sony",
+      "nome": "Sony Xperia XZ1",
+      "slug": "sony-xperia-xz1"
+    },
+    {
+      "batteriaMah": 2700,
+      "marca": "Sony",
+      "nome": "Sony Xperia XZ1 Compact",
+      "slug": "sony-xperia-xz1-compact"
+    },
+    {
+      "batteriaMah": 3180,
+      "marca": "Sony",
+      "nome": "Sony Xperia XZ2",
+      "slug": "sony-xperia-xz2"
+    },
+    {
+      "batteriaMah": 2870,
+      "marca": "Sony",
+      "nome": "Sony Xperia XZ2 Compact",
+      "slug": "sony-xperia-xz2-compact"
+    },
+    {
+      "batteriaMah": 3330,
+      "marca": "Sony",
+      "nome": "Sony Xperia XZ3",
+      "slug": "sony-xperia-xz3"
+    },
+    {
+      "batteriaMah": 2900,
+      "marca": "Sony",
+      "nome": "Sony Xperia XZs",
+      "slug": "sony-xperia-xzs"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "TCL",
+      "nome": "10 5G",
+      "slug": "tcl-10-5g"
+    },
+    {
+      "batteriaMah": 5010,
+      "marca": "TCL",
+      "nome": "40 NxtPaper",
+      "slug": "tcl-40-nxtpaper"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "TCL",
+      "nome": "NXTPAPER Ultra 60",
+      "slug": "tcl-nxtpaper-ultra-60"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Ulefone",
+      "nome": "Armor 11 5G",
+      "slug": "ulefone-armor-11-5g"
+    },
+    {
+      "batteriaMah": 5180,
+      "marca": "Ulefone",
+      "nome": "Armor 12",
+      "slug": "ulefone-armor-12"
+    },
+    {
+      "batteriaMah": 10850,
+      "marca": "Ulefone",
+      "nome": "Armor 20WT",
+      "slug": "ulefone-armor-20wt"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Ulefone",
+      "nome": "Armor 6",
+      "slug": "ulefone-armor-6"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "Ulefone",
+      "nome": "Armor 7",
+      "slug": "ulefone-armor-7"
+    },
+    {
+      "batteriaMah": 6600,
+      "marca": "ulefone",
+      "nome": "Armor 9",
+      "slug": "ulefone-armor-9"
+    },
+    {
+      "batteriaMah": 3250,
+      "marca": "ULEFONE",
+      "nome": "Ulefone Gemini",
+      "slug": "ulefone-gemini"
+    },
+    {
+      "batteriaMah": 3860,
+      "marca": "Ulefone",
+      "nome": "Ulefone Gemini PRO",
+      "slug": "ulefone-gemini-pro"
+    },
+    {
+      "batteriaMah": 6050,
+      "marca": "Ulefone",
+      "nome": "Ulefone Power 2",
+      "slug": "ulefone-power-2"
+    },
+    {
+      "batteriaMah": 9600,
+      "marca": "Ulefone",
+      "nome": "Power Armor 18T",
+      "slug": "ulefone-power-armor-18t"
+    },
+    {
+      "batteriaMah": 3100,
+      "marca": "UMI",
+      "nome": "UMI Iron Pro",
+      "slug": "umi-iron-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "UMI",
+      "nome": "UMI Max",
+      "slug": "umi-max"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "UMI",
+      "nome": "UMI Plus",
+      "slug": "umi-plus"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "UMI",
+      "nome": "UMI Plus E",
+      "slug": "umi-plus-e"
+    },
+    {
+      "batteriaMah": 2500,
+      "marca": "UMI",
+      "nome": "UMI Rome",
+      "slug": "umi-rome"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "UMI",
+      "nome": "UMI Super",
+      "slug": "umi-super"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "UMI",
+      "nome": "UMI Touch",
+      "slug": "umi-touch"
+    },
+    {
+      "batteriaMah": 3780,
+      "marca": "UMI",
+      "nome": "UMI Z",
+      "slug": "umi-z"
+    },
+    {
+      "batteriaMah": 3780,
+      "marca": "UMI",
+      "nome": "UMI Z Pro",
+      "slug": "umi-z-pro"
+    },
+    {
+      "batteriaMah": 2000,
+      "marca": "Unihertz",
+      "nome": "Atom",
+      "slug": "unihertz-atom"
+    },
+    {
+      "batteriaMah": 3180,
+      "marca": "Vernee",
+      "nome": "Vernee Apollo Lite",
+      "slug": "vernee-apollo-lite"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Vivo iQOO",
+      "nome": "Pro",
+      "slug": "vivo-iqoo-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Vivo",
+      "nome": "Vivo Nex A",
+      "slug": "vivo-nex-a"
+    },
+    {
+      "batteriaMah": 3500,
+      "marca": "Vivo",
+      "nome": "Nex Dual Display",
+      "slug": "vivo-nex-dual-display"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "vivo",
+      "nome": "vivo NEX S global",
+      "slug": "vivo-nex-s-global"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Vivo",
+      "nome": "V21 5G",
+      "slug": "vivo-v21-5g"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Vivo",
+      "nome": "V23 5G",
+      "slug": "vivo-v23-5g"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "Vivo",
+      "nome": "V40",
+      "slug": "vivo-v40"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Vivo",
+      "nome": "V50",
+      "slug": "vivo-v50"
+    },
+    {
+      "batteriaMah": 6500,
+      "marca": "Vivo",
+      "nome": "V70",
+      "slug": "vivo-v70"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Vivo",
+      "nome": "V70 FE",
+      "slug": "vivo-v70-fe"
+    },
+    {
+      "batteriaMah": 3260,
+      "marca": "Vivo",
+      "nome": "Vivo V9",
+      "slug": "vivo-v9"
+    },
+    {
+      "batteriaMah": 6500,
+      "marca": "Vivo",
+      "nome": "X200 FE",
+      "slug": "vivo-x200-fe"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Vivo",
+      "nome": "X200 Pro",
+      "slug": "vivo-x200-pro"
+    },
+    {
+      "batteriaMah": 5440,
+      "marca": "Vivo",
+      "nome": "X300 Pro",
+      "slug": "vivo-x300-pro"
+    },
+    {
+      "batteriaMah": 6600,
+      "marca": "Vivo",
+      "nome": "X300 Ultra",
+      "slug": "vivo-x300-ultra"
+    },
+    {
+      "batteriaMah": 4315,
+      "marca": "Vivo",
+      "nome": "X51",
+      "slug": "vivo-x51"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "Vivo",
+      "nome": "X60 Pro 5G",
+      "slug": "vivo-x60-pro-5g"
+    },
+    {
+      "batteriaMah": 4700,
+      "marca": "Vivo",
+      "nome": "X80 Pro",
+      "slug": "vivo-x80-pro"
+    },
+    {
+      "batteriaMah": 4700,
+      "marca": "Vivo",
+      "nome": "X90 Pro+",
+      "slug": "vivo-x90-pro"
+    },
+    {
+      "batteriaMah": 2540,
+      "marca": "Vodafone",
+      "nome": "Vodafone Smart Prime 7",
+      "slug": "vodafone-smart-prime-7"
+    },
+    {
+      "batteriaMah": 2900,
+      "marca": "Wiko",
+      "nome": "Wiko Fever 4G",
+      "slug": "wiko-fever-4g"
+    },
+    {
+      "batteriaMah": 2000,
+      "marca": "Wiko",
+      "nome": "Wiko Lenny3",
+      "slug": "wiko-lenny3"
+    },
+    {
+      "batteriaMah": 2500,
+      "marca": "Wiko",
+      "nome": "Wiko Pulp 4G",
+      "slug": "wiko-pulp-4g"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Wiko",
+      "nome": "Wiko U Feel Prime",
+      "slug": "wiko-u-feel-prime"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Wiko",
+      "nome": "View 2 Go",
+      "slug": "wiko-view-2-go"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Wiko",
+      "nome": "View 2 Plus",
+      "slug": "wiko-view-2-plus"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Wiko",
+      "nome": "Wiko View 2 Pro",
+      "slug": "wiko-view-2-pro"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Wiko",
+      "nome": "Wiko View Prime",
+      "slug": "wiko-view-prime"
+    },
+    {
+      "batteriaMah": 3200,
+      "marca": "Wiko",
+      "nome": "Wiko Wim",
+      "slug": "wiko-wim"
+    },
+    {
+      "batteriaMah": 4250,
+      "marca": "Xiaomi",
+      "nome": "11 Lite 5G NE",
+      "slug": "xiaomi-11-lite-5g-ne"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "11T",
+      "slug": "xiaomi-11t"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "11T Pro",
+      "slug": "xiaomi-11t-pro"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Xiaomi",
+      "nome": "12",
+      "slug": "xiaomi-12"
+    },
+    {
+      "batteriaMah": 4300,
+      "marca": "Xiaomi",
+      "nome": "12 Lite",
+      "slug": "xiaomi-12-lite"
+    },
+    {
+      "batteriaMah": 4600,
+      "marca": "Xiaomi",
+      "nome": "12 Pro",
+      "slug": "xiaomi-12-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "12T",
+      "slug": "xiaomi-12t"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "12T Pro",
+      "slug": "xiaomi-12t-pro"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Xiaomi",
+      "nome": "12X",
+      "slug": "xiaomi-12x"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Xiaomi",
+      "nome": "13",
+      "slug": "xiaomi-13"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Xiaomi",
+      "nome": "13 Lite",
+      "slug": "xiaomi-13-lite"
+    },
+    {
+      "batteriaMah": 4820,
+      "marca": "Xiaomi",
+      "nome": "13 Pro",
+      "slug": "xiaomi-13-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "13 Ultra",
+      "slug": "xiaomi-13-ultra"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "13T",
+      "slug": "xiaomi-13t"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "13T Pro",
+      "slug": "xiaomi-13t-pro"
+    },
+    {
+      "batteriaMah": 4610,
+      "marca": "Xiaomi",
+      "nome": "14",
+      "slug": "xiaomi-14"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "14 Ultra",
+      "slug": "xiaomi-14-ultra"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "14T Pro",
+      "slug": "xiaomi-14t-pro"
+    },
+    {
+      "batteriaMah": 5240,
+      "marca": "Xiaomi",
+      "nome": "15",
+      "slug": "xiaomi-15"
+    },
+    {
+      "batteriaMah": 5410,
+      "marca": "Xiaomi",
+      "nome": "15 Ultra",
+      "slug": "xiaomi-15-ultra"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "Xiaomi",
+      "nome": "15T Pro",
+      "slug": "xiaomi-15t-pro"
+    },
+    {
+      "batteriaMah": 6330,
+      "marca": "Xiaomi",
+      "nome": "17",
+      "slug": "xiaomi-17"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Xiaomi",
+      "nome": "17 Ultra",
+      "slug": "xiaomi-17-ultra"
+    },
+    {
+      "batteriaMah": 6500,
+      "marca": "Xiaomi",
+      "nome": "17T",
+      "slug": "xiaomi-17t"
+    },
+    {
+      "batteriaMah": 7000,
+      "marca": "Xiaomi",
+      "nome": "17T Pro",
+      "slug": "xiaomi-17t-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Black Shark",
+      "slug": "xiaomi-black-shark"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Black Shark Helo",
+      "slug": "xiaomi-black-shark-helo"
+    },
+    {
+      "batteriaMah": 4780,
+      "marca": "Xiaomi",
+      "nome": "Mi 10",
+      "slug": "xiaomi-mi-10"
+    },
+    {
+      "batteriaMah": 4160,
+      "marca": "Xiaomi",
+      "nome": "Mi 10 Lite 5G",
+      "slug": "xiaomi-mi-10-lite-5g"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Xiaomi",
+      "nome": "Mi 10 Pro",
+      "slug": "xiaomi-mi-10-pro"
+    },
+    {
+      "batteriaMah": 4820,
+      "marca": "Xiaomi",
+      "nome": "Mi 10T Lite",
+      "slug": "xiaomi-mi-10t-lite"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "Mi 10T Pro",
+      "slug": "xiaomi-mi-10t-pro"
+    },
+    {
+      "batteriaMah": 4600,
+      "marca": "Xiaomi",
+      "nome": "Mi 11 5G",
+      "slug": "xiaomi-mi-11-5g"
+    },
+    {
+      "batteriaMah": 4250,
+      "marca": "Xiaomi",
+      "nome": "Mi 11 Lite",
+      "slug": "xiaomi-mi-11-lite"
+    },
+    {
+      "batteriaMah": 4250,
+      "marca": "Xiaomi",
+      "nome": "Mi 11 Lite 5G",
+      "slug": "xiaomi-mi-11-lite-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "Mi 11 Ultra",
+      "slug": "xiaomi-mi-11-ultra"
+    },
+    {
+      "batteriaMah": 4520,
+      "marca": "Xiaomi",
+      "nome": "Mi 11i",
+      "slug": "xiaomi-mi-11i"
+    },
+    {
+      "batteriaMah": 3260,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 4s",
+      "slug": "xiaomi-mi-4s"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 5",
+      "slug": "xiaomi-mi-5"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 5 Pro",
+      "slug": "xiaomi-mi-5-pro"
+    },
+    {
+      "batteriaMah": 2860,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 5c",
+      "slug": "xiaomi-mi-5c"
+    },
+    {
+      "batteriaMah": 3200,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 5s",
+      "slug": "xiaomi-mi-5s"
+    },
+    {
+      "batteriaMah": 3800,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 5s Plus",
+      "slug": "xiaomi-mi-5s-plus"
+    },
+    {
+      "batteriaMah": 3080,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 5X",
+      "slug": "xiaomi-mi-5x"
+    },
+    {
+      "batteriaMah": 3350,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 6",
+      "slug": "xiaomi-mi-6"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 8",
+      "slug": "xiaomi-mi-8"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 8 Explorer Edition",
+      "slug": "xiaomi-mi-8-explorer-edition"
+    },
+    {
+      "batteriaMah": 3350,
+      "marca": "Xiaomi",
+      "nome": "Mi 8 Lite",
+      "slug": "xiaomi-mi-8-lite"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Xiaomi",
+      "nome": "Mi 8 Pro",
+      "slug": "xiaomi-mi-8-pro"
+    },
+    {
+      "batteriaMah": 3120,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 8 SE",
+      "slug": "xiaomi-mi-8-se"
+    },
+    {
+      "batteriaMah": 4030,
+      "marca": "Xiaomi",
+      "nome": "Mi 9 Lite",
+      "slug": "xiaomi-mi-9-lite"
+    },
+    {
+      "batteriaMah": 3070,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi 9 SE",
+      "slug": "xiaomi-mi-9-se"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Mi 9t",
+      "slug": "xiaomi-mi-9t"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Mi 9T Pro",
+      "slug": "xiaomi-mi-9t-pro"
+    },
+    {
+      "batteriaMah": 3080,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi A1",
+      "slug": "xiaomi-mi-a1"
+    },
+    {
+      "batteriaMah": 3010,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi A2",
+      "slug": "xiaomi-mi-a2"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi A2 Lite",
+      "slug": "xiaomi-mi-a2-lite"
+    },
+    {
+      "batteriaMah": 4030,
+      "marca": "Xiaomi",
+      "nome": "Mi A3",
+      "slug": "xiaomi-mi-a3"
+    },
+    {
+      "batteriaMah": 4850,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi Max",
+      "slug": "xiaomi-mi-max"
+    },
+    {
+      "batteriaMah": 5300,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi Max 2",
+      "slug": "xiaomi-mi-max-2"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi Max 3",
+      "slug": "xiaomi-mi-max-3"
+    },
+    {
+      "batteriaMah": 4400,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi MIX",
+      "slug": "xiaomi-mi-mix"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi MIX 2",
+      "slug": "xiaomi-mi-mix-2"
+    },
+    {
+      "batteriaMah": 3400,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi Mix 2s",
+      "slug": "xiaomi-mi-mix-2s"
+    },
+    {
+      "batteriaMah": 3200,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi Mix 3",
+      "slug": "xiaomi-mi-mix-3"
+    },
+    {
+      "batteriaMah": 3800,
+      "marca": "Xiaomi",
+      "nome": "Mi Mix 3 5G",
+      "slug": "xiaomi-mi-mix-3-5g"
+    },
+    {
+      "batteriaMah": 4050,
+      "marca": "Xiaomi",
+      "nome": "Mi Mix Alpha",
+      "slug": "xiaomi-mi-mix-alpha"
+    },
+    {
+      "batteriaMah": 5260,
+      "marca": "Xiaomi",
+      "nome": "Mi Note 10",
+      "slug": "xiaomi-mi-note-10"
+    },
+    {
+      "batteriaMah": 5260,
+      "marca": "Xiaomi",
+      "nome": "Mi Note 10 Lite",
+      "slug": "xiaomi-mi-note-10-lite"
+    },
+    {
+      "batteriaMah": 4070,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi Note 2",
+      "slug": "xiaomi-mi-note-2"
+    },
+    {
+      "batteriaMah": 6600,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Mi Pad 3",
+      "slug": "xiaomi-mi-pad-3"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "Xiaomi",
+      "nome": "Mi Play",
+      "slug": "xiaomi-mi-play"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Xiaomi",
+      "nome": "Mi9",
+      "slug": "xiaomi-mi9"
+    },
+    {
+      "batteriaMah": 4780,
+      "marca": "Xiaomi",
+      "nome": "Mix Flip",
+      "slug": "xiaomi-mix-flip"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "Redmi 13C 4G",
+      "slug": "xiaomi-redmi-13c-4g"
+    },
+    {
+      "batteriaMah": 4100,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi 3",
+      "slug": "xiaomi-redmi-3"
+    },
+    {
+      "batteriaMah": 4100,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi 3 Pro",
+      "slug": "xiaomi-redmi-3-pro"
+    },
+    {
+      "batteriaMah": 4100,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi 3S",
+      "slug": "xiaomi-redmi-3s"
+    },
+    {
+      "batteriaMah": 4100,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi 4 Pro",
+      "slug": "xiaomi-redmi-4-pro"
+    },
+    {
+      "batteriaMah": 3120,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi 4a",
+      "slug": "xiaomi-redmi-4a"
+    },
+    {
+      "batteriaMah": 3300,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi 5",
+      "slug": "xiaomi-redmi-5"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi 5 Plus",
+      "slug": "xiaomi-redmi-5-plus"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Redmi 7",
+      "slug": "xiaomi-redmi-7"
+    },
+    {
+      "batteriaMah": 5200,
+      "marca": "Xiaomi",
+      "nome": "Redmi A5 4G",
+      "slug": "xiaomi-redmi-a5-4g"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Xiaomi Redmi",
+      "nome": "A7 Pro",
+      "slug": "xiaomi-redmi-a7-pro"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 11 Pro+ 5G",
+      "slug": "xiaomi-redmi-note-11-pro-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 12 5G",
+      "slug": "xiaomi-redmi-note-12-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 12 Pro+",
+      "slug": "xiaomi-redmi-note-12-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 13",
+      "slug": "xiaomi-redmi-note-13"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi ",
+      "nome": "Redmi Note 13 5G",
+      "slug": "xiaomi-redmi-note-13-5g"
+    },
+    {
+      "batteriaMah": 5100,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 13 Pro",
+      "slug": "xiaomi-redmi-note-13-pro"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 13 Pro+ 5G",
+      "slug": "xiaomi-redmi-note-13-pro-5g"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 14 4G",
+      "slug": "xiaomi-redmi-note-14-4g"
+    },
+    {
+      "batteriaMah": 5110,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 14 Pro 5G",
+      "slug": "xiaomi-redmi-note-14-pro-5g"
+    },
+    {
+      "batteriaMah": 6000,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 15 4G",
+      "slug": "xiaomi-redmi-note-15-4g"
+    },
+    {
+      "batteriaMah": 5520,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 15 5G",
+      "slug": "xiaomi-redmi-note-15-5g"
+    },
+    {
+      "batteriaMah": 6500,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 15 Pro 4G",
+      "slug": "xiaomi-redmi-note-15-pro-4g"
+    },
+    {
+      "batteriaMah": 6580,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 15 Pro 5G",
+      "slug": "xiaomi-redmi-note-15-pro-5g"
+    },
+    {
+      "batteriaMah": 6500,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 15 Pro Plus",
+      "slug": "xiaomi-redmi-note-15-pro-plus"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi Note 3",
+      "slug": "xiaomi-redmi-note-3"
+    },
+    {
+      "batteriaMah": 4050,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi Note 3 Pro",
+      "slug": "xiaomi-redmi-note-3-pro"
+    },
+    {
+      "batteriaMah": 4100,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi Note 4",
+      "slug": "xiaomi-redmi-note-4"
+    },
+    {
+      "batteriaMah": 4100,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi Note 4x",
+      "slug": "xiaomi-redmi-note-4x"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi Note 5",
+      "slug": "xiaomi-redmi-note-5"
+    },
+    {
+      "batteriaMah": 3080,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi Note 5A",
+      "slug": "xiaomi-redmi-note-5a"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi Note 6 Pro",
+      "slug": "xiaomi-redmi-note-6-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi Note 7",
+      "slug": "xiaomi-redmi-note-7"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 7 Pro",
+      "slug": "xiaomi-redmi-note-7-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 8",
+      "slug": "xiaomi-redmi-note-8"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "Xiaomi Redmi",
+      "nome": "Note 8 Pro",
+      "slug": "xiaomi-redmi-note-8-pro"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Redmi Note 8T",
+      "slug": "xiaomi-redmi-note-8t"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi Pro",
+      "slug": "xiaomi-redmi-pro"
+    },
+    {
+      "batteriaMah": 3080,
+      "marca": "Xiaomi",
+      "nome": "Xiaomi Redmi S2",
+      "slug": "xiaomi-redmi-s2"
+    },
+    {
+      "batteriaMah": 5500,
+      "marca": "Zenfone",
+      "nome": "11 Ultra",
+      "slug": "zenfone-11-ultra"
+    },
+    {
+      "batteriaMah": 4220,
+      "marca": "ZTE",
+      "nome": "Axon 20 5G",
+      "slug": "zte-axon-20-5g"
+    },
+    {
+      "batteriaMah": 4200,
+      "marca": "ZTE",
+      "nome": "Axon 30 5G",
+      "slug": "zte-axon-30-5g"
+    },
+    {
+      "batteriaMah": 4600,
+      "marca": "ZTE",
+      "nome": "Axon 30 Ultra 5G",
+      "slug": "zte-axon-30-ultra-5g"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "ZTE",
+      "nome": "Axon 40 Ultra",
+      "slug": "zte-axon-40-ultra"
+    },
+    {
+      "batteriaMah": 3250,
+      "marca": "ZTE",
+      "nome": "ZTE Axon 7",
+      "slug": "zte-axon-7"
+    },
+    {
+      "batteriaMah": 2705,
+      "marca": "ZTE",
+      "nome": "ZTE Axon 7 Mini",
+      "slug": "zte-axon-7-mini"
+    },
+    {
+      "batteriaMah": 3250,
+      "marca": "ZTE",
+      "nome": "ZTE Axon 7 prime",
+      "slug": "zte-axon-7-prime"
+    },
+    {
+      "batteriaMah": 3180,
+      "marca": "ZTE",
+      "nome": "ZTE Axon M",
+      "slug": "zte-axon-m"
+    },
+    {
+      "batteriaMah": 2800,
+      "marca": "ZTE",
+      "nome": "ZTE Axon Mini",
+      "slug": "zte-axon-mini"
+    },
+    {
+      "batteriaMah": 4000,
+      "marca": "ZTE",
+      "nome": "ZTE Blade A452",
+      "slug": "zte-blade-a452"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "ZTE",
+      "nome": "ZTE Blade A610 Plus",
+      "slug": "zte-blade-a610-plus"
+    },
+    {
+      "batteriaMah": 2200,
+      "marca": "ZTE",
+      "nome": "ZTE Blade V6",
+      "slug": "zte-blade-v6"
+    },
+    {
+      "batteriaMah": 2500,
+      "marca": "ZTE",
+      "nome": "ZTE Blade V7",
+      "slug": "zte-blade-v7"
+    },
+    {
+      "batteriaMah": 2500,
+      "marca": "ZTE",
+      "nome": "ZTE Blade V7 Lite",
+      "slug": "zte-blade-v7-lite"
+    },
+    {
+      "batteriaMah": 7050,
+      "marca": "ZTE Nubia",
+      "nome": "Red Magic 10 Pro+",
+      "slug": "zte-nubia-red-magic-10-pro"
+    },
+    {
+      "batteriaMah": 5050,
+      "marca": "ZTE Nubia",
+      "nome": "Red Magic 6",
+      "slug": "zte-nubia-red-magic-6"
+    },
+    {
+      "batteriaMah": 5050,
+      "marca": "ZTE Nubia",
+      "nome": "Red Magic 6s Pro",
+      "slug": "zte-nubia-red-magic-6s-pro"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "ZTE",
+      "nome": "Nubia Red Magic 7",
+      "slug": "zte-nubia-red-magic-7"
+    },
+    {
+      "batteriaMah": 5000,
+      "marca": "ZTE Nubia",
+      "nome": "Red Magic 7 Pro",
+      "slug": "zte-nubia-red-magic-7-pro"
+    },
+    {
+      "batteriaMah": 4500,
+      "marca": "ZTE",
+      "nome": "Nubia RedMagic 5S",
+      "slug": "zte-nubia-redmagic-5s"
+    },
+    {
+      "batteriaMah": 3000,
+      "marca": "ZTE",
+      "nome": "ZTE Nubia Z11",
+      "slug": "zte-nubia-z11"
+    },
+    {
+      "batteriaMah": 2800,
+      "marca": "ZTE",
+      "nome": "ZTE Nubia Z11 Mini",
+      "slug": "zte-nubia-z11-mini"
+    },
+    {
+      "batteriaMah": 6150,
+      "marca": "ZTE",
+      "nome": "Nubia Z70 Ultra",
+      "slug": "zte-nubia-z70-ultra"
+    },
+    {
+      "batteriaMah": 3100,
+      "marca": "ZUK",
+      "nome": "ZUK Edge",
+      "slug": "zuk-edge"
+    }
+  ],
+  "source": "andreagaleazzi.com",
+  "updatedAt": "1785603560",
+  "version": 1
+}

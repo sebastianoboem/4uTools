@@ -7,3 +7,6 @@ latest.json
 *.iml
 .idea/
 src-tauri/.updater-keys/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/

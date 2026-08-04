@@ -1,9 +1,10 @@
 use adb_bridge::AdbBridge;
 
 use crate::battery::{
-    format_temperature, merge_battery_sysfs, merged_health, parse_dumpsys_battery,
-    parse_sysfs_battery,
+    capacity_health_percent, format_temperature, merge_battery_sysfs, merged_health,
+    parse_dumpsys_battery, parse_sysfs_battery,
 };
+use crate::battery_catalog::lookup_design_capacity;
 use crate::details::{
     build_battery_details, build_device_details, build_storage_details, build_verification_checks,
     DetailsInput,
@@ -166,7 +167,6 @@ pub fn load_device_summary(serial: &str) -> Result<DeviceSummary, String> {
         device_name.to_string()
     };
 
-    let health = merged_health(&dumpsys, &sysfs);
     let is_charging = dumpsys.status == "Charging";
     let charge_cycles = if dumpsys.cycle_count > 0 {
         dumpsys.cycle_count
@@ -194,6 +194,30 @@ pub fn load_device_summary(serial: &str) -> Result<DeviceSummary, String> {
     let android_version = get_prop(&props, "ro.build.version.release");
     let security_patch = get_prop(&props, "ro.build.version.security_patch");
     let serial = get_prop(&props, "ro.serialno");
+
+    let mut design_capacity = if dumpsys.design_capacity > 0 {
+        dumpsys.design_capacity
+    } else {
+        sysfs.design_capacity
+    };
+    let max_capacity = if dumpsys.full_charge_capacity > 0 {
+        dumpsys.full_charge_capacity
+    } else {
+        sysfs.full_charge_capacity
+    };
+    let mut design_from_catalog = false;
+    if design_capacity == 0 {
+        if let Some(mah) = lookup_design_capacity(&brand, &model, &product) {
+            design_capacity = mah;
+            design_from_catalog = true;
+            dumpsys.design_capacity = mah;
+        }
+    }
+    let health = if max_capacity > 0 && design_capacity > 0 {
+        capacity_health_percent(max_capacity, design_capacity)
+    } else {
+        merged_health(&dumpsys, &sysfs)
+    };
 
     let details_input = DetailsInput {
         props: &props,
@@ -223,7 +247,8 @@ pub fn load_device_summary(serial: &str) -> Result<DeviceSummary, String> {
     };
 
     let device_details = build_device_details(&details_input);
-    let battery_details = build_battery_details(&dumpsys, health, charge_cycles, rooted);
+    let battery_details =
+        build_battery_details(&dumpsys, health, charge_cycles, rooted, design_from_catalog);
     let storage_details = build_storage_details(
         &storage.breakdown,
         &storage_total,
@@ -255,16 +280,9 @@ pub fn load_device_summary(serial: &str) -> Result<DeviceSummary, String> {
         storage_breakdown: storage.breakdown,
         battery_level: dumpsys.level,
         battery_health: health,
-        battery_design_capacity_mah: if dumpsys.design_capacity > 0 {
-            dumpsys.design_capacity
-        } else {
-            sysfs.design_capacity
-        },
-        battery_max_capacity_mah: if dumpsys.full_charge_capacity > 0 {
-            dumpsys.full_charge_capacity
-        } else {
-            sysfs.full_charge_capacity
-        },
+        battery_design_capacity_mah: design_capacity,
+        battery_max_capacity_mah: max_capacity,
+        battery_design_from_catalog: design_from_catalog,
         battery_temperature: format_temperature(dumpsys.temperature_tenths_c),
         battery_charging_power: dumpsys.charging_watts.clone(),
         battery_technology: if dumpsys.technology.is_empty() {

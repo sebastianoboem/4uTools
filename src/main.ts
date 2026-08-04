@@ -56,6 +56,7 @@ interface DeviceSummary {
   batteryHealth: number;
   batteryDesignCapacityMah: number;
   batteryMaxCapacityMah: number;
+  batteryDesignFromCatalog?: boolean;
   batteryTemperature: string;
   batteryChargingPower: string;
   batteryTechnology: string;
@@ -1005,6 +1006,34 @@ async function checkForAppUpdatesOnStartup() {
   }
 }
 
+async function updateBatteryCatalogDb() {
+  const btn = $("btn-update-battery-db") as HTMLButtonElement;
+  if (btn.disabled) return;
+  const ok = await confirm(
+    "Scaricare ~1000 schede tecniche da andreagaleazzi.com?\nPuò richiedere alcuni minuti. Il DB locale verrà aggiornato.",
+    { title: "Aggiorna DB batterie", kind: "info" },
+  );
+  if (!ok) return;
+
+  btn.disabled = true;
+  btn.textContent = "DB batterie: avvio…";
+  showError("");
+  try {
+    const status = await invoke<{
+      entries: number;
+      updatedAt: string;
+      path: string;
+    }>("update_battery_catalog");
+    showError(`DB batterie aggiornato: ${status.entries} modelli.`);
+    if (selectedSerial) await refreshSummary();
+  } catch (e) {
+    showError(`Aggiornamento DB batterie fallito: ${String(e)}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Aggiorna DB batterie";
+  }
+}
+
 async function checkForAppUpdates(silent = true) {
   try {
     const update = await check();
@@ -1113,6 +1142,9 @@ async function init() {
   $("btn-update-later").addEventListener("click", closeUpdateDialog);
   $("btn-update-now").addEventListener("click", () => void installPendingUpdate());
   $("btn-check-update").addEventListener("click", () => void checkForAppUpdates(false));
+  $("btn-update-battery-db").addEventListener("click", () =>
+    void updateBatteryCatalogDb(),
+  );
 
   const updateDlg = document.getElementById("modal-update");
   updateDlg?.addEventListener("click", (e) => {
@@ -1142,6 +1174,26 @@ async function init() {
 
   await listen<PartnerInstallProgress>("partner-install-progress", (ev) =>
     onPartnerInstallProgress(ev.payload),
+  );
+
+  await listen<{ current: number; total: number; phase: string }>(
+    "battery-catalog-progress",
+    (ev) => {
+      const { current, total, phase } = ev.payload;
+      const btn = $("btn-update-battery-db");
+      if (phase === "done") {
+        btn.textContent = "Aggiorna DB batterie";
+        return;
+      }
+      if (phase === "sitemap") {
+        btn.textContent = "DB batterie: sitemap…";
+        return;
+      }
+      btn.textContent =
+        total > 0
+          ? `DB batterie: ${current}/${total}`
+          : "DB batterie: download…";
+    },
   );
 
   void refreshPartnerTools();

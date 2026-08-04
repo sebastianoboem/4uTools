@@ -206,6 +206,7 @@ pub fn build_battery_details(
     health: u32,
     cycles: u32,
     rooted: bool,
+    design_from_catalog: bool,
 ) -> Vec<DetailSection> {
     let health_label = battery_health_label(battery);
     let voltage_v = battery.voltage_mv as f64 / 1000.0;
@@ -220,15 +221,22 @@ pub fn build_battery_details(
         .as_deref()
         .filter(|s| !s.is_empty());
 
-    let mut spec_rows = vec![
-        row(
-            "Design Capacity",
-            if battery.design_capacity > 0 {
-                format!("{} mAh", battery.design_capacity)
+    let design_row = if battery.design_capacity > 0 {
+        DetailRow {
+            label: "Design Capacity".to_string(),
+            value: format!("{} mAh", battery.design_capacity),
+            note: if design_from_catalog {
+                Some("catalogo schede tecniche".to_string())
             } else {
-                "N/A".to_string()
+                None
             },
-        ),
+        }
+    } else {
+        row("Design Capacity", "N/A")
+    };
+
+    let mut spec_rows = vec![
+        design_row,
         row(
             "Current Capacity",
             if battery.charge_counter_mah > 0 {
