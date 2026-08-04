@@ -1058,16 +1058,32 @@ async function installPendingUpdate() {
   ($("btn-update-later") as HTMLButtonElement).disabled = true;
   $("update-progress").classList.remove("hidden");
 
+  let downloaded = 0;
+  let contentLength = 0;
   try {
     await update.downloadAndInstall((event) => {
-      if (event.event === "Progress") {
-        const mb = (event.data.chunkLength / (1024 * 1024)).toFixed(1);
-        $("update-progress-text").textContent = `Download in corso… (+${mb} MB)`;
+      if (event.event === "Started") {
+        contentLength = event.data.contentLength ?? 0;
+        $("update-progress-text").textContent = "Download in corso…";
+      } else if (event.event === "Progress") {
+        downloaded += event.data.chunkLength;
+        const doneMb = (downloaded / (1024 * 1024)).toFixed(1);
+        if (contentLength > 0) {
+          const totalMb = (contentLength / (1024 * 1024)).toFixed(1);
+          const pct = Math.min(100, Math.round((downloaded / contentLength) * 100));
+          $("update-progress-text").textContent =
+            `Download in corso… ${doneMb}/${totalMb} MB (${pct}%)`;
+        } else {
+          $("update-progress-text").textContent =
+            `Download in corso… ${doneMb} MB`;
+        }
+      } else if (event.event === "Finished") {
+        $("update-progress-text").textContent = "Installazione…";
       }
     });
     await relaunch();
   } catch (e) {
-    showError(`Aggiornamento fallito: ${e}. Se persiste, scarica l'installer da SourceForge o GitHub Releases.`);
+    showError(`Aggiornamento fallito: ${e}. Se persiste, scarica l'installer da GitHub Releases.`);
     closeUpdateDialog();
   }
 }

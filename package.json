@@ -1,7 +1,7 @@
 {
   "name": "4utools",
   "private": true,
-  "version": "1.3.2",
+  "version": "1.3.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,6 @@
     "tauri": "tauri",
     "setup:adb": "bash scripts/download-platform-tools.sh",
     "release:manifest": "node scripts/generate-latest-json.mjs",
-    "release:sourceforge": "node scripts/publish-sourceforge-latest.mjs",
     "release:build": "bash scripts/release-build.sh",
     "battery:catalog": "cargo run -p fourutools --bin build-battery-catalog"
   },

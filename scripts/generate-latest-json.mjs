@@ -1,23 +1,17 @@
 #!/usr/bin/env node
 /**
- * Genera latest.json per Tauri updater.
+ * Genera latest.json per Tauri updater (GitHub Releases).
  *
- * Dual publish (SourceForge + GitHub): usa --base-url SourceForge così i
- * download/stats vanno su SF. Lo stesso file va caricato anche sulla GitHub
- * Release (fallback updater) e sul path stabile SF via
- * scripts/publish-sourceforge-latest.mjs.
- *
- * Esempio (SourceForge — preferito, CDN diretto):
+ * Esempio:
  *   node scripts/generate-latest-json.mjs \
- *     --version 1.0.1 \
+ *     --version 1.3.3 \
  *     --notes "Correzioni e miglioramenti" \
- *     --base-url https://downloads.sourceforge.net/project/forutools/releases/v1.0.1 \
- *     --darwin-aarch64 src-tauri/target/release/bundle/macos/4uTools.app.tar.gz.sig \
- *     --darwin-x86_64 src-tauri/target/x86_64-apple-darwin/release/bundle/macos/4uTools.app.tar.gz.sig \
- *     --windows-x86_64 src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/4uTools_1.0.1_x64-setup.exe.sig
+ *     --base-url https://github.com/sebastianoboem/4uTools/releases/download/v1.3.3 \
+ *     --darwin-aarch64 release/staging-1.3.3/4uTools_1.3.3_aarch64.app.tar.gz.sig \
+ *     --darwin-x86_64 release/staging-1.3.3/4uTools_1.3.3_x64.app.tar.gz.sig \
+ *     --windows-x86_64 release/staging-1.3.3/4uTools_1.3.3_x64-setup.exe.sig
  *
- * Esempio (GitHub only, legacy):
- *   ... --base-url https://github.com/sebastianoboem/4uTools/releases/download/v1.0.1
+ * Allega il file generato alla GitHub Release come `latest.json`.
  */
 import { readFileSync, writeFileSync, existsSync, mkdtempSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -100,15 +94,7 @@ for (const [platform, sigPath] of Object.entries(opts.platforms)) {
   }
   verifyMinisign(artifactPath, sigPath, pubkey);
   const signature = readFileSync(sigPath, "utf8").trim();
-  // downloads.sourceforge.net serves the file directly; /files/.../download
-  // can return an HTML landing page (blocks Tauri fallback on HTTP 200).
-  const isDownloadsCdn = opts.baseUrl.includes("downloads.sourceforge.net");
-  const isSourceForgeFiles = opts.baseUrl.includes("sourceforge.net/projects/");
-  const url = isDownloadsCdn
-    ? `${opts.baseUrl}/${artifact}`
-    : isSourceForgeFiles
-      ? `${opts.baseUrl}/${artifact}/download`
-      : `${opts.baseUrl}/${artifact}`;
+  const url = `${opts.baseUrl}/${artifact}`;
   platforms[platform] = {
     signature,
     url,

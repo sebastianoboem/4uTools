@@ -25,7 +25,7 @@ Puoi anche **riavviare** o **spegnere** il telefono, **nascondere serial/IMEI** 
 
 ## Download
 
-Scarica l'installer da **[SourceForge](https://sourceforge.net/projects/forutools/files/releases/)** o dalle **[GitHub Releases](https://github.com/sebastianoboem/4uTools/releases)**:
+Scarica l'installer dalle **[GitHub Releases](https://github.com/sebastianoboem/4uTools/releases)**:
 
 | Piattaforma | File |
 | ----------- | ---- |
@@ -33,7 +33,7 @@ Scarica l'installer da **[SourceForge](https://sourceforge.net/projects/forutool
 | macOS (Intel) | `4uTools_<versione>_x64.dmg` |
 | Windows | `4uTools_<versione>_x64.exe` |
 
-L'app controlla automaticamente all'avvio gli aggiornamenti (SourceForge primario, GitHub in fallback) e propone l'installazione.
+L'app controlla automaticamente all'avvio gli aggiornamenti da GitHub Releases e propone l'installazione.
 
 ---
 
@@ -52,7 +52,7 @@ All'avvio rileva il dispositivo autorizzato e mostra la dashboard **Overview**. 
 
 ### 3. Strumenti collegati
 
-- **AutoBackup**, **AndroidAdwareCleaner** e **GoogleFotoManager** aprono programmi companion: al primo click, se non installati, 4uTools propone di scaricarli (SourceForge primario, GitHub fallback).
+- **AutoBackup**, **AndroidAdwareCleaner** e **GoogleFotoManager** aprono programmi companion: al primo click, se non installati, 4uTools propone di scaricarli.
 
 ---
 
