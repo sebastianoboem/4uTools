@@ -21,7 +21,9 @@ dist/
 
 # Distribution
 build/
+release/
 *.spec
+latest.json
 
 # App
 backup_errors.log
@@ -32,3 +34,6 @@ backup_errors.log
 *.key.pub
 .env
 .env.*
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/

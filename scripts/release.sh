@@ -4,9 +4,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-SF_HOST="sebastianoboem@frs.sourceforge.net"
-SF_PATH="/home/frs/project/autobkup/releases"
-SF_DOWNLOAD_BASE="https://sourceforge.net/projects/autobkup/files/releases"
 GH_REPO_DEFAULT="sebastianoboem/AutoBackup"
 PRIVATE_KEY_DEFAULT="${HOME}/.tauri/autobackup.key"
 
@@ -14,21 +11,22 @@ usage() {
   cat <<'EOF'
 Usage: scripts/release.sh [options]
 
-Build signed release artifacts locally and publish them to GitHub + SourceForge.
+Build signed release artifacts locally and publish them to GitHub Releases.
+
+Pipeline (see docs/RELEASE.md):
+  1. Build firmata locale
+  2. Test updater su server locale (obbligatorio prima del publish)
+  3. Se OK → questo script (GitHub Release + latest.json)
 
 Options:
   --skip-build        Upload existing artifacts without rebuilding
   --skip-windows      Skip Windows cross-compile (macOS host only)
-  --skip-sourceforge  Skip SourceForge SFTP upload
   --notes FILE        Release notes file (default: generated)
   --draft             Create/update GitHub release as draft
   -h, --help          Show this help
 
-On macOS, Windows installers are built locally with cargo-xwin (no GitHub Actions).
-
 Requirements:
   - npm, Rust, gh CLI (authenticated)
-  - SSH access to SourceForge FRS
   - TAURI_SIGNING_PRIVATE_KEY[_PATH] (default: ~/.tauri/autobackup.key)
   - macOS Windows cross-build: brew install llvm nsis && cargo install --locked cargo-xwin
 EOF
@@ -36,7 +34,6 @@ EOF
 
 SKIP_BUILD=0
 SKIP_WINDOWS=0
-SKIP_SF=0
 DRAFT=0
 NOTES_FILE=""
 
@@ -44,7 +41,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-build) SKIP_BUILD=1; shift ;;
     --skip-windows) SKIP_WINDOWS=1; shift ;;
-    --skip-sourceforge) SKIP_SF=1; shift ;;
+    --skip-sourceforge)
+      echo "Nota: SourceForge non è più usato; --skip-sourceforge è ignorato." >&2
+      shift
+      ;;
     --draft) DRAFT=1; shift ;;
     --notes)
       NOTES_FILE="${2:?missing notes file}"
@@ -58,6 +58,7 @@ done
 VERSION="$(node -p "require('./src-tauri/tauri.conf.json').version")"
 TAG="v${VERSION}"
 GH_REPO="$(gh repo view --json nameWithOwner -q .nameWithOwner 2>/dev/null || echo "$GH_REPO_DEFAULT")"
+BASE_URL="https://github.com/${GH_REPO}/releases/download/${TAG}"
 
 if [[ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]]; then
   KEY_PATH="${TAURI_SIGNING_PRIVATE_KEY_PATH:-$PRIVATE_KEY_DEFAULT}"
@@ -128,21 +129,14 @@ detect_platform_key() {
 write_latest_json() {
   local out="$1"
   local notes="${2:-AutoBackup ${TAG}}"
-  local tmp_platforms
-  tmp_platforms="$(mktemp)"
-  echo '{}' >"$tmp_platforms"
+  local manifest_args=(
+    --version "$VERSION"
+    --notes "$notes"
+    --base-url "$BASE_URL"
+    --out "$out"
+  )
 
-  if curl -fsSL "https://github.com/${GH_REPO}/releases/latest/download/latest.json" -o /tmp/autobackup-latest.json 2>/dev/null; then
-    if node -e 'JSON.parse(require("fs").readFileSync("/tmp/autobackup-latest.json","utf8"))' 2>/dev/null; then
-      node -e '
-        const fs = require("fs");
-        const prev = JSON.parse(fs.readFileSync("/tmp/autobackup-latest.json", "utf8"));
-        fs.writeFileSync(process.argv[1], JSON.stringify(prev.platforms || {}));
-      ' "$tmp_platforms"
-    fi
-  fi
-
-  local file sig platform url name
+  local file sig platform
   for file in "${ARTIFACTS[@]}"; do
     case "$file" in
       *.sig) continue ;;
@@ -157,35 +151,10 @@ write_latest_json() {
       echo "  skip (missing .sig): $file"
       continue
     fi
-    name="$(basename "$file")"
-    url="${SF_DOWNLOAD_BASE}/${name}/download"
-    node -e '
-      const fs = require("fs");
-      const platforms = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-      const signature = fs.readFileSync(process.argv[4], "utf8").replace(/\n/g, "");
-      platforms[process.argv[2]] = { url: process.argv[3], signature };
-      fs.writeFileSync(process.argv[1], JSON.stringify(platforms));
-      console.log("  +", process.argv[2], process.argv[3]);
-    ' "$tmp_platforms" "$platform" "$url" "$sig"
+    manifest_args+=(--"$platform" "$sig")
   done
 
-  node -e '
-    const fs = require("fs");
-    const platforms = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-    if (!Object.keys(platforms).length) {
-      console.error("No signed updater platforms found for latest.json");
-      process.exit(1);
-    }
-    const manifest = {
-      version: process.argv[2],
-      notes: process.argv[3],
-      pub_date: new Date().toISOString(),
-      platforms,
-    };
-    fs.writeFileSync(process.argv[4], JSON.stringify(manifest, null, 2) + "\n");
-  ' "$tmp_platforms" "$VERSION" "$notes" "$out"
-
-  rm -f "$tmp_platforms"
+  node "$ROOT/scripts/generate-latest-json.mjs" "${manifest_args[@]}"
 }
 
 if [[ "$SKIP_BUILD" -eq 0 ]]; then
@@ -204,7 +173,7 @@ if [[ -z "$NOTES_FILE" ]]; then
 AutoBackup ${TAG}
 
 - macOS / Windows installers
-- Auto-update via SourceForge (primary) with GitHub fallback
+- Auto-update via GitHub Releases
 - Built locally with \`scripts/release.sh\`
 EOF
 fi
@@ -243,13 +212,6 @@ else
   gh release create "$TAG" "${UPLOAD_FILES[@]}" "${RELEASE_ARGS[@]}"
 fi
 
-if [[ "$SKIP_SF" -eq 0 ]]; then
-  echo "Uploading to SourceForge ${SF_PATH}..."
-  scp "${UPLOAD_FILES[@]}" "${SF_HOST}:${SF_PATH}/"
-else
-  echo "Skipping SourceForge upload."
-fi
-
 echo "Done."
 echo "  GitHub: https://github.com/${GH_REPO}/releases/tag/${TAG}"
-echo "  SourceForge: https://sourceforge.net/projects/autobkup/files/releases/"
+echo "  latest.json: ${BASE_URL%/download/${TAG}}/latest/download/latest.json"
