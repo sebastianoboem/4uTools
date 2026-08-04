@@ -14,8 +14,8 @@ Updater in produzione: **solo GitHub Releases**.
 
 ```json
 "endpoints": [
-  "https://github.com/sebastianoboem/AutoBackup/releases/latest/download/latest.json",
-  "https://raw.githubusercontent.com/sebastianoboem/AutoBackup/updater/latest.json"
+  "https://raw.githubusercontent.com/sebastianoboem/AutoBackup/updater/latest.json",
+  "https://github.com/sebastianoboem/AutoBackup/releases/latest/download/updater.json"
 ]
 ```
 

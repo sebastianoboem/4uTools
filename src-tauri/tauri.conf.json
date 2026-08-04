@@ -59,8 +59,8 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI3MEMwNjUyNENCQ0E4NTEKUldSUnFMeE1VZ1lNdDBhRlBGQnJmSUNXQTZXRmVMTXdZV2x1NUVRMUVqc2lQYW5YYzlJVFF1WUMK",
       "endpoints": [
-        "https://github.com/sebastianoboem/AutoBackup/releases/latest/download/latest.json",
-        "https://raw.githubusercontent.com/sebastianoboem/AutoBackup/updater/latest.json"
+        "https://raw.githubusercontent.com/sebastianoboem/AutoBackup/updater/latest.json",
+        "https://github.com/sebastianoboem/AutoBackup/releases/latest/download/updater.json"
       ]
     }
   }
