@@ -14,9 +14,12 @@ Updater in produzione: **solo GitHub Releases**.
 
 ```json
 "endpoints": [
-  "https://github.com/sebastianoboem/AutoBackup/releases/latest/download/latest.json"
+  "https://github.com/sebastianoboem/AutoBackup/releases/latest/download/latest.json",
+  "https://raw.githubusercontent.com/sebastianoboem/AutoBackup/updater/latest.json"
 ]
 ```
+
+Il branch `updater` viene aggiornato da `scripts/release.sh` come mirror del manifest.
 
 ---
 
