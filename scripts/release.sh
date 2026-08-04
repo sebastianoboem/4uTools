@@ -184,6 +184,8 @@ for file in "${ARTIFACTS[@]}"; do
   cp "$file" "$UPLOAD_DIR/"
 done
 write_latest_json "$UPLOAD_DIR/latest.json" "$NOTES_CONTENT"
+# Prefer updater.json on GitHub Releases (latest.json CDN can stick to deleted blobs)
+cp "$UPLOAD_DIR/latest.json" "$UPLOAD_DIR/updater.json"
 
 echo "Artifacts:"
 find "$UPLOAD_DIR" -type f -print | sed 's/^/  - /'
@@ -232,5 +234,5 @@ rm -rf "$UPDATER_DIR"
 
 echo "Done."
 echo "  GitHub: https://github.com/${GH_REPO}/releases/tag/${TAG}"
-echo "  latest.json: https://github.com/${GH_REPO}/releases/latest/download/latest.json"
+echo "  updater.json: https://github.com/${GH_REPO}/releases/latest/download/updater.json"
 echo "  raw mirror: https://raw.githubusercontent.com/${GH_REPO}/updater/latest.json"
