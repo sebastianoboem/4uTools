@@ -209,6 +209,10 @@ else
   if ! git rev-parse "$TAG" >/dev/null 2>&1; then
     git tag -a "$TAG" -m "AutoBackup ${TAG}"
   fi
+  # gh needs the tag on the remote (or --target) before create
+  if git rev-parse --abbrev-ref --symbolic-full-name '@{u}' >/dev/null 2>&1; then
+    git push origin "refs/tags/${TAG}" 2>/dev/null || git push origin "$TAG"
+  fi
   gh release create "$TAG" "${UPLOAD_FILES[@]}" "${RELEASE_ARGS[@]}"
 fi
 
