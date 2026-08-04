@@ -216,6 +216,21 @@ else
   gh release create "$TAG" "${UPLOAD_FILES[@]}" "${RELEASE_ARGS[@]}"
 fi
 
+# Mirror latest.json on branch `updater` (stable raw.githubusercontent URL)
+UPDATER_DIR="$(mktemp -d)"
+cp "$UPLOAD_DIR/latest.json" "$UPDATER_DIR/latest.json"
+(
+  cd "$UPDATER_DIR"
+  git init -q
+  git checkout -q -b updater
+  git add latest.json
+  git -c user.email="autobackup-release@users.noreply.github.com" -c user.name="AutoBackup Release" commit -qm "updater manifest ${TAG}"
+  git remote add origin "https://github.com/${GH_REPO}.git"
+  git push -f origin updater
+)
+rm -rf "$UPDATER_DIR"
+
 echo "Done."
 echo "  GitHub: https://github.com/${GH_REPO}/releases/tag/${TAG}"
-echo "  latest.json: ${BASE_URL%/download/${TAG}}/latest/download/latest.json"
+echo "  latest.json: https://github.com/${GH_REPO}/releases/latest/download/latest.json"
+echo "  raw mirror: https://raw.githubusercontent.com/${GH_REPO}/updater/latest.json"
