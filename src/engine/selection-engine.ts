@@ -47,7 +47,8 @@ export class SelectionEngine {
   private activeScrollEl: HTMLElement | null = null
   private loopPromise: Promise<void> | null = null
   private callbacks: EngineCallbacks = {}
-  private postAction: 'none' | 'download' | 'delete' = 'none'
+  private shouldDownload = false
+  private shouldDelete = false
 
   setCallbacks(callbacks: EngineCallbacks): void {
     this.callbacks = callbacks
@@ -82,14 +83,16 @@ export class SelectionEngine {
   async start(params?: Partial<SelectionParams>): Promise<void> {
     if (this.controlState === 'running') return
     this.params = { ...DEFAULT_SELECTION_PARAMS, ...params }
-    this.postAction = this.params.downloadAfterSelection ? 'download' : 'none'
+    this.shouldDownload = this.params.downloadAfterSelection
+    this.shouldDelete = false
     await this.runSelection()
   }
 
   async startAndDelete(params?: Partial<SelectionParams>): Promise<void> {
     if (this.controlState === 'running') return
-    this.params = { ...DEFAULT_SELECTION_PARAMS, ...params, downloadAfterSelection: false }
-    this.postAction = 'delete'
+    this.params = { ...DEFAULT_SELECTION_PARAMS, ...params }
+    this.shouldDownload = this.params.downloadAfterSelection
+    this.shouldDelete = true
     await this.runSelection()
   }
 
@@ -129,7 +132,7 @@ export class SelectionEngine {
   private async runWithoutScrollContainer(mainEl: HTMLElement): Promise<void> {
     const existingSelection = this.getReportedSelectedCount()
 
-    if (this.postAction === 'delete' && existingSelection > 0) {
+    if (this.shouldDelete && existingSelection > 0) {
       this.emitLog('info', `${existingSelection} foto già selezionate — avvio eliminazione`)
       await this.completePostAction(existingSelection, 0)
       return
@@ -157,13 +160,20 @@ export class SelectionEngine {
   }
 
   private async completePostAction(total: number, leftovers: number): Promise<void> {
-    if (this.postAction === 'download' && total > 0) {
-      await this.triggerDownload()
-    } else if (this.postAction === 'delete' && total > 0) {
-      await this.triggerDelete()
+    let downloadOk = true
+    if (this.shouldDownload && total > 0) {
+      downloadOk = await this.triggerDownload()
+    }
+    if (this.shouldDelete && total > 0) {
+      if (this.shouldDownload && !downloadOk) {
+        this.emitLog('avviso', 'Eliminazione saltata perché il download non è riuscito')
+      } else {
+        await this.triggerDelete()
+      }
     }
 
-    this.postAction = 'none'
+    this.shouldDownload = false
+    this.shouldDelete = false
     this.state = 'done'
     this.controlState = 'stopped'
     this.emitProgress()
@@ -374,7 +384,7 @@ export class SelectionEngine {
     await this.completePostAction(total, leftovers)
   }
 
-  private async triggerDownload(): Promise<void> {
+  private async triggerDownload(): Promise<boolean> {
     this.emitLog('azione', 'Avvio download…')
     this.stopProgressTicker()
     this.state = 'downloading'
@@ -393,10 +403,10 @@ export class SelectionEngine {
               ? 'Download completato (Maiusc+D)'
               : 'Download completato'
         )
-        return
+        return true
       }
       this.emitLog('errore', `Download non riuscito (${result.step ?? 'sconosciuto'})`)
-      return
+      return false
     }
 
     const menuBtn = findMoreOptionsButton()
@@ -407,11 +417,12 @@ export class SelectionEngine {
       if (downloadItem) {
         downloadItem.click()
         this.emitLog('info', 'Download avviato dal menu')
-        return
+        return true
       }
     }
 
     this.emitLog('errore', 'Impossibile avviare il download')
+    return false
   }
 
   private async triggerDelete(): Promise<void> {

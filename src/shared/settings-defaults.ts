@@ -27,7 +27,7 @@ export const PARAM_TOOLTIPS: Record<keyof SelectionParams, string> = {
   maxSelections:
     'Limite massimo di click di selezione eseguiti dal motore (0 = nessun limite). Il contatore «Selezionate» segue il totale mostrato da Google Foto.',
   downloadAfterSelection:
-    'Al termine della selezione, apre il menu opzioni e avvia il download (Scarica / Maiusc+D).'
+    'Con Avvia: al termine della selezione apre il menu e scarica. Con Elimina: scarica e poi sposta nel cestino.'
 }
 
 export const PARAM_RANGES = {

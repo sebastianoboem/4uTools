@@ -219,4 +219,90 @@ describe('SelectionEngine', () => {
     expect(doneEvents[0]?.total).toBe(2)
     expect(engine.getState()).toBe('done')
   })
+
+  it('downloads then deletes when startAndDelete has downloadAfterSelection', async () => {
+    createGooglePhotosGrid(document, { photoCount: 3, virtualize: false })
+
+    const order: string[] = []
+    let resolveDownload: ((value: { ok: boolean; method?: string }) => void) | null = null
+
+    let deleteClicks = 0
+    const deleteBtn = document.createElement('button')
+    deleteBtn.setAttribute('aria-label', 'Elimina')
+    deleteBtn.addEventListener('click', () => {
+      deleteClicks++
+      order.push('delete')
+      const dialog = document.createElement('div')
+      dialog.setAttribute('role', 'dialog')
+      const confirm = document.createElement('button')
+      confirm.textContent = 'Sposta nel cestino'
+      confirm.addEventListener('click', () => dialog.remove())
+      dialog.appendChild(confirm)
+      document.body.appendChild(dialog)
+    })
+    document.body.appendChild(deleteBtn)
+
+    engine.setCallbacks({
+      onTriggerDownload: () => {
+        order.push('download')
+        return new Promise((resolve) => {
+          resolveDownload = resolve
+        })
+      }
+    })
+
+    const deletePromise = engine.startAndDelete({
+      clickDelay: 0,
+      settleDelay: 5,
+      scrollFraction: 100,
+      passesPerStep: 1,
+      stallPasses: 2,
+      downloadAfterSelection: true
+    })
+
+    await vi.runAllTimersAsync()
+    expect(order).toEqual(['download'])
+    expect(deleteClicks).toBe(0)
+    expect(engine.getState()).toBe('downloading')
+    expect(resolveDownload).not.toBeNull()
+
+    resolveDownload!({ ok: true, method: 'menu' })
+    await vi.runAllTimersAsync()
+    await deletePromise
+
+    expect(order).toEqual(['download', 'delete'])
+    expect(deleteClicks).toBe(1)
+    expect(engine.getState()).toBe('done')
+  })
+
+  it('skips delete when downloadAfterSelection is set but download fails', async () => {
+    createGooglePhotosGrid(document, { photoCount: 3, virtualize: false })
+
+    let deleteClicks = 0
+    const deleteBtn = document.createElement('button')
+    deleteBtn.setAttribute('aria-label', 'Elimina')
+    deleteBtn.addEventListener('click', () => {
+      deleteClicks++
+    })
+    document.body.appendChild(deleteBtn)
+
+    engine.setCallbacks({
+      onTriggerDownload: async () => ({ ok: false, step: 'download-failed' })
+    })
+
+    const deletePromise = engine.startAndDelete({
+      clickDelay: 0,
+      settleDelay: 5,
+      scrollFraction: 100,
+      passesPerStep: 1,
+      stallPasses: 2,
+      downloadAfterSelection: true
+    })
+
+    await vi.runAllTimersAsync()
+    await deletePromise
+
+    expect(deleteClicks).toBe(0)
+    expect(engine.getState()).toBe('done')
+  })
 })

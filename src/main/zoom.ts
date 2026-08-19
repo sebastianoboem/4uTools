@@ -1,13 +1,20 @@
 import type { WebContents } from 'electron'
 
-export const ZOOM_MIN = 0.5
+export const ZOOM_MIN = 0.3
 export const ZOOM_MAX = 3.0
 export const ZOOM_STEP = 0.1
-export const ZOOM_DEFAULT = 1.0
+export const ZOOM_DEFAULT = 0.5
 
 export interface ZoomState {
   factor: number
   percent: number
+}
+
+let lastZoomFactor: number | null = null
+
+/** Test helper: clear remembered zoom so cases stay isolated. */
+export function resetLastZoomFactor(): void {
+  lastZoomFactor = null
 }
 
 export function clampZoom(factor: number): number {
@@ -19,18 +26,21 @@ export function zoomToPercent(factor: number): number {
 }
 
 export function getZoomState(webContents: WebContents | null): ZoomState {
-  const factor = webContents ? webContents.getZoomFactor() : ZOOM_DEFAULT
+  const factor =
+    lastZoomFactor ?? (webContents ? webContents.getZoomFactor() : ZOOM_DEFAULT)
   return { factor, percent: zoomToPercent(factor) }
 }
 
 export function applyZoom(webContents: WebContents, factor: number): ZoomState {
   const next = clampZoom(factor)
+  lastZoomFactor = next
   webContents.setZoomFactor(next)
   return { factor: next, percent: zoomToPercent(next) }
 }
 
 export function stepZoom(webContents: WebContents, direction: -1 | 1): ZoomState {
-  return applyZoom(webContents, webContents.getZoomFactor() + direction * ZOOM_STEP)
+  const current = lastZoomFactor ?? webContents.getZoomFactor()
+  return applyZoom(webContents, current + direction * ZOOM_STEP)
 }
 
 export function resetZoom(webContents: WebContents): ZoomState {

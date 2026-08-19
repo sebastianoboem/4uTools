@@ -40,7 +40,7 @@ declare global {
       onTutorialReposition: (cb: () => void) => () => void
       zoomStep: (direction: -1 | 1) => Promise<{ factor: number; percent: number }>
       zoomReset: () => Promise<{ factor: number; percent: number }>
-      onZoomChanged: (cb: (state: { factor: number }) => void) => () => void
+      onZoomChanged: (cb: (state: { factor: number; percent?: number }) => void) => () => void
       onDevModeChanged: (cb: (state: { enabled: boolean }) => void) => () => void
       onProgress: (cb: (event: ProgressEvent) => void) => () => void
       onDone: (cb: (event: { total: number; leftovers: number }) => void) => () => void
@@ -340,7 +340,9 @@ function bindButtons(): void {
   btnDelete.addEventListener('click', () => {
     if (isRunningUi) return
     const confirmed = window.confirm(
-      'Sei sicuro di voler selezionare tutte le foto visibili e spostarle nel cestino?'
+      chkDownload.checked
+        ? 'Sei sicuro di voler selezionare tutte le foto visibili, scaricarle e poi spostarle nel cestino?'
+        : 'Sei sicuro di voler selezionare tutte le foto visibili e spostarle nel cestino?'
     )
     if (!confirmed) return
 
@@ -352,7 +354,7 @@ function bindButtons(): void {
       errorAlert.classList.add('hidden')
       btnRediagnose.classList.add('hidden')
       try {
-        const params = { ...readParamsFromForm(), downloadAfterSelection: false }
+        const params = readParamsFromForm()
         await window.panelApi.saveSettings(params)
         setRunControlsMode(true)
         await window.panelApi.deleteSelected(params)
@@ -494,8 +496,8 @@ async function init(): Promise<void> {
     pageStatus = status
     updatePageUi()
   })
-  window.panelApi.onZoomChanged(({ factor }) => {
-    updateZoomLabel(Math.round(factor * 100))
+  window.panelApi.onZoomChanged(({ factor, percent }) => {
+    updateZoomLabel(percent ?? Math.round(factor * 100))
   })
   window.panelApi.onDevModeChanged(({ enabled }) => {
     updateDevModeUi(enabled)

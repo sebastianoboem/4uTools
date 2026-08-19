@@ -1,8 +1,14 @@
-export const SF_PROJECT_DEFAULT = 'googlefotomanager'
+declare const __GFM_BAKED_UPDATE_FEED_URL__: string | undefined
 
-/** Stable generic feed directory (trailing slash required). */
-export const SOURCEFORGE_UPDATE_URL =
-  `https://downloads.sourceforge.net/project/${SF_PROJECT_DEFAULT}/releases/`
+/** Optional generic feed for local staging (http://127.0.0.1:…/). Never set in production builds. */
+export function localUpdateFeedUrl(): string | undefined {
+  const baked =
+    typeof __GFM_BAKED_UPDATE_FEED_URL__ === 'string'
+      ? __GFM_BAKED_UPDATE_FEED_URL__.trim()
+      : ''
+  const fromEnv = process.env.GFM_UPDATE_FEED_URL?.trim() || ''
+  return fromEnv || baked || undefined
+}
 
 export const GITHUB_UPDATE_FEED = {
   provider: 'github' as const,
@@ -10,9 +16,10 @@ export const GITHUB_UPDATE_FEED = {
   repo: 'GoogleFotoManager'
 }
 
-export function sourceforgeFeed(url = SOURCEFORGE_UPDATE_URL) {
+export function genericFeed(url: string) {
+  const normalized = url.endsWith('/') ? url : `${url}/`
   return {
     provider: 'generic' as const,
-    url
+    url: normalized
   }
 }

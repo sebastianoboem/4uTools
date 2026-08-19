@@ -92,8 +92,8 @@ contextBridge.exposeInMainWorld('panelApi', {
     ipcRenderer.on(IPC.PANEL_PAGE_STATUS, handler)
     return () => ipcRenderer.removeListener(IPC.PANEL_PAGE_STATUS, handler)
   },
-  onZoomChanged: (cb: (state: { factor: number }) => void): (() => void) => {
-    const handler = (_: unknown, payload: { factor: number }) => cb(payload)
+  onZoomChanged: (cb: (state: { factor: number; percent?: number }) => void): (() => void) => {
+    const handler = (_: unknown, payload: { factor: number; percent?: number }) => cb(payload)
     ipcRenderer.on(IPC.PANEL_ZOOM_CHANGED, handler)
     return () => ipcRenderer.removeListener(IPC.PANEL_ZOOM_CHANGED, handler)
   },

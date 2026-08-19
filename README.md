@@ -39,11 +39,11 @@ npm test
 
 ## Aggiornamenti
 
-All’avvio l’app controlla prima **SourceForge** (`…/googlefotomanager/releases/latest.yml`), poi in fallback **GitHub Releases** se SourceForge non risponde.
+All’avvio l’app controlla aggiornamenti su **GitHub Releases** (`latest.yml` / `latest-mac.yml`).
 
 ## Build e release
 
-Ogni release contiene **3 installer** + `latest.yml` (metadato auto-update).
+Pipeline: test updater locale → se OK → publish GitHub. Dettagli in [`docs/RELEASE.md`](docs/RELEASE.md).
 
 ```bash
 npm run build:release
@@ -55,15 +55,9 @@ npm run build:release
 | macOS Intel         | `Google.Foto.Manager-{version}-x64-Intel.dmg`          |
 | Windows             | `Google.Foto.Manager-{version}.exe`                    |
 
-Pubblicazione dual (GitHub + SourceForge):
-
 ```bash
-export SF_USER=tuo_username_sourceforge
-# opzionale: export SF_PROJECT=googlefotomanager
-npm run release:publish -- 1.2.4 /path/to/release-notes.md
+npm run release:publish -- 1.3.2 /path/to/release-notes.md
 ```
-
-Serve accesso SSH a `frs.sourceforge.net`. Su SourceForge i file vanno in `releases/` (path fisso per l’auto-update). La GitHub Integration di SF può comunque rispecchiare le release GitHub in altre cartelle.
 
 
 

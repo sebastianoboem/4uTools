@@ -25,12 +25,18 @@ function userReleaseFiles(version, dir = releaseDir) {
   )
   const dmgArm = names.find((n) => n.endsWith('.dmg') && n.includes('AppleSilicon'))
   const dmgIntel = names.find((n) => n.endsWith('.dmg') && n.includes('Intel'))
-  if (!exe || !dmgArm || !dmgIntel) {
+  const zipArm = names.find(
+    (n) => n.endsWith('.zip') && n.includes(version) && n.includes('arm64')
+  )
+  const zipIntel = names.find(
+    (n) => n.endsWith('.zip') && n.includes(version) && n.includes('x64')
+  )
+  if (!exe || !dmgArm || !dmgIntel || !zipArm || !zipIntel) {
     throw new Error(
-      `Expected 3 release files in ${dir} (exe + 2 dmg), found: ${names.join(', ')}`
+      `Expected exe + 2 dmg + 2 zip in ${dir}, found: ${names.join(', ')}`
     )
   }
-  return [exe, dmgArm, dmgIntel].map((name) => path.join(dir, name))
+  return [exe, dmgArm, dmgIntel, zipArm, zipIntel].map((name) => path.join(dir, name))
 }
 
 function updateMetadataFiles(dir = releaseDir) {

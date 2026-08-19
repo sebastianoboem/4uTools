@@ -16,7 +16,7 @@ import { IPC } from '../shared/ipc-channels'
 import { registerIpcHandlers, notifyDevModeChanged } from './ipc'
 import { isPhotosGoogleUrl } from '../engine/selectors'
 import { getActiveProfileId } from './profile-store'
-import { applyZoom, ZOOM_STEP } from './zoom'
+import { applyZoom, getZoomState, stepZoom, ZOOM_DEFAULT } from './zoom'
 import { activateProfileOnSession, loadPhotosWithProfile } from './profile-load'
 import {
   initTutorialOverlay,
@@ -63,20 +63,27 @@ function layoutViews(): void {
   layoutTutorialOverlay(width, height)
 }
 
+function notifyPanelZoom(state: { factor: number; percent: number }): void {
+  panelView?.webContents.send(IPC.PANEL_ZOOM_CHANGED, state)
+}
+
 function setupPhotosZoom(webContents: Electron.WebContents): void {
+  notifyPanelZoom(applyZoom(webContents, ZOOM_DEFAULT))
+  webContents.once('did-finish-load', () => {
+    notifyPanelZoom(applyZoom(webContents, ZOOM_DEFAULT))
+  })
+
   webContents.on('before-input-event', (event, input) => {
     if (input.type !== 'mouseWheel') return
     const hasZoomModifier = input.control || input.meta
     if (!hasZoomModifier) return
 
     event.preventDefault()
-    applyZoom(webContents, webContents.getZoomFactor() + (input.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP))
+    notifyPanelZoom(stepZoom(webContents, input.deltaY > 0 ? -1 : 1))
   })
 
   webContents.on('zoom-changed', () => {
-    panelView?.webContents.send(IPC.PANEL_ZOOM_CHANGED, {
-      factor: webContents.getZoomFactor()
-    })
+    notifyPanelZoom(getZoomState(webContents))
   })
 }
 

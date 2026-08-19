@@ -1,7 +1,11 @@
 import { app, BrowserWindow, dialog } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { prepareAppQuit } from './app-quit'
-import { GITHUB_UPDATE_FEED, sourceforgeFeed } from '../shared/update-feeds'
+import {
+  GITHUB_UPDATE_FEED,
+  genericFeed,
+  localUpdateFeedUrl
+} from '../shared/update-feeds'
 
 const UPDATE_HTML = `<!DOCTYPE html>
 <html lang="it">
@@ -64,16 +68,6 @@ const UPDATE_HTML = `<!DOCTYPE html>
 </html>`
 
 let updateWindow: BrowserWindow | null = null
-
-export type UpdateFeedKind = 'sourceforge' | 'github'
-
-/** Exported for tests: whether an updater error should try the GitHub fallback. */
-export function shouldFallbackToGitHub(
-  currentFeed: UpdateFeedKind,
-  alreadyTriedGithub: boolean
-): boolean {
-  return currentFeed === 'sourceforge' && !alreadyTriedGithub
-}
 
 export function shouldRunStartupUpdateCheck(): boolean {
   return app.isPackaged
@@ -143,12 +137,13 @@ function configureAutoUpdater(): void {
   autoUpdater.allowDowngrade = false
 }
 
-function applyFeed(feed: UpdateFeedKind): void {
-  if (feed === 'sourceforge') {
-    autoUpdater.setFeedURL(sourceforgeFeed())
-  } else {
-    autoUpdater.setFeedURL(GITHUB_UPDATE_FEED)
+function applyUpdateFeed(): void {
+  const localUrl = localUpdateFeedUrl()
+  if (localUrl) {
+    autoUpdater.setFeedURL(genericFeed(localUrl))
+    return
   }
+  autoUpdater.setFeedURL(GITHUB_UPDATE_FEED)
 }
 
 async function promptRestartToInstall(version: string): Promise<never> {
@@ -190,8 +185,6 @@ export async function runStartupUpdateCheck(): Promise<void> {
 
   return new Promise((resolve) => {
     let settled = false
-    let currentFeed: UpdateFeedKind = 'sourceforge'
-    let triedGithub = false
 
     const finish = (): void => {
       if (settled) return
@@ -200,38 +193,22 @@ export async function runStartupUpdateCheck(): Promise<void> {
       resolve()
     }
 
-    const startCheck = (feed: UpdateFeedKind): void => {
-      currentFeed = feed
-      applyFeed(feed)
-      setUpdateUi({
-        title: 'Controllo aggiornamenti…',
-        message:
-          feed === 'sourceforge'
-            ? 'Verifica aggiornamenti su SourceForge…'
-            : 'Verifica aggiornamenti su GitHub (fallback)…'
-      })
-      void autoUpdater.checkForUpdates().catch((error: Error) => {
-        handleUpdaterError(error)
-      })
-    }
+    const localUrl = localUpdateFeedUrl()
+    setUpdateUi({
+      title: 'Controllo aggiornamenti…',
+      message: localUrl
+        ? 'Verifica aggiornamenti (feed locale)…'
+        : 'Verifica aggiornamenti su GitHub…'
+    })
 
-    const handleUpdaterError = (error: Error): void => {
-      console.warn('[auto-updater]', currentFeed, error.message)
-      if (shouldFallbackToGitHub(currentFeed, triedGithub)) {
-        triedGithub = true
-        startCheck('github')
-        return
-      }
-      finish()
-    }
+    applyUpdateFeed()
 
     autoUpdater.on('checking-for-update', () => {
       setUpdateUi({
         title: 'Controllo aggiornamenti…',
-        message:
-          currentFeed === 'sourceforge'
-            ? 'Verifica aggiornamenti su SourceForge…'
-            : 'Verifica aggiornamenti su GitHub (fallback)…'
+        message: localUrl
+          ? 'Verifica aggiornamenti (feed locale)…'
+          : 'Verifica aggiornamenti su GitHub…'
       })
     })
 
@@ -259,9 +236,13 @@ export async function runStartupUpdateCheck(): Promise<void> {
     })
 
     autoUpdater.on('error', (error) => {
-      handleUpdaterError(error)
+      console.warn('[auto-updater]', error.message)
+      finish()
     })
 
-    startCheck('sourceforge')
+    void autoUpdater.checkForUpdates().catch((error: Error) => {
+      console.warn('[auto-updater]', error.message)
+      finish()
+    })
   })
 }

@@ -19,11 +19,11 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     target: '#btn-delete',
-    html: 'Seleziona e poi elimina'
+    html: 'Seleziona e poi elimina. Se «Scarica» è attivo, prima scarica e poi elimina.'
   },
   {
     target: '.download-option',
-    html: 'Seleziona e poi scarica'
+    html: 'Con Avvia: seleziona e poi scarica. Con Elimina: seleziona, scarica e poi elimina.'
   },
   {
     target: '#zoom-section',

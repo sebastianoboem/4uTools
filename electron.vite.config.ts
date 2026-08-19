@@ -1,9 +1,14 @@
 import { resolve } from 'node:path'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 
+const bakedLocalFeed = process.env.GFM_UPDATE_FEED_URL?.trim() || ''
+
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
+    define: {
+      __GFM_BAKED_UPDATE_FEED_URL__: JSON.stringify(bakedLocalFeed)
+    },
     build: {
       rollupOptions: {
         input: {
