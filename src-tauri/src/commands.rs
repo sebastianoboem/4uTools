@@ -4,8 +4,15 @@ use package_scanner::ScannedPackage;
 use reputation_db::{row_is_suspicious, PackageReputation};
 use serde::{Deserialize, Serialize};
 use system_setup::{load_guides, resolve_guide, DeviceGuides, GuideStep};
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::ipc::Channel;
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
+
+static STARTUP_SYNC_DONE: AtomicBool = AtomicBool::new(false);
+
+pub fn mark_startup_sync_done() {
+    STARTUP_SYNC_DONE.store(true, Ordering::SeqCst);
+}
 use uninstall_engine::{UninstallEngine, UninstallResult};
 
 pub const SUSPICIOUS_THRESHOLD: u64 = reputation_db::SUSPICIOUS_UNINSTALL_THRESHOLD;
@@ -166,9 +173,29 @@ pub fn list_devices() -> Result<Vec<AdbDevice>, String> {
         .map_err(|e| e.to_string())
 }
 
+fn sync_status(state: &AppState) -> Result<cloud_sync::SyncStatus, String> {
+    let provider_id = {
+        let config = state.config.lock().map_err(|e| e.to_string())?;
+        config.sync_provider.clone().unwrap_or_else(|| "local".into())
+    };
+    let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
+    let mut status = sync.status_for(&provider_id);
+    status.startup_pending = !STARTUP_SYNC_DONE.load(Ordering::SeqCst);
+    Ok(status)
+}
+
+async fn reconcile_off_main(app: AppHandle) -> Result<cloud_sync::SyncStatus, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<AppState>();
+        reconcile_state(state.inner())
+    })
+    .await
+    .map_err(|e| format!("sync interrotta: {e}"))?
+}
+
 #[tauri::command(rename_all = "snake_case")]
-pub fn sync_pull(state: State<'_, AppState>) -> Result<cloud_sync::SyncStatus, String> {
-    reconcile_state(&state)
+pub async fn sync_pull(app: AppHandle) -> Result<cloud_sync::SyncStatus, String> {
+    reconcile_off_main(app).await
 }
 
 pub fn reconcile_quiet(state: &AppState) {
@@ -183,12 +210,14 @@ fn reconcile_state_inner(state: &AppState) -> Result<cloud_sync::SyncStatus, Str
     let mut sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
     let db = state.db.lock().map_err(|e| e.to_string())?;
     sync.reconcile(&db).map_err(|e| e.to_string())?;
-    Ok(sync.status())
+    drop(db);
+    drop(sync);
+    sync_status(state)
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub fn sync_push(state: State<'_, AppState>) -> Result<cloud_sync::SyncStatus, String> {
-    reconcile_state(&state)
+pub async fn sync_push(app: AppHandle) -> Result<cloud_sync::SyncStatus, String> {
+    reconcile_off_main(app).await
 }
 
 #[derive(Clone, Serialize)]
@@ -261,8 +290,29 @@ fn scan_packages_streaming(
     Ok(())
 }
 
+fn load_reputations(
+    state: &AppState,
+    viewer: Option<String>,
+) -> Result<std::collections::HashMap<String, PackageReputation>, String> {
+    {
+        let mut sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
+        if sync.is_supabase() {
+            let db = state.db.lock().map_err(|e| e.to_string())?;
+            let _ = sync.pull_stats(&db);
+        }
+    }
+    let db = state.db.lock().map_err(|e| e.to_string())?;
+    Ok(db
+        .all_reputations(viewer.as_deref())
+        .unwrap_or_default()
+        .into_iter()
+        .map(|r| (r.package_name.clone(), r))
+        .collect())
+}
+
 #[tauri::command(rename_all = "snake_case")]
 pub async fn scan_packages(
+    app: AppHandle,
     state: State<'_, AppState>,
     user_only: bool,
     serial: Option<String>,
@@ -273,23 +323,14 @@ pub async fn scan_packages(
     } else {
         AdbBridge::new().ok().and_then(|bridge| bridge.get_serial().ok())
     };
-    let reputations: std::collections::HashMap<String, PackageReputation> = {
-        {
-            let mut sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
-            if sync.is_supabase() {
-                let db = state.db.lock().map_err(|e| e.to_string())?;
-                let _ = sync.pull_stats(&db);
-            }
-        }
-        let db = state.db.lock().map_err(|e| e.to_string())?;
-        db.all_reputations(viewer.as_deref())
-            .unwrap_or_default()
-            .into_iter()
-            .map(|r| (r.package_name.clone(), r))
-            .collect()
-    };
-
     let metadata_cache_path = state.metadata_cache_path.clone();
+    let reputations = tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<AppState>();
+        load_reputations(state.inner(), viewer)
+    })
+    .await
+    .map_err(|e| format!("sync interrotta: {e}"))??;
+
     tauri::async_runtime::spawn_blocking(move || {
         scan_packages_streaming(user_only, serial, reputations, metadata_cache_path, on_progress)
     })
@@ -443,8 +484,7 @@ pub fn set_airplane_mode(enabled: bool, serial: Option<String>) -> Result<String
 
 #[tauri::command(rename_all = "snake_case")]
 pub fn get_sync_status(state: State<'_, AppState>) -> Result<cloud_sync::SyncStatus, String> {
-    let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
-    Ok(sync.status())
+    sync_status(&state)
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -584,8 +624,8 @@ pub fn set_sync_folder(state: State<'_, AppState>, folder: Option<String>) -> Re
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub fn sync_now(state: State<'_, AppState>) -> Result<cloud_sync::SyncStatus, String> {
-    reconcile_state(&state)
+pub async fn sync_now(app: AppHandle) -> Result<cloud_sync::SyncStatus, String> {
+    reconcile_off_main(app).await
 }
 
 #[derive(Debug, Deserialize)]

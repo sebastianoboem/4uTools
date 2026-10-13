@@ -103,6 +103,8 @@ interface SyncStatus {
   last_pull: string | null;
   last_push: string | null;
   last_error: string | null;
+  provider_label: string;
+  startup_pending: boolean;
 }
 
 interface SyncProviderInfo {
@@ -139,6 +141,7 @@ let sortAsc = false;
 let guidesCache: DeviceGuides | null = null;
 let connectionAttempts = 0;
 const CONNECTION_ATTEMPTS_BEFORE_POPUP = 3;
+let deviceSession = 0;
 let guideDebounceTimer: number | null = null;
 
 const GENERIC_GUIDE_STEPS: GuideStep[] = [
@@ -463,6 +466,54 @@ async function tryConnect(): Promise<boolean> {
   return false;
 }
 
+function deviceStillPresent(status: AdbStatus): boolean {
+  if (deviceSerial) {
+    return status.devices.some((d) => d.serial === deviceSerial && d.state === "device");
+  }
+  return status.has_authorized_device;
+}
+
+async function waitUntilDisconnected(session: number): Promise<void> {
+  let misses = 0;
+  while (session === deviceSession) {
+    await delay(1000);
+    if (session !== deviceSession) return;
+    let present = false;
+    try {
+      present = deviceStillPresent(await invoke<AdbStatus>("get_adb_status"));
+    } catch {
+      present = false;
+    }
+    if (session !== deviceSession) return;
+    if (present) {
+      misses = 0;
+      continue;
+    }
+    misses += 1;
+    if (misses >= 2) return;
+  }
+}
+
+function dropDeviceSession() {
+  deviceSession += 1;
+  packages = [];
+  selectedPackages.clear();
+  deviceSerial = "";
+  deviceBrand = "";
+  deviceModel = "";
+  lastRemoved = [];
+  scanInFlight = false;
+  operationInFlight = false;
+  setPackagesLoading(false);
+  setScanControlsDisabled(false);
+  ($("#scan-info") as HTMLElement).textContent = "Nessun dispositivo collegato";
+  renderTable();
+  closeSettings();
+  optimizeRunning = false;
+  closeOptimize();
+  closeUpdateDialog();
+}
+
 async function runPhase2(): Promise<void> {
   connectionAttempts = 0;
   await loadBrandOptions();
@@ -475,8 +526,14 @@ async function runPhase2(): Promise<void> {
 
     if (await tryConnect()) {
       closeConnectionDialog();
-      await onDeviceConnected();
-      return;
+      const session = deviceSession;
+      const untilGone = waitUntilDisconnected(session);
+      void onDeviceConnected(session);
+      await untilGone;
+      if (session !== deviceSession) continue;
+      dropDeviceSession();
+      connectionAttempts = CONNECTION_ATTEMPTS_BEFORE_POPUP - 1;
+      continue;
     }
 
     if (connectionAttempts >= CONNECTION_ATTEMPTS_BEFORE_POPUP) {
@@ -501,17 +558,26 @@ async function runPhase2(): Promise<void> {
 
 // --- FASE 3: connessione OK → pull DB ---
 
-async function onDeviceConnected() {
+async function onDeviceConnected(session: number) {
+  if (session !== deviceSession) return;
   showMain();
 
+  beginDbOp();
   try {
     await invoke("sync_pull");
   } catch {
     // solo locale o remoto non disponibile — continua senza bloccare
+  } finally {
+    endDbOp();
   }
 
-  await refreshDbPanel();
-  await scanPackages();
+  if (session !== deviceSession) return;
+  try {
+    await scanPackages();
+  } catch (e) {
+    if (session !== deviceSession) return;
+    ($("#scan-info") as HTMLElement).textContent = `Errore: ${e}`;
+  }
 }
 
 let pendingUpdate: Update | null = null;
@@ -603,6 +669,7 @@ async function installPendingUpdate() {
 }
 
 let syncConfigured = false;
+let dbOps = 0;
 
 function updateSyncButton(configured: boolean, loading = false) {
   syncConfigured = configured;
@@ -614,40 +681,59 @@ function updateSyncButton(configured: boolean, loading = false) {
   btn.disabled = !configured || loading;
 }
 
-function setSyncButtonLoading(loading: boolean) {
-  updateSyncButton(syncConfigured, loading);
+function paintDbVerifying() {
+  updateSyncButton(syncConfigured, true);
+  const device = deviceSerial
+    ? `<span class="muted">${escapeHtml(deviceBrand)} ${escapeHtml(deviceModel)} · ${escapeHtml(deviceSerial)}</span>`
+    : "";
+  const el = $("#db-status");
+  if (el) el.innerHTML = `<span class="sync-badge sync-local">Verifico...</span>${device}`;
+}
+
+function beginDbOp() {
+  dbOps += 1;
+  paintDbVerifying();
+}
+
+function endDbOp() {
+  dbOps = Math.max(0, dbOps - 1);
+  if (dbOps === 0) void refreshDbPanel();
 }
 
 async function runSync(notify = true) {
-  const btn = $("#btn-sync-full") as HTMLButtonElement | null;
-  if (!syncConfigured || btn?.classList.contains("loading")) return;
+  if (!syncConfigured || dbOps > 0) return;
 
-  setSyncButtonLoading(true);
+  beginDbOp();
   try {
     await invoke("sync_now");
-    await scanPackages();
-    await refreshDbPanel();
-    if (notify) toast("Sync completato.", "success");
   } catch (e) {
     if (notify) toast(`Sync non riuscito: ${e}`, "error");
     throw e;
   } finally {
-    setSyncButtonLoading(false);
+    endDbOp();
   }
+
+  await scanPackages();
+  if (notify) toast("Sync completato.", "success");
 }
 
 async function refreshDbPanel() {
   const status = await invoke<SyncStatus>("get_sync_status");
-  const btn = $("#btn-sync-full") as HTMLButtonElement | null;
-  updateSyncButton(status.configured, btn?.classList.contains("loading") ?? false);
+  const verifying = dbOps > 0 || status.startup_pending;
+  updateSyncButton(status.configured, verifying);
   const el = $("#db-status")!;
+  const device = `<span class="muted">${escapeHtml(deviceBrand)} ${escapeHtml(deviceModel)} · ${escapeHtml(deviceSerial)}</span>`;
 
-  const modeLabel = status.configured ? "sincronizzato" : "solo locale";
+  if (verifying) {
+    el.innerHTML = `<span class="sync-badge sync-local">Verifico...</span>${deviceSerial ? device : ""}`;
+    return;
+  }
+
   const badgeClass = status.configured ? "sync-synced" : "sync-local";
 
   el.innerHTML = `
-    <span class="sync-badge ${badgeClass}">DB: ${modeLabel}</span>
-    <span class="muted">${deviceBrand} ${deviceModel} · ${deviceSerial}</span>
+    <span class="sync-badge ${badgeClass}">DB: ${escapeHtml(status.provider_label)}</span>
+    ${device}
     ${status.last_pull ? `<span class="muted">↓ ${formatTime(status.last_pull)}</span>` : ""}
     ${status.last_push ? `<span class="muted">↑ ${formatTime(status.last_push)}</span>` : ""}
     ${status.last_error ? `<span style="color:#f87171">${escapeHtml(status.last_error)}</span>` : ""}
@@ -911,6 +997,7 @@ function updateActionButtons() {
 async function scanPackages(options?: { forceFull?: boolean }) {
   if (scanInFlight || operationInFlight) return;
 
+  const session = deviceSession;
   const hideSystem = !flagShown("system");
   const userOnly = options?.forceFull ? false : hideSystem;
   const longHint = !userOnly;
@@ -920,13 +1007,22 @@ async function scanPackages(options?: { forceFull?: boolean }) {
   packages = [];
   setPackagesLoading(true, longHint);
   ($("#scan-info") as HTMLElement).textContent = "Scansione app…";
+  beginDbOp();
+  let pullSettled = false;
+  const settlePull = () => {
+    if (pullSettled) return;
+    pullSettled = true;
+    endDbOp();
+  };
 
   let received = 0;
   let total = 0;
 
   const onProgress = new Channel<ScanProgressEvent>();
   onProgress.onmessage = (event) => {
+    if (session !== deviceSession) return;
     if (event.kind === "started") {
+      settlePull();
       total = event.total;
       deviceSerial = event.device_serial;
       deviceBrand = event.device_brand ?? deviceBrand;
@@ -973,11 +1069,15 @@ async function scanPackages(options?: { forceFull?: boolean }) {
       serial: deviceSerial || null,
       on_progress: onProgress,
     });
+    if (session !== deviceSession) return;
     await refreshDbPanel();
   } catch (e) {
+    if (session !== deviceSession) return;
     ($("#scan-info") as HTMLElement).textContent = `Errore: ${e}`;
     toast(`Errore scansione: ${e}`, "error");
   } finally {
+    settlePull();
+    if (session !== deviceSession) return;
     scanInFlight = false;
     operationInFlight = false;
     setPackagesLoading(false);
@@ -1069,6 +1169,7 @@ async function bulkUninstall() {
   if (!selected.length || operationInFlight) return;
   if (!confirm(`Disinstallare ${selected.length} app selezionate?`)) return;
 
+  const session = deviceSession;
   operationInFlight = true;
   setScanControlsDisabled(true);
   ($("#btn-uninstall") as HTMLButtonElement).disabled = true;
@@ -1078,6 +1179,7 @@ async function bulkUninstall() {
 
   const onProgress = new Channel<UninstallProgressEvent>();
   onProgress.onmessage = (event) => {
+    if (session !== deviceSession) return;
     if (event.kind === "started") {
       total = event.total;
       setOperationProgress(true, 0, total, `Disinstallazione… 0 / ${total}`);
@@ -1104,15 +1206,19 @@ async function bulkUninstall() {
       req: { packages: selected, dry_run: false, serial: null },
       on_progress: onProgress,
     });
+    if (session !== deviceSession) return;
     lastRemoved = removed;
 
     operationInFlight = false;
     await scanPackages();
     await refreshDbPanel();
+    if (session !== deviceSession) return;
     toast(`${lastRemoved.length} app rimosse.`, "success");
   } catch (e) {
+    if (session !== deviceSession) return;
     toast(`Errore disinstallazione: ${e}`, "error");
   } finally {
+    if (session !== deviceSession) return;
     operationInFlight = false;
     setOperationProgress(false, 0, 0, "");
     setScanControlsDisabled(false);
@@ -1461,6 +1567,7 @@ function tailPath(path: string): string {
 
 async function openOptimize() {
   if (operationInFlight) return;
+  const session = deviceSession;
   const token = ++optimizeToken;
   optimizeRunning = false;
   optimizeScan = null;
@@ -1476,6 +1583,7 @@ async function openOptimize() {
   if (paths) paths.replaceChildren();
   const onProgress = new Channel<{ label: string }>();
   onProgress.onmessage = (event) => {
+    if (session !== deviceSession || token !== optimizeToken) return;
     const short = tailPath(event.label);
     if (recent[recent.length - 1]?.short === short) return;
     recent.push({ full: event.label, short });
@@ -1495,7 +1603,7 @@ async function openOptimize() {
       serial: deviceSerial || null,
       on_progress: onProgress,
     });
-    if (token !== optimizeToken) return;
+    if (session !== deviceSession || token !== optimizeToken) return;
     optimizeScan = scan;
     for (const category of scan.categories) {
       if (category.estimated || category.count > 0) optimizeChecked.add(category.id);
@@ -1503,7 +1611,7 @@ async function openOptimize() {
     showOptimizePhase("results");
     renderOptimize();
   } catch (e) {
-    if (token !== optimizeToken) return;
+    if (session !== deviceSession || token !== optimizeToken) return;
     ($("#optimize-error") as HTMLElement).textContent = `Errore: ${e}`;
     showOptimizePhase("error");
   }
@@ -1522,6 +1630,7 @@ async function runOptimize() {
   const size = selection.bytes > 0 ? formatBytes(selection.bytes) : "dimensione non misurabile";
   if (!confirm(`Eliminare ${selection.count} elementi, ${size}? L'operazione non è reversibile.`)) return;
 
+  const session = deviceSession;
   optimizeRunning = true;
   operationInFlight = true;
   setScanControlsDisabled(true);
@@ -1531,6 +1640,7 @@ async function runOptimize() {
 
   const onProgress = new Channel<OptimizeProgressEvent>();
   onProgress.onmessage = (event) => {
+    if (session !== deviceSession) return;
     if (event.kind !== "started" && event.kind !== "item") return;
     const current = event.kind === "item" ? event.current ?? 0 : 0;
     const total = event.total ?? 0;
@@ -1549,6 +1659,7 @@ async function runOptimize() {
       },
       on_progress: onProgress,
     });
+    if (session !== deviceSession) return;
     const summary = result.trimmed_system_cache && result.freed_bytes === 0
       ? "Cache di sistema ridotta. Lo spazio liberato non è misurabile."
       : result.trimmed_system_cache
@@ -1564,10 +1675,12 @@ async function runOptimize() {
     showOptimizePhase("result");
     toast(summary, result.errors.length ? "warn" : "success");
   } catch (e) {
+    if (session !== deviceSession) return;
     ($("#optimize-error") as HTMLElement).textContent = `Errore: ${e}`;
     showOptimizePhase("error");
     toast(`Errore pulizia: ${e}`, "error");
   } finally {
+    if (session !== deviceSession) return;
     optimizeRunning = false;
     operationInFlight = false;
     setScanControlsDisabled(false);
@@ -1660,17 +1773,6 @@ window.addEventListener("DOMContentLoaded", () => {
       await updateSettingsStatusText();
     } catch (err) {
       toast(String(err), "error");
-    }
-  });
-
-  $("#btn-settings-sync-now")?.addEventListener("click", async () => {
-    try {
-      await invoke("sync_now");
-      toast("Sync completato", "success");
-      await refreshDbPanel();
-      await updateSettingsStatusText();
-    } catch (e) {
-      toast(String(e), "error");
     }
   });
 

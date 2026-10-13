@@ -53,6 +53,8 @@ pub struct SyncStatus {
     pub last_pull: Option<DateTime<Utc>>,
     pub last_push: Option<DateTime<Utc>>,
     pub last_error: Option<String>,
+    pub provider_label: String,
+    pub startup_pending: bool,
 }
 
 pub struct CloudSync {
@@ -113,7 +115,17 @@ impl CloudSync {
             last_pull: self.last_pull,
             last_push: self.last_push,
             last_error: self.last_error.clone(),
+            provider_label: "Solo locale".into(),
+            startup_pending: false,
         }
+    }
+
+    pub fn status_for(&self, provider_id: &str) -> SyncStatus {
+        let mut status = self.status();
+        if status.configured {
+            status.provider_label = SyncProviderId::from_str_id(provider_id).label().into();
+        }
+        status
     }
 
     /// Legge il remoto, unisce nel DB locale e riscrive solo se il risultato è diverso.

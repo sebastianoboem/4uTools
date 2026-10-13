@@ -39,6 +39,18 @@ impl SyncProviderId {
             _ => Self::Local,
         }
     }
+
+    pub fn label(&self) -> &'static str {
+        match self {
+            Self::Local => "Solo locale",
+            Self::Supabase => "Supabase",
+            Self::GoogleDrive => "Google Drive",
+            Self::Icloud => "iCloud Drive",
+            Self::Onedrive => "OneDrive",
+            Self::Dropbox => "Dropbox",
+            Self::Custom => "Cartella personalizzata",
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]

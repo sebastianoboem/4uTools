@@ -18,12 +18,12 @@
       <section id="screen-main" class="screen-main hidden">
         <div id="db-panel" class="db-panel">
           <div class="db-panel-left">
-            <div id="db-status" class="db-status-text">Database: solo locale</div>
+            <div id="db-status" class="db-status-text"><span class="sync-badge sync-local">Verifico...</span></div>
             <div id="db-activity" class="db-activity hidden"></div>
           </div>
           <div class="db-actions">
             <span id="btn-sync-wrap" class="btn-sync-wrap">
-              <button id="btn-sync-full" class="btn small btn-sync" type="button">
+              <button id="btn-sync-full" class="btn small btn-sync loading" type="button" disabled>
                 <span class="btn-sync-label"><span class="btn-sync-icon" aria-hidden="true">☁</span> Sync</span>
                 <span class="btn-sync-spinner" aria-hidden="true"></span>
               </button>
@@ -157,7 +157,6 @@
           <button id="btn-settings-clear-cache" type="button" class="btn small">Cancella cache scansione</button>
         </section>
         <div class="dialog-actions">
-          <button id="btn-settings-sync-now" type="button" class="btn">Sync ora</button>
           <button id="btn-settings-close" type="button" class="btn primary">Chiudi</button>
         </div>
       </div>

@@ -24,6 +24,7 @@ pub fn run() {
                 if let Some(state) = handle.try_state::<AppState>() {
                     commands::reconcile_quiet(&state);
                 }
+                commands::mark_startup_sync_done();
                 let _ = handle.emit("sync-finished", ());
             });
             Ok(())
