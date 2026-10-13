@@ -1341,6 +1341,19 @@ async function exportReport(format: "csv" | "pdf") {
 
 // --- Init ---
 
+let closeInFlight = false;
+
+async function shutdownAndClose() {
+  if (closeInFlight) return;
+  closeInFlight = true;
+  $("#screen-closing")?.classList.remove("hidden");
+  await Promise.race([
+    invoke("push_reports").catch(() => undefined),
+    delay(8000),
+  ]);
+  await invoke("allow_app_close");
+}
+
 async function boot() {
   const ok = await runPhase1();
   if (!ok) return;
@@ -1697,6 +1710,9 @@ window.addEventListener("DOMContentLoaded", () => {
   }
   void listen("sync-finished", () => {
     void refreshDbPanel();
+  });
+  void listen("app-close-requested", () => {
+    void shutdownAndClose();
   });
   boot();
 

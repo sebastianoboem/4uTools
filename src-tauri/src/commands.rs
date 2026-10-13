@@ -9,9 +9,22 @@ use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, State};
 
 static STARTUP_SYNC_DONE: AtomicBool = AtomicBool::new(false);
+static CLOSE_ALLOWED: AtomicBool = AtomicBool::new(false);
 
 pub fn mark_startup_sync_done() {
     STARTUP_SYNC_DONE.store(true, Ordering::SeqCst);
+}
+
+pub fn close_allowed() -> bool {
+    CLOSE_ALLOWED.load(Ordering::SeqCst)
+}
+
+#[tauri::command]
+pub fn allow_app_close(app: AppHandle) {
+    CLOSE_ALLOWED.store(true, Ordering::SeqCst);
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.close();
+    }
 }
 use uninstall_engine::{UninstallEngine, UninstallResult};
 
@@ -191,6 +204,23 @@ async fn reconcile_off_main(app: AppHandle) -> Result<cloud_sync::SyncStatus, St
     })
     .await
     .map_err(|e| format!("sync interrotta: {e}"))?
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn push_reports(app: AppHandle) -> Result<(), String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<AppState>();
+        let state = state.inner();
+        let mut sync = match state.cloud_sync.try_lock() {
+            Ok(guard) => guard,
+            Err(std::sync::TryLockError::WouldBlock) => return Ok(()),
+            Err(err) => return Err(err.to_string()),
+        };
+        let db = state.db.lock().map_err(|e| e.to_string())?;
+        sync.push_pending(&db).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("invio interrotto: {e}"))?
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -483,8 +513,13 @@ pub fn set_airplane_mode(enabled: bool, serial: Option<String>) -> Result<String
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub fn get_sync_status(state: State<'_, AppState>) -> Result<cloud_sync::SyncStatus, String> {
-    sync_status(&state)
+pub async fn get_sync_status(app: AppHandle) -> Result<cloud_sync::SyncStatus, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let state = app.state::<AppState>();
+        sync_status(state.inner())
+    })
+    .await
+    .map_err(|e| format!("stato sync interrotto: {e}"))?
 }
 
 #[tauri::command(rename_all = "snake_case")]

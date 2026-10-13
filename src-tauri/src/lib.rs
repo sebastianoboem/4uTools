@@ -3,10 +3,7 @@ mod optimizer;
 mod state;
 
 use state::AppState;
-use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{Emitter, Manager};
-
-static EXIT_SYNC_STARTED: AtomicBool = AtomicBool::new(false);
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -20,6 +17,18 @@ pub fn run() {
         .manage(app_state)
         .setup(|app| {
             let handle = app.handle().clone();
+            if let Some(window) = app.get_webview_window("main") {
+                let emit_handle = handle.clone();
+                window.on_window_event(move |event| {
+                    if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                        if commands::close_allowed() {
+                            return;
+                        }
+                        api.prevent_close();
+                        let _ = emit_handle.emit("app-close-requested", ());
+                    }
+                });
+            }
             std::thread::spawn(move || {
                 if let Some(state) = handle.try_state::<AppState>() {
                     commands::reconcile_quiet(&state);
@@ -38,6 +47,7 @@ pub fn run() {
             commands::get_adb_status,
             commands::list_devices,
             commands::sync_pull,
+            commands::push_reports,
             commands::sync_push,
             commands::scan_packages,
             commands::bulk_uninstall,
@@ -49,6 +59,7 @@ pub fn run() {
             commands::set_sync_folder,
             commands::set_supabase_config,
             commands::sync_now,
+            commands::allow_app_close,
             commands::export_report,
             commands::clear_metadata_cache,
             commands::scan_storage,
@@ -56,19 +67,5 @@ pub fn run() {
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
-        .run(|app, event| {
-            if let tauri::RunEvent::ExitRequested { api, .. } = event {
-                if EXIT_SYNC_STARTED.swap(true, Ordering::SeqCst) {
-                    return;
-                }
-                api.prevent_exit();
-                let handle = app.clone();
-                std::thread::spawn(move || {
-                    if let Some(state) = handle.try_state::<AppState>() {
-                        commands::reconcile_quiet(&state);
-                    }
-                    handle.exit(0);
-                });
-            }
-        });
+        .run(|_, _| ());
 }

@@ -140,16 +140,25 @@ impl SupabaseConfig {
         Ok(self.signup()?.access_token)
     }
 
-    pub fn push_and_pull(&self, db: &ReputationDb) -> Result<(), SyncError> {
-        let token = self.access_token()?;
+    pub fn push_pending(&self, db: &ReputationDb) -> Result<(), SyncError> {
         let uninstalls = db.load_uninstall_events()?;
         let votes = db.load_flag_votes()?;
+        if uninstalls.is_empty() && votes.is_empty() {
+            return Ok(());
+        }
+        let token = self.access_token()?;
         if !uninstalls.is_empty() {
             self.rpc(&token, "push_uninstalls", &uninstall_rows(&uninstalls))?;
         }
         if !votes.is_empty() {
             self.rpc(&token, "push_votes", &vote_rows(&votes))?;
         }
+        Ok(())
+    }
+
+    pub fn push_and_pull(&self, db: &ReputationDb) -> Result<(), SyncError> {
+        self.push_pending(db)?;
+        let token = self.access_token()?;
         let stats = self.fetch_stats(&token)?;
         db.replace_remote_stats(&stats)?;
         Ok(())

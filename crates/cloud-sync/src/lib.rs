@@ -128,6 +128,28 @@ impl CloudSync {
         status
     }
 
+    /// Invia solo disinstallazioni e voti. Non scarica i totali.
+    pub fn push_pending(&mut self, db: &ReputationDb) -> Result<(), SyncError> {
+        match &self.backend {
+            SyncBackend::Local => Ok(()),
+            SyncBackend::Folder(_) => self.reconcile_folder(db),
+            SyncBackend::Supabase(cfg) => {
+                let cfg = cfg.clone();
+                match cfg.push_pending(db) {
+                    Ok(()) => {
+                        self.last_push = Some(Utc::now());
+                        self.last_error = None;
+                        Ok(())
+                    }
+                    Err(e) => {
+                        self.last_error = Some(e.to_string());
+                        Err(e)
+                    }
+                }
+            }
+        }
+    }
+
     /// Legge il remoto, unisce nel DB locale e riscrive solo se il risultato è diverso.
     pub fn reconcile(&mut self, db: &ReputationDb) -> Result<(), SyncError> {
         match &self.backend {
