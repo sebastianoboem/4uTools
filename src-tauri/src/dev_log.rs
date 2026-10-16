@@ -5,7 +5,7 @@ use std::sync::{Mutex, OnceLock};
 use std::time::Duration;
 
 // Release GitHub: false. scripts/check-dev-log.mjs rifiuta il manifest se resta true.
-pub const ENABLED: bool = false;
+pub const ENABLED: bool = true;
 
 const MAX_BYTES: u64 = 2 * 1024 * 1024;
 
