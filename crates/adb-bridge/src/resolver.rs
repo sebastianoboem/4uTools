@@ -21,7 +21,9 @@ pub fn resolve_adb_path() -> Option<PathBuf> {
     }
 
     if let Ok(home) = std::env::var("ANDROID_HOME").or_else(|_| std::env::var("ANDROID_SDK_ROOT")) {
-        let candidate = PathBuf::from(home).join("platform-tools").join(adb_exe_name());
+        let candidate = PathBuf::from(home)
+            .join("platform-tools")
+            .join(adb_exe_name());
         if candidate.exists() {
             return Some(candidate);
         }

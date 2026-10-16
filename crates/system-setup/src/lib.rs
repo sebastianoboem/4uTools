@@ -1,7 +1,9 @@
 mod guides;
 mod platform_tools;
 
-pub use guides::{find_guide, find_guide_by_model, resolve_guide, DeviceGuide, DeviceGuides, GuideStep};
+pub use guides::{
+    find_guide, find_guide_by_model, resolve_guide, DeviceGuide, DeviceGuides, GuideStep,
+};
 pub use platform_tools::{ensure_platform_tools, PlatformToolsResult, SystemInfo};
 
 use serde::Serialize;
@@ -53,7 +55,8 @@ pub fn check_setup() -> SetupStatus {
             } else {
                 (
                     false,
-                    "Windows: ADB assente — verrà installato platform-tools con driver USB Google".into(),
+                    "Windows: ADB assente — verrà installato platform-tools con driver USB Google"
+                        .into(),
                 )
             }
         }

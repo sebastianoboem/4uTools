@@ -41,11 +41,7 @@ impl SystemInfo {
         let version = std::env::consts::OS.to_string();
         let arch = std::env::consts::ARCH.to_string();
 
-        Self {
-            os,
-            version,
-            arch,
-        }
+        Self { os, version, arch }
     }
 }
 

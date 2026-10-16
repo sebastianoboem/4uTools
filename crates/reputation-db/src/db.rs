@@ -1,10 +1,10 @@
 use crate::models::{
-    effective_marks, FlagVote, PackageReputation, RemoteStat, ReportEvent,
-    ReputationSnapshot, UninstallEvent, VoteFlag, LEGACY_DEVICE,
+    effective_marks, FlagVote, PackageReputation, RemoteStat, ReportEvent, ReputationSnapshot,
+    UninstallEvent, VoteFlag, LEGACY_DEVICE,
 };
 use chrono::Utc;
 use rusqlite::{params, Connection};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use thiserror::Error;
 use uuid::Uuid;
@@ -96,8 +96,11 @@ impl ReputationDb {
         )?;
         self.ensure_column("packages", "marked_system", "INTEGER NOT NULL DEFAULT 0")?;
         self.ensure_column("packages", "marked_trusted", "INTEGER NOT NULL DEFAULT 0")?;
-        let added_suspicious =
-            self.ensure_column("packages", "marked_suspicious", "INTEGER NOT NULL DEFAULT 0")?;
+        let added_suspicious = self.ensure_column(
+            "packages",
+            "marked_suspicious",
+            "INTEGER NOT NULL DEFAULT 0",
+        )?;
         if added_suspicious {
             self.conn.execute(
                 "UPDATE packages SET marked_suspicious = 1
@@ -130,8 +133,10 @@ impl ReputationDb {
             .filter_map(|r| r.ok())
             .any(|name| name == column);
         if !exists {
-            self.conn
-                .execute(&format!("ALTER TABLE {table} ADD COLUMN {column} {definition}"), [])?;
+            self.conn.execute(
+                &format!("ALTER TABLE {table} ADD COLUMN {column} {definition}"),
+                [],
+            )?;
             return Ok(true);
         }
         Ok(false)
@@ -226,18 +231,24 @@ impl ReputationDb {
         Ok(event)
     }
 
-    pub fn set_vote(&self, package_name: &str, device_serial: &str, flag: &str) -> Result<(), DbError> {
+    pub fn set_vote(
+        &self,
+        package_name: &str,
+        device_serial: &str,
+        flag: &str,
+    ) -> Result<FlagVote, DbError> {
         if device_serial.is_empty() || VoteFlag::parse(flag).is_none() {
             return Err(DbError::BadFlag);
         }
         self.touch_package(package_name)?;
-        self.upsert_vote(&FlagVote {
+        let vote = FlagVote {
             package_name: package_name.to_string(),
             device_serial: device_serial.to_string(),
             flag: flag.to_string(),
             voted_at: Utc::now(),
-        })?;
-        Ok(())
+        };
+        self.upsert_vote(&vote)?;
+        Ok(vote)
     }
 
     fn upsert_vote(&self, vote: &FlagVote) -> Result<(), DbError> {
@@ -275,16 +286,64 @@ impl ReputationDb {
         Ok(())
     }
 
+    pub fn upsert_remote_stat(&self, stat: &RemoteStat) -> Result<(), DbError> {
+        self.conn.execute(
+            "INSERT INTO remote_stats (package_name, uninstall_count, system_votes, trusted_votes, suspicious_votes)
+             VALUES (?1, ?2, ?3, ?4, ?5)
+             ON CONFLICT(package_name) DO UPDATE SET
+               uninstall_count = excluded.uninstall_count,
+               system_votes = excluded.system_votes,
+               trusted_votes = excluded.trusted_votes,
+               suspicious_votes = excluded.suspicious_votes",
+            params![
+                stat.package_name,
+                stat.uninstall_count as i64,
+                stat.system_votes as i64,
+                stat.trusted_votes as i64,
+                stat.suspicious_votes as i64,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn delete_remote_stat(&self, package_name: &str) -> Result<(), DbError> {
+        self.conn.execute(
+            "DELETE FROM remote_stats WHERE package_name = ?1",
+            params![package_name],
+        )?;
+        Ok(())
+    }
+
     pub fn get_reputation(
         &self,
         package_name: &str,
         viewer_serial: Option<&str>,
     ) -> Result<PackageReputation, DbError> {
-        let mut reps = self.reputations_for(&[package_name.to_string()], viewer_serial)?;
+        self.get_reputation_pending(package_name, viewer_serial, &HashSet::new())
+    }
+
+    pub fn get_reputation_pending(
+        &self,
+        package_name: &str,
+        viewer_serial: Option<&str>,
+        pending: &HashSet<String>,
+    ) -> Result<PackageReputation, DbError> {
+        let mut reps = self.reputations_for(&[package_name.to_string()], viewer_serial, pending)?;
         Ok(reps.pop().unwrap_or_else(|| empty_rep(package_name, None)))
     }
 
-    pub fn all_reputations(&self, viewer_serial: Option<&str>) -> Result<Vec<PackageReputation>, DbError> {
+    pub fn all_reputations(
+        &self,
+        viewer_serial: Option<&str>,
+    ) -> Result<Vec<PackageReputation>, DbError> {
+        self.all_reputations_pending(viewer_serial, &HashSet::new())
+    }
+
+    pub fn all_reputations_pending(
+        &self,
+        viewer_serial: Option<&str>,
+        pending: &HashSet<String>,
+    ) -> Result<Vec<PackageReputation>, DbError> {
         let mut names = Vec::new();
         for table in ["packages", "flag_votes", "remote_stats", "uninstall_events"] {
             let mut stmt = self
@@ -297,13 +356,14 @@ impl ReputationDb {
         }
         names.sort();
         names.dedup();
-        self.reputations_for(&names, viewer_serial)
+        self.reputations_for(&names, viewer_serial, pending)
     }
 
     fn reputations_for(
         &self,
         names: &[String],
         viewer_serial: Option<&str>,
+        pending: &HashSet<String>,
     ) -> Result<Vec<PackageReputation>, DbError> {
         let local = self.local_counts()?;
         let remote = self.remote_counts()?;
@@ -316,28 +376,16 @@ impl ReputationDb {
                 .map(|c| c.uninstalls)
                 .unwrap_or(0)
                 .max(remote.map(|c| c.uninstalls).unwrap_or(0));
-            // Un voto esplicito di questo telefono (anche "none") conta da solo:
-            // remote_stats è un aggregato che include ancora il voto precedente fino al prossimo push.
-            let voted_here = mine.contains_key(name);
-            let pick = |local_n: u64, remote_n: u64| {
-                if voted_here {
-                    local_n
-                } else {
-                    local_n.max(remote_n)
-                }
+            // Finché l'invio di questo pacchetto non è riuscito il remoto è vecchio:
+            // i badge restano sul conteggio locale. Dopo, vale l'aggregato online.
+            let votes = if pending.contains(name) || remote.is_none() {
+                local
+            } else {
+                remote
             };
-            let system = pick(
-                local.map(|c| c.system).unwrap_or(0),
-                remote.map(|c| c.system).unwrap_or(0),
-            );
-            let trusted = pick(
-                local.map(|c| c.trusted).unwrap_or(0),
-                remote.map(|c| c.trusted).unwrap_or(0),
-            );
-            let suspicious = pick(
-                local.map(|c| c.suspicious).unwrap_or(0),
-                remote.map(|c| c.suspicious).unwrap_or(0),
-            );
+            let system = votes.map(|c| c.system).unwrap_or(0);
+            let trusted = votes.map(|c| c.trusted).unwrap_or(0);
+            let suspicious = votes.map(|c| c.suspicious).unwrap_or(0);
             let (marked_system, marked_trusted, marked_suspicious) =
                 effective_marks(system, trusted, suspicious);
             let my_vote = mine.get(name).cloned().filter(|f| f != "none");
@@ -349,6 +397,9 @@ impl ReputationDb {
                 marked_trusted,
                 marked_suspicious,
                 my_vote,
+                online_system: remote.map(|c| c.system).unwrap_or(0),
+                online_trusted: remote.map(|c| c.trusted).unwrap_or(0),
+                online_suspicious: remote.map(|c| c.suspicious).unwrap_or(0),
             });
         }
         Ok(out)
@@ -363,7 +414,11 @@ impl ReputationDb {
              GROUP BY package_name, flag",
         )?;
         let rows = stmt.query_map([], |row| {
-            Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?, row.get::<_, u64>(2)?))
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, u64>(2)?,
+            ))
         })?;
         for row in rows {
             let (name, flag, n) = row?;
@@ -383,15 +438,19 @@ impl ReputationDb {
         let mut stmt = self.conn.prepare(
             "SELECT package_name, COUNT(*) FROM uninstall_events WHERE success = 1 GROUP BY package_name",
         )?;
-        let rows = stmt.query_map([], |row| Ok((row.get::<_, String>(0)?, row.get::<_, u64>(1)?)))?;
+        let rows = stmt.query_map([], |row| {
+            Ok((row.get::<_, String>(0)?, row.get::<_, u64>(1)?))
+        })?;
         for row in rows {
             let (name, n) = row?;
-            map.entry(name).or_insert(Counts {
-                uninstalls: 0,
-                system: 0,
-                trusted: 0,
-                suspicious: 0,
-            }).uninstalls = n;
+            map.entry(name)
+                .or_insert(Counts {
+                    uninstalls: 0,
+                    system: 0,
+                    trusted: 0,
+                    suspicious: 0,
+                })
+                .uninstalls = n;
         }
         Ok(map)
     }
@@ -423,9 +482,9 @@ impl ReputationDb {
         let Some(serial) = serial.filter(|s| !s.is_empty()) else {
             return Ok(HashMap::new());
         };
-        let mut stmt = self.conn.prepare(
-            "SELECT package_name, flag FROM flag_votes WHERE device_serial = ?1",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT package_name, flag FROM flag_votes WHERE device_serial = ?1")?;
         let rows = stmt.query_map(params![serial], |row| {
             Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
         })?;
@@ -467,9 +526,9 @@ impl ReputationDb {
     }
 
     pub fn load_flag_votes(&self) -> Result<Vec<FlagVote>, DbError> {
-        let mut stmt = self.conn.prepare(
-            "SELECT package_name, device_serial, flag, voted_at FROM flag_votes",
-        )?;
+        let mut stmt = self
+            .conn
+            .prepare("SELECT package_name, device_serial, flag, voted_at FROM flag_votes")?;
         let rows = stmt.query_map([], |row| {
             let ts: String = row.get(3)?;
             Ok(FlagVote {
@@ -552,6 +611,9 @@ fn empty_rep(package_name: &str, my_vote: Option<String>) -> PackageReputation {
         marked_trusted: false,
         marked_suspicious: false,
         my_vote,
+        online_system: 0,
+        online_trusted: 0,
+        online_suspicious: 0,
     }
 }
 
@@ -563,10 +625,13 @@ mod tests {
     #[test]
     fn votes_roundtrip_and_legacy_marks() {
         let db = ReputationDb::open(":memory:").unwrap();
-        db.set_vote("com.android.settings", "phone-a", "system").unwrap();
+        db.set_vote("com.android.settings", "phone-a", "system")
+            .unwrap();
         db.set_vote("com.bank.app", "phone-a", "trusted").unwrap();
         db.set_vote("com.bad.app", "phone-a", "suspicious").unwrap();
-        let rep = db.get_reputation("com.android.settings", Some("phone-a")).unwrap();
+        let rep = db
+            .get_reputation("com.android.settings", Some("phone-a"))
+            .unwrap();
         assert!(rep.marked_system);
         assert_eq!(rep.my_vote.as_deref(), Some("system"));
         let trusted = db.get_reputation("com.bank.app", Some("phone-a")).unwrap();
@@ -576,7 +641,10 @@ mod tests {
         assert!(bad.marked_suspicious);
         assert!(bad.is_suspicious());
         db.set_vote("com.bad.app", "phone-a", "none").unwrap();
-        assert!(!db.get_reputation("com.bad.app", Some("phone-a")).unwrap().is_suspicious());
+        assert!(!db
+            .get_reputation("com.bad.app", Some("phone-a"))
+            .unwrap()
+            .is_suspicious());
         for _ in 0..6 {
             db.record_uninstall("com.android.settings", "phone-a", true, None)
                 .unwrap();
@@ -589,9 +657,16 @@ mod tests {
         assert!(snap.flag_votes.len() >= 3);
         let db2 = ReputationDb::open(":memory:").unwrap();
         db2.merge_snapshot(&snap).unwrap();
-        assert!(db2.get_reputation("com.bank.app", Some("phone-a")).unwrap().marked_trusted);
+        assert!(
+            db2.get_reputation("com.bank.app", Some("phone-a"))
+                .unwrap()
+                .marked_trusted
+        );
         assert_eq!(
-            db2.get_reputation("com.bad.app", Some("phone-a")).unwrap().my_vote.as_deref(),
+            db2.get_reputation("com.bad.app", Some("phone-a"))
+                .unwrap()
+                .my_vote
+                .as_deref(),
             None
         );
     }
@@ -599,7 +674,8 @@ mod tests {
     #[test]
     fn merge_snapshot_deduplicates_events() {
         let db = ReputationDb::open(":memory:").unwrap();
-        db.record_uninstall("com.evil.ads", "serial1", true, None).unwrap();
+        db.record_uninstall("com.evil.ads", "serial1", true, None)
+            .unwrap();
         let snap = db.export_snapshot().unwrap();
         let db2 = ReputationDb::open(":memory:").unwrap();
         db2.merge_snapshot(&snap).unwrap();
@@ -613,7 +689,8 @@ mod tests {
         let db = ReputationDb::open(":memory:").unwrap();
         db.set_vote("com.app", "keeper", "trusted").unwrap();
         for i in 0..4 {
-            db.set_vote("com.app", &format!("phone-{i}"), "suspicious").unwrap();
+            db.set_vote("com.app", &format!("phone-{i}"), "suspicious")
+                .unwrap();
         }
         let below = db.get_reputation("com.app", None).unwrap();
         assert!(below.marked_trusted);
@@ -628,7 +705,8 @@ mod tests {
 
         db.set_vote("com.sys", "keeper", "system").unwrap();
         for i in 0..5 {
-            db.set_vote("com.sys", &format!("phone-{i}"), "suspicious").unwrap();
+            db.set_vote("com.sys", &format!("phone-{i}"), "suspicious")
+                .unwrap();
         }
         let sys = db.get_reputation("com.sys", None).unwrap();
         assert!(sys.marked_suspicious);
@@ -653,8 +731,21 @@ mod tests {
         other.merge_snapshot(&newer).unwrap();
         let merged = other.get_reputation("com.app", Some("phone-a")).unwrap();
         assert_eq!(merged.my_vote.as_deref(), Some("trusted"));
-        assert!(other.get_reputation("com.app", Some("phone-b")).unwrap().marked_system || merged.marked_trusted);
-        assert!(other.get_reputation("com.app", Some("phone-b")).unwrap().my_vote.as_deref() == Some("system"));
+        assert!(
+            other
+                .get_reputation("com.app", Some("phone-b"))
+                .unwrap()
+                .marked_system
+                || merged.marked_trusted
+        );
+        assert!(
+            other
+                .get_reputation("com.app", Some("phone-b"))
+                .unwrap()
+                .my_vote
+                .as_deref()
+                == Some("system")
+        );
     }
 
     #[test]
@@ -693,15 +784,61 @@ mod tests {
         assert!(before.my_vote.is_none());
 
         db.set_vote("com.app", "phone-a", "none").unwrap();
+        let pending = HashSet::from(["com.app".to_string()]);
+        let waiting = db
+            .get_reputation_pending("com.app", Some("phone-a"), &pending)
+            .unwrap();
+        assert!(!waiting.marked_suspicious);
+        assert_eq!(waiting.online_suspicious, 1);
         let cleared = db.get_reputation("com.app", Some("phone-a")).unwrap();
-        assert!(!cleared.marked_suspicious);
+        assert!(cleared.marked_suspicious);
         assert!(cleared.my_vote.is_none());
-        assert!(db.get_reputation("com.app", Some("phone-b")).unwrap().marked_suspicious);
+        assert_eq!(cleared.online_suspicious, 1);
+        assert!(
+            db.get_reputation("com.app", Some("phone-b"))
+                .unwrap()
+                .marked_suspicious
+        );
+    }
 
-        db.set_vote("com.app", "phone-a", "trusted").unwrap();
-        let trusted = db.get_reputation("com.app", Some("phone-a")).unwrap();
-        assert!(trusted.marked_trusted);
-        assert!(!trusted.marked_suspicious);
+    #[test]
+    fn upsert_remote_stat_keeps_the_other_package() {
+        let db = ReputationDb::open(":memory:").unwrap();
+        db.replace_remote_stats(&[
+            RemoteStat {
+                package_name: "com.keep".into(),
+                uninstall_count: 2,
+                system_votes: 1,
+                trusted_votes: 0,
+                suspicious_votes: 0,
+            },
+            RemoteStat {
+                package_name: "com.app".into(),
+                uninstall_count: 0,
+                system_votes: 0,
+                trusted_votes: 0,
+                suspicious_votes: 1,
+            },
+        ])
+        .unwrap();
+        db.upsert_remote_stat(&RemoteStat {
+            package_name: "com.app".into(),
+            uninstall_count: 3,
+            system_votes: 0,
+            trusted_votes: 2,
+            suspicious_votes: 4,
+        })
+        .unwrap();
+        let keep = db.get_reputation("com.keep", None).unwrap();
+        assert_eq!(keep.online_system, 1);
+        assert_eq!(keep.uninstall_count, 2);
+        let app = db.get_reputation("com.app", None).unwrap();
+        assert_eq!(app.online_trusted, 2);
+        assert_eq!(app.online_suspicious, 4);
+        assert_eq!(app.report_count, 4);
+        db.delete_remote_stat("com.app").unwrap();
+        assert_eq!(db.get_reputation("com.app", None).unwrap().online_suspicious, 0);
+        assert_eq!(db.get_reputation("com.keep", None).unwrap().online_system, 1);
     }
 
     #[test]
@@ -721,7 +858,9 @@ mod tests {
         };
         let db = ReputationDb::open(":memory:").unwrap();
         db.merge_snapshot(&snap).unwrap();
-        let rep = db.get_reputation("com.bank.app", Some(LEGACY_DEVICE)).unwrap();
+        let rep = db
+            .get_reputation("com.bank.app", Some(LEGACY_DEVICE))
+            .unwrap();
         assert!(rep.marked_trusted);
         assert!(!rep.marked_suspicious);
         assert_eq!(rep.my_vote.as_deref(), Some("trusted"));

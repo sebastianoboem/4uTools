@@ -1,12 +1,56 @@
 use crate::error::AdbError;
 use crate::resolver::resolve_adb_path;
 use serde::{Deserialize, Serialize};
-use std::io::BufRead;
+use std::io::{BufRead, Read};
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::OnceLock;
+
+static DEV_LOGGER: OnceLock<fn(&str)> = OnceLock::new();
+
+pub fn set_dev_logger(log: fn(&str)) {
+    let _ = DEV_LOGGER.set(log);
+}
+
+fn devlog(line: &str) {
+    if let Some(log) = DEV_LOGGER.get() {
+        log(line);
+    }
+}
+
+pub fn format_dev_stream(label: &str, text: &str) -> String {
+    if text.is_empty() {
+        return String::new();
+    }
+    if text.len() <= 2048 {
+        return format!("{label} {}", text.replace(['\r', '\n'], " "));
+    }
+    format!(
+        "{label} {} bytes, {} lines",
+        text.len(),
+        text.lines().count()
+    )
+}
+
+fn trace_adb(args: &[&str], ok: bool, stdout: &str, stderr: &str) {
+    let Some(log) = DEV_LOGGER.get() else {
+        return;
+    };
+    log(&format!(
+        "adb {} {}",
+        args.join(" "),
+        if ok { "ok" } else { "ERR" }
+    ));
+    for line in [
+        format_dev_stream("stdout", stdout),
+        format_dev_stream("stderr", stderr),
+    ] {
+        if !line.is_empty() {
+            log(&line);
+        }
+    }
+}
 use std::thread;
-use std::time::{Duration, Instant};
 
 #[cfg(windows)]
 fn hide_console_window(cmd: &mut Command) {
@@ -79,53 +123,6 @@ impl AdbBridge {
         parse_devices(&output)
     }
 
-    pub fn start_server(&self) -> Result<(), AdbError> {
-        let _ = self.run_adb(&["start-server"])?;
-        Ok(())
-    }
-
-    pub fn reconnect_usb(&self) -> Result<(), AdbError> {
-        let _ = self.run_adb(&["reconnect", "usb"])?;
-        Ok(())
-    }
-
-    /// Attende fino a `wait_ms` un dispositivo visibile in `adb devices` (anche non autorizzato).
-    pub fn discover_device_serial(&self, wait_ms: u64) -> Result<String, AdbError> {
-        self.start_server()?;
-        let deadline = Instant::now() + Duration::from_millis(wait_ms);
-        let mut reconnected = false;
-
-        loop {
-            if let Some(device) = self.pick_best_device()? {
-                return Ok(device.serial);
-            }
-            if Instant::now() >= deadline {
-                return Err(AdbError::NoDevice);
-            }
-            if !reconnected {
-                let _ = self.reconnect_usb();
-                reconnected = true;
-            }
-            thread::sleep(Duration::from_millis(500));
-        }
-    }
-
-    pub fn device_state_for_serial(&self, serial: &str) -> Result<Option<DeviceState>, AdbError> {
-        let devices = self.list_devices()?;
-        Ok(devices
-            .iter()
-            .find(|d| d.serial == serial)
-            .map(|d| d.state.clone()))
-    }
-
-    fn pick_best_device(&self) -> Result<Option<AdbDevice>, AdbError> {
-        let devices = self.list_devices()?;
-        if let Some(want) = &self.serial {
-            return Ok(devices.into_iter().find(|d| d.serial == *want));
-        }
-        Ok(pick_best_from_list(&devices))
-    }
-
     pub fn get_serial(&self) -> Result<String, AdbError> {
         if let Some(s) = self.resolved_serial.get() {
             return Ok(s.clone());
@@ -174,8 +171,20 @@ impl AdbBridge {
         let mut child = command_no_window(&self.adb)
             .args(["-s", &serial, "shell", command])
             .stdout(std::process::Stdio::piped())
-            .stderr(std::process::Stdio::null())
-            .spawn()?;
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .map_err(|e| {
+                devlog(&format!("adb shell {command} ERR {e}"));
+                AdbError::Io(e)
+            })?;
+        let stderr_pipe = child.stderr.take();
+        let stderr_task = thread::spawn(move || {
+            let mut buf = String::new();
+            if let Some(mut stderr) = stderr_pipe {
+                let _ = stderr.read_to_string(&mut buf);
+            }
+            buf
+        });
         let mut output = String::new();
         if let Some(stdout) = child.stdout.take() {
             for line in std::io::BufReader::new(stdout).lines() {
@@ -186,10 +195,22 @@ impl AdbBridge {
             }
         }
         let status = child.wait()?;
-        if !status.success() && output.is_empty() {
+        let stderr = stderr_task.join().unwrap_or_default();
+        let ok = status.success() || !output.is_empty();
+        trace_adb(&["shell", command], ok, &output, &stderr);
+        if !ok {
             return Err(AdbError::CommandFailed("adb shell failed".into()));
         }
         Ok(output)
+    }
+
+    pub fn push(&self, local: &std::path::Path, remote: &str) -> Result<(), AdbError> {
+        let serial = self.get_serial()?;
+        let local = local
+            .to_str()
+            .ok_or_else(|| AdbError::CommandFailed("percorso helper non valido".into()))?;
+        self.run_adb(&["-s", &serial, "push", local, remote])?;
+        Ok(())
     }
 
     pub fn exec_out(&self, command: &str) -> Result<Vec<u8>, AdbError> {
@@ -197,10 +218,24 @@ impl AdbBridge {
         let output = command_no_window(&self.adb)
             .args(["-s", &serial, "exec-out", command])
             .output()
-            .map_err(AdbError::Io)?;
+            .map_err(|e| {
+                devlog(&format!("adb exec-out {command} ERR {e}"));
+                AdbError::Io(e)
+            })?;
 
-        if !output.status.success() && output.stdout.is_empty() {
-            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let ok = output.status.success() || !output.stdout.is_empty();
+        devlog(&format!(
+            "adb exec-out {command} {} bytes={}",
+            if ok { "ok" } else { "ERR" },
+            output.stdout.len()
+        ));
+        let err_line = format_dev_stream("stderr", &stderr);
+        if !err_line.is_empty() {
+            devlog(&err_line);
+        }
+
+        if !ok {
             return Err(AdbError::CommandFailed(if stderr.is_empty() {
                 format!("adb exec-out {:?} failed", command)
             } else {
@@ -209,6 +244,79 @@ impl AdbBridge {
         }
 
         Ok(output.stdout)
+    }
+
+    pub fn open_notification_settings(&self, package: &str) -> Result<String, AdbError> {
+        if !is_package_name(package) {
+            return Err(AdbError::CommandFailed("package non valido".into()));
+        }
+        let out = self.shell(&format!(
+            "am start -a android.settings.APP_NOTIFICATION_SETTINGS --es android.provider.extra.APP_PACKAGE {package}"
+        ))?;
+        reject_activity_error(out)
+    }
+
+    pub fn open_default_apps(&self) -> Result<String, AdbError> {
+        let out = self.shell("am start -a android.settings.MANAGE_DEFAULT_APPS_SETTINGS")?;
+        reject_activity_error(out)
+    }
+
+    /// `--user 0` only. Revoke also sets `user-fixed` so the app does not ask again.
+    pub fn set_notifications_allowed(
+        &self,
+        package: &str,
+        allowed: bool,
+    ) -> Result<String, AdbError> {
+        if !is_package_name(package) {
+            return Err(AdbError::CommandFailed("package non valido".into()));
+        }
+        let perm = "android.permission.POST_NOTIFICATIONS";
+        if allowed {
+            self.shell_notification_change(&format!(
+                "pm clear-permission-flags --user 0 {package} {perm} user-fixed"
+            ))?;
+            self.shell_notification_change(&format!("pm grant --user 0 {package} {perm}"))
+        } else {
+            self.shell_notification_change(&format!("pm revoke --user 0 {package} {perm}"))?;
+            self.shell_notification_change(&format!(
+                "pm set-permission-flags --user 0 {package} {perm} user-set user-fixed"
+            ))
+        }
+    }
+
+    fn shell_notification_change(&self, command: &str) -> Result<String, AdbError> {
+        let out = match self.shell(command) {
+            Ok(out) => out,
+            Err(err) => {
+                if notification_change_denied_text(&err.to_string()) {
+                    return Err(notification_change_denied());
+                }
+                return Err(err);
+            }
+        };
+        if notification_change_denied_text(&out) {
+            Err(notification_change_denied())
+        } else {
+            Ok(out)
+        }
+    }
+
+    pub fn install_existing(&self, package: &str) -> Result<String, AdbError> {
+        if !is_package_name(package) {
+            return Err(AdbError::CommandFailed("package non valido".into()));
+        }
+        let serial = self.get_serial()?;
+        self.run_adb(&[
+            "-s",
+            &serial,
+            "shell",
+            "cmd",
+            "package",
+            "install-existing",
+            "--user",
+            "0",
+            package,
+        ])
     }
 
     pub fn uninstall(&self, package: &str) -> Result<String, AdbError> {
@@ -237,7 +345,12 @@ impl AdbBridge {
 
     pub fn list_device_admins(&self) -> Result<Vec<String>, AdbError> {
         let output = self.shell("dpm list-owners")?;
-        Ok(output.lines().map(str::trim).filter(|l| !l.is_empty()).map(str::to_string).collect())
+        Ok(output
+            .lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .map(str::to_string)
+            .collect())
     }
 
     pub fn remove_active_admin(&self, component: &str) -> Result<String, AdbError> {
@@ -249,49 +362,21 @@ impl AdbBridge {
         Ok(val.trim().to_string())
     }
 
-    pub fn input_text(&self, text: &str) -> Result<String, AdbError> {
-        let escaped = text
-            .replace('\\', "\\\\")
-            .replace(' ', "%s")
-            .replace('\'', "\\'");
-        self.shell(&format!("input text {escaped}"))
-    }
-
-    pub fn keyevent(&self, code: i32) -> Result<String, AdbError> {
-        self.shell(&format!("input keyevent {code}"))
-    }
-
-    pub fn open_settings(&self) -> Result<String, AdbError> {
-        self.shell("am start -a android.settings.SETTINGS")
-    }
-
-    pub fn device_connection_state(&self) -> Result<DeviceState, AdbError> {
-        self.start_server()?;
-        if let Some(device) = self.pick_best_device()? {
-            return Ok(device.state);
-        }
-        Err(AdbError::NoDevice)
-    }
-
-    pub fn set_airplane_mode(&self, enabled: bool) -> Result<String, AdbError> {
-        let cmd = if enabled {
-            "cmd connectivity airplane-mode enable"
-        } else {
-            "cmd connectivity airplane-mode disable"
-        };
-        self.shell(cmd)
-    }
-
     fn run_adb(&self, args: &[&str]) -> Result<String, AdbError> {
         let output = command_no_window(&self.adb)
             .args(args)
             .output()
-            .map_err(AdbError::Io)?;
+            .map_err(|e| {
+                devlog(&format!("adb {} ERR {e}", args.join(" ")));
+                AdbError::Io(e)
+            })?;
 
         let stdout = String::from_utf8_lossy(&output.stdout).to_string();
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        let ok = output.status.success() || !stdout.is_empty();
+        trace_adb(args, ok, &stdout, &stderr);
 
-        if !output.status.success() && stdout.is_empty() {
+        if !ok {
             return Err(AdbError::CommandFailed(if stderr.is_empty() {
                 format!("adb {:?} failed", args)
             } else {
@@ -303,20 +388,85 @@ impl AdbBridge {
     }
 }
 
+fn notification_change_denied_text(text: &str) -> bool {
+    text.contains("SecurityException") || text.contains("Exception occurred")
+}
+
+fn notification_change_denied() -> AdbError {
+    AdbError::CommandFailed(
+        "Questo telefono non lascia cambiare le notifiche da qui. Usa «Apri notifiche sul telefono»."
+            .into(),
+    )
+}
+
+fn reject_activity_error(out: String) -> Result<String, AdbError> {
+    if out.contains("Error") {
+        Err(AdbError::CommandFailed(out.trim().to_string()))
+    } else {
+        Ok(out)
+    }
+}
+
+fn is_package_name(package: &str) -> bool {
+    package.contains('.')
+        && package.split('.').all(|part| {
+            !part.is_empty() && part.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+        })
+}
+
+fn is_preinstalled(package_name: &str) -> bool {
+    matches!(
+        package_name,
+        "com.oplus.games" | "com.netflix.partner.activation"
+    )
+}
+
 fn is_initial_system(package_name: &str, apk_path: Option<&str>) -> bool {
+    if is_preinstalled(package_name) {
+        return false;
+    }
     if has_system_prefix(package_name) {
         return true;
     }
     apk_path.is_some_and(apk_on_system_partition)
 }
 
-/// AOSP (`com.android.`) plus the manufacturer/carrier prefixes from the
-/// system-app cheat sheet. Gmail/YouTube (`com.google.android.gm` / `.youtube`)
-/// are not included — only Play Services (`gms`).
+/// AOSP (`com.android.`) plus manufacturer modules. Gmail/YouTube stay out.
+/// Assistente giochi and Netflix Partner are preinstalled, not system.
 fn has_system_prefix(package_name: &str) -> bool {
     const PREFIXES: &[&str] = &[
         "com.android.",
+        "android.autoinstalls.",
         "com.google.android.gms",
+        "com.google.android.ext.",
+        "com.google.android.networkstack",
+        "com.google.android.cellbroadcast",
+        "com.google.android.onetimeinitializer",
+        "com.google.android.federatedcompute",
+        "com.google.android.overlay.",
+        "com.google.android.gsf",
+        "com.google.android.partnersetup",
+        "com.google.android.feedback",
+        "com.google.android.setupwizard",
+        "com.google.android.configupdater",
+        "com.google.android.packageinstaller",
+        "com.google.android.webview",
+        "com.google.android.trichromelibrary",
+        "com.google.android.permissioncontroller",
+        "com.google.android.captiveportallogin",
+        "com.google.android.modulemetadata",
+        "com.google.android.sdksandbox",
+        "com.google.android.adservices",
+        "com.google.android.rkpd",
+        "com.google.android.safetycenter",
+        "com.google.android.as",
+        "com.google.android.apps.turbo",
+        "com.google.android.apps.restore",
+        "com.google.mainline.",
+        "com.oplus.",
+        "com.coloros.",
+        "com.heytap.",
+        "com.quicinc.",
         "com.samsung.android.",
         "com.miui.",
         "com.xiaomi.",
@@ -386,19 +536,6 @@ fn select_serial(devices: &[AdbDevice], want: Option<&str>) -> Result<String, Ad
             "multiple devices connected; specify serial".into(),
         )),
     }
-}
-
-fn pick_best_from_list(devices: &[AdbDevice]) -> Option<AdbDevice> {
-    for state in [
-        DeviceState::Device,
-        DeviceState::Unauthorized,
-        DeviceState::Offline,
-    ] {
-        if let Some(d) = devices.iter().find(|d| d.state == state) {
-            return Some(d.clone());
-        }
-    }
-    devices.first().cloned()
 }
 
 #[cfg(test)]
@@ -507,46 +644,46 @@ mod tests {
             "com.oplus.ndsf",
             Some("/product/priv-app/DSF/DSF.apk")
         ));
+        assert!(is_initial_system(
+            "com.coloros.weather.service",
+            Some("/data/app/Weather/base.apk")
+        ));
+        assert!(is_initial_system(
+            "com.google.android.webview",
+            Some("/data/app/WebView/base.apk")
+        ));
+        assert!(is_initial_system(
+            "com.google.android.overlay.gmsconfig.common",
+            Some("/my_bigball/overlay/common.apk")
+        ));
         assert!(!is_initial_system(
-            "com.coloros.relax",
-            Some("/data/app/OppoRelax/OppoRelax.apk")
+            "com.oplus.games",
+            Some("/my_bigball/app/Games/base.apk")
+        ));
+        assert!(!is_initial_system(
+            "com.netflix.partner.activation",
+            Some("/my_product/app/Netflix/base.apk")
+        ));
+        assert!(!is_initial_system(
+            "com.google.android.youtube",
+            Some("/data/app/YouTube/base.apk")
         ));
     }
 
     #[test]
-    fn pick_prefers_authorized_device() {
-        let devices = vec![
-            AdbDevice {
-                serial: "offline1".into(),
-                state: DeviceState::Offline,
-                model: None,
-                product: None,
-            },
-            AdbDevice {
-                serial: "auth1".into(),
-                state: DeviceState::Device,
-                model: None,
-                product: None,
-            },
-        ];
-        assert_eq!(
-            pick_best_from_list(&devices).map(|d| d.serial),
-            Some("auth1".into())
-        );
+    fn notification_denial_is_the_shell_security_exception() {
+        assert!(notification_change_denied_text(
+            "Exception occurred while executing 'revoke':\njava.lang.SecurityException: revokeRuntimePermission"
+        ));
+        assert!(!notification_change_denied_text(""));
     }
 
     #[test]
-    fn pick_unauthorized_when_no_authorized() {
-        let devices = vec![AdbDevice {
-            serial: "unauth1".into(),
-            state: DeviceState::Unauthorized,
-            model: None,
-            product: None,
-        }];
-        assert_eq!(
-            pick_best_from_list(&devices).map(|d| d.serial),
-            Some("unauth1".into())
-        );
+    fn package_name_rejects_shell_metacharacters() {
+        assert!(is_package_name("com.foo.app"));
+        assert!(!is_package_name("com.foo;id"));
+        assert!(!is_package_name("com.foo$(id)"));
+        assert!(!is_package_name("settings"));
     }
 }
 

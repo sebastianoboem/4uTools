@@ -1,7 +1,9 @@
 use cloud_sync::CloudSync;
 use reputation_db::ReputationDb;
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::path::PathBuf;
+use std::sync::atomic::AtomicU64;
 use std::sync::Mutex;
 
 #[derive(Debug, Serialize, Deserialize, Default)]
@@ -27,8 +29,10 @@ pub struct AppState {
     pub config: Mutex<AppConfig>,
     pub config_path: PathBuf,
     pub platform_tools_dir: PathBuf,
-    pub metadata_cache_path: PathBuf,
     pub optimize: Mutex<OptimizeSlot>,
+    pub pending_push: Mutex<HashSet<String>>,
+    pub realtime_gen: AtomicU64,
+    pub viewer_serial: Mutex<Option<String>>,
 }
 
 impl AppState {
@@ -58,7 +62,7 @@ impl AppState {
         let cloud_sync = CloudSync::new(backend);
 
         let platform_tools_dir = config_dir.join("platform-tools");
-        let metadata_cache_path = config_dir.join("metadata-cache.json");
+        let _ = std::fs::remove_file(config_dir.join("metadata-cache.json"));
         std::env::set_var(
             "ANDROID_ADWARE_PLATFORM_TOOLS",
             platform_tools_dir.to_string_lossy().as_ref(),
@@ -73,11 +77,13 @@ impl AppState {
             config: Mutex::new(config),
             config_path,
             platform_tools_dir,
-            metadata_cache_path,
             optimize: Mutex::new(OptimizeSlot {
                 seq: 0,
                 current: None,
             }),
+            pending_push: Mutex::new(HashSet::new()),
+            realtime_gen: AtomicU64::new(0),
+            viewer_serial: Mutex::new(None),
         })
     }
 

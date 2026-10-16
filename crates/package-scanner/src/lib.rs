@@ -1,17 +1,15 @@
 mod arsc;
-mod cache;
-
-pub use cache::{CachedMetadata, MetadataCache, METADATA_CACHE_VERSION};
+mod helper;
 
 use adb_bridge::{AdbBridge, PackageInfo};
 use arsc::{lookup_all_strings, lookup_string, parse_resource_ref};
-use axmldecoder::{Node, parse as parse_manifest};
-use base64::{Engine as _, engine::general_purpose::STANDARD};
+use axmldecoder::{parse as parse_manifest, Node};
+use base64::{engine::general_purpose::STANDARD, Engine as _};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+use std::thread;
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -29,6 +27,11 @@ pub struct ScannedPackage {
     pub is_system: bool,
     pub installer: Option<String>,
     pub is_device_admin: bool,
+    pub sideloaded: bool,
+    pub installed_recently: bool,
+    pub reads_screen: bool,
+    pub draws_over: bool,
+    pub no_launcher_icon: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -41,6 +44,7 @@ pub enum ScanProgress {
 struct PackageDumpInfo {
     installer: Option<String>,
     signing_org: Option<String>,
+    first_install_ms: Option<i64>,
 }
 
 enum LabelValue {
@@ -59,21 +63,11 @@ const SCAN_THREADS: usize = 16;
 
 pub struct PackageScanner {
     bridge: Arc<AdbBridge>,
-    cache_path: Option<PathBuf>,
 }
 
 impl PackageScanner {
-    pub fn new(bridge: AdbBridge) -> Self {
-        Self {
-            bridge: Arc::new(bridge),
-            cache_path: None,
-        }
-    }
-
-    /// Enable the persistent metadata cache backed by the given JSON file.
-    pub fn with_cache_path(mut self, path: PathBuf) -> Self {
-        self.cache_path = Some(path);
-        self
+    pub fn new(bridge: Arc<AdbBridge>) -> Self {
+        Self { bridge }
     }
 
     pub fn scan(&self, user_only: bool) -> Result<Vec<ScannedPackage>, ScanError> {
@@ -86,85 +80,104 @@ impl PackageScanner {
         Ok(results)
     }
 
-    pub fn scan_with_progress<F>(&self, user_only: bool, mut on_progress: F) -> Result<(), ScanError>
+    pub fn scan_with_progress<F>(
+        &self,
+        user_only: bool,
+        mut on_progress: F,
+    ) -> Result<(), ScanError>
     where
-        F: FnMut(ScanProgress) + Send + Sync,
+        F: FnMut(ScanProgress) + Send,
     {
-        let packages = self.bridge.list_packages(user_only)?;
-        let bulk_dumpsys = exec_out_gz(&self.bridge, "dumpsys package")
-            .map(|b| String::from_utf8_lossy(&b).into_owned())
-            .unwrap_or_default();
-        let dump_info = parse_bulk_dumpsys(&bulk_dumpsys);
-        let admins = self.load_admin_packages()?;
+        let (tx, rx) = std::sync::mpsc::channel();
+        let helper_bridge = Arc::clone(&self.bridge);
+        let helper_thread = thread::spawn(move || helper::run(&helper_bridge, user_only, tx));
 
-        let total = packages.len();
-        on_progress(ScanProgress::Started { total });
-
-        let metadata_cache = Arc::new(Mutex::new(MetadataCache::load(self.cache_path.clone())));
-
-        let on_progress = Arc::new(Mutex::new(on_progress));
-        let bridge = Arc::clone(&self.bridge);
-        let dump_info = Arc::new(dump_info);
-        let admins = Arc::new(admins);
-
-        let pool = rayon::ThreadPoolBuilder::new()
-            .num_threads(SCAN_THREADS)
-            .build()
-            .expect("failed to build scan thread pool");
-        pool.install(|| {
-            packages.par_iter().for_each(|pkg| {
-                let cached = metadata_cache
-                    .lock()
-                    .ok()
-                    .and_then(|c| c.get(&pkg.package_name, pkg.apk_path.as_deref()).cloned());
-                let scanned = match cached {
-                    Some(hit) => ScannedPackage {
-                        package_name: pkg.package_name.clone(),
-                        label: known_label(&pkg.package_name).or(hit.label),
-                        author: hit.author,
-                        icon_url: hit.icon_url,
-                        is_system: pkg.is_system,
-                        installer: dump_info
-                            .get(&pkg.package_name)
-                            .and_then(|i| i.installer.clone()),
-                        is_device_admin: admins.contains(&pkg.package_name),
-                    },
-                    None => {
-                        let (scanned, cacheable) =
-                            enrich_package(&bridge, pkg, &dump_info, &admins);
-                        if pkg.apk_path.is_some() {
-                            if let Ok(mut c) = metadata_cache.lock() {
-                                c.put(
-                                    &pkg.package_name,
-                                    CachedMetadata {
-                                        apk_path: pkg.apk_path.clone(),
-                                        label: scanned.label.clone(),
-                                        author: scanned.author.clone(),
-                                        icon_url: scanned.icon_url.clone(),
-                                        complete: cacheable,
-                                        v: METADATA_CACHE_VERSION,
-                                    },
-                                );
-                            }
-                        }
-                        scanned
-                    }
-                };
-                if let Ok(mut cb) = on_progress.lock() {
-                    cb(ScanProgress::Package(scanned));
-                }
+        let (packages, dump_info, admins, signals) = thread::scope(|scope| {
+            let packages = scope.spawn(|| self.bridge.list_packages(user_only));
+            let dump = scope.spawn(|| {
+                exec_out_gz(&self.bridge, "dumpsys package")
+                    .map(|bytes| String::from_utf8_lossy(&bytes).into_owned())
+                    .unwrap_or_default()
             });
+            let admins = scope.spawn(|| self.load_admin_packages());
+            let signals = scope.spawn(|| RiskSignals::load(&self.bridge));
+            Ok::<_, ScanError>((
+                packages.join().expect("list packages")?,
+                parse_bulk_dumpsys(&dump.join().expect("dumpsys package")),
+                admins.join().expect("device policy")?,
+                signals.join().expect("risk signals"),
+            ))
+        })?;
+        let now_ms = now_millis();
+        on_progress(ScanProgress::Started {
+            total: packages.len(),
         });
 
-        if let Ok(c) = metadata_cache.lock() {
-            c.save();
+        let known: HashSet<&str> = packages
+            .iter()
+            .map(|pkg| pkg.package_name.as_str())
+            .collect();
+        let mut seen = HashSet::new();
+        for line in rx {
+            let Some(app) = helper::parse_line(&line) else {
+                continue;
+            };
+            if !known.contains(app.package_name.as_str()) || !seen.insert(app.package_name.clone())
+            {
+                continue;
+            }
+            let Some(pkg) = packages
+                .iter()
+                .find(|pkg| pkg.package_name == app.package_name)
+            else {
+                continue;
+            };
+            let mut scanned = package_from_helper(pkg, &app, &dump_info, &admins);
+            attach_risk(
+                &mut scanned,
+                dump_info.get(&pkg.package_name),
+                &signals,
+                now_ms,
+            );
+            on_progress(ScanProgress::Package(scanned));
+        }
+        let _ = helper_thread.join();
+
+        let missing = missing_packages(&packages, &seen);
+        if !missing.is_empty() {
+            let on_progress = Arc::new(Mutex::new(on_progress));
+            let bridge = Arc::clone(&self.bridge);
+            let dump_info = Arc::new(dump_info);
+            let admins = Arc::new(admins);
+            let signals = Arc::new(signals);
+            let pool = rayon::ThreadPoolBuilder::new()
+                .num_threads(SCAN_THREADS)
+                .build()
+                .expect("failed to build scan thread pool");
+            pool.install(|| {
+                missing.par_iter().for_each(|pkg| {
+                    let mut scanned = enrich_package(&bridge, pkg, &dump_info, &admins);
+                    attach_risk(
+                        &mut scanned,
+                        dump_info.get(&pkg.package_name),
+                        &signals,
+                        now_ms,
+                    );
+                    if let Ok(mut cb) = on_progress.lock() {
+                        cb(ScanProgress::Package(scanned));
+                    }
+                });
+            });
         }
 
         Ok(())
     }
 
     fn load_admin_packages(&self) -> Result<HashSet<String>, ScanError> {
-        let output = self.bridge.shell("dumpsys device_policy").unwrap_or_default();
+        let output = self
+            .bridge
+            .shell("dumpsys device_policy")
+            .unwrap_or_default();
         let mut admins = HashSet::new();
         for line in output.lines() {
             if line.contains("admin=ComponentInfo{") {
@@ -188,7 +201,7 @@ fn enrich_package(
     pkg: &PackageInfo,
     dump_info: &HashMap<String, PackageDumpInfo>,
     admins: &HashSet<String>,
-) -> (ScannedPackage, bool) {
+) -> ScannedPackage {
     let dumpsys_info = dump_info
         .get(&pkg.package_name)
         .cloned()
@@ -196,8 +209,12 @@ fn enrich_package(
     let installer = dumpsys_info.installer.clone();
     let author = dumpsys_info.signing_org.clone();
 
-    let manifest_bytes =
-        fetch_apk_entry(bridge, &pkg.package_name, pkg.apk_path.as_deref(), "AndroidManifest.xml");
+    let manifest_bytes = fetch_apk_entry(
+        bridge,
+        &pkg.package_name,
+        pkg.apk_path.as_deref(),
+        "AndroidManifest.xml",
+    );
     let meta = manifest_bytes
         .as_deref()
         .map(parse_application_meta)
@@ -206,7 +223,8 @@ fn enrich_package(
             icon_res: None,
         });
 
-    let needs_arsc = matches!(meta.label, Some(LabelValue::Reference(_))) || meta.icon_res.is_some();
+    let needs_arsc =
+        matches!(meta.label, Some(LabelValue::Reference(_))) || meta.icon_res.is_some();
     let arsc_bytes = if needs_arsc {
         fetch_apk_entry(
             bridge,
@@ -230,21 +248,66 @@ fn enrich_package(
         &meta,
         arsc_bytes.as_deref(),
     );
-    let cacheable =
-        apk_label.is_some() || known_label(&pkg.package_name).is_some() || icon_url.is_some();
 
-    (
-        ScannedPackage {
-            package_name: pkg.package_name.clone(),
-            label,
-            author,
-            icon_url,
-            is_system: pkg.is_system,
-            installer,
-            is_device_admin: admins.contains(&pkg.package_name),
-        },
-        cacheable,
-    )
+    ScannedPackage {
+        package_name: pkg.package_name.clone(),
+        label,
+        author,
+        icon_url,
+        is_system: pkg.is_system,
+        installer,
+        is_device_admin: admins.contains(&pkg.package_name),
+        sideloaded: false,
+        installed_recently: false,
+        reads_screen: false,
+        draws_over: false,
+        no_launcher_icon: false,
+    }
+}
+
+fn package_from_helper(
+    pkg: &PackageInfo,
+    app: &helper::HelperApp,
+    dump_info: &HashMap<String, PackageDumpInfo>,
+    admins: &HashSet<String>,
+) -> ScannedPackage {
+    ScannedPackage {
+        package_name: pkg.package_name.clone(),
+        label: label_from_helper(&pkg.package_name, app.label.clone()),
+        author: app.author.clone().filter(|org| !is_generic_org(org)),
+        icon_url: app
+            .icon_png
+            .as_deref()
+            .filter(|bytes| is_image_bytes(bytes))
+            .map(icon_bytes_to_data_url),
+        is_system: pkg.is_system,
+        installer: dump_info
+            .get(&pkg.package_name)
+            .and_then(|info| info.installer.clone()),
+        is_device_admin: admins.contains(&pkg.package_name),
+        sideloaded: false,
+        installed_recently: false,
+        reads_screen: false,
+        draws_over: false,
+        no_launcher_icon: false,
+    }
+}
+
+fn label_from_helper(package_name: &str, raw: Option<String>) -> Option<String> {
+    match raw.and_then(|value| normalize_label(&value)) {
+        Some(label) if label != package_name => Some(label),
+        _ => infer_label_from_package(package_name),
+    }
+}
+
+fn missing_packages<'a>(
+    packages: &'a [PackageInfo],
+    seen: &HashSet<String>,
+) -> Vec<&'a PackageInfo> {
+    packages
+        .iter()
+        .filter(|pkg| !seen.contains(&pkg.package_name))
+        .collect()
 }
 
 fn resolve_apk_label(meta: &AppMeta, arsc: Option<&[u8]>) -> Option<String> {
@@ -328,11 +391,7 @@ fn resolve_icon(
     url
 }
 
-fn load_split_arscs(
-    bridge: &AdbBridge,
-    package_name: &str,
-    apk_paths: &[String],
-) -> Vec<Vec<u8>> {
+fn load_split_arscs(bridge: &AdbBridge, package_name: &str, apk_paths: &[String]) -> Vec<Vec<u8>> {
     apk_paths
         .iter()
         .skip(1)
@@ -363,11 +422,13 @@ fn extend_paths_from_xml(
             break;
         }
         for xml_path in xml_paths {
-            let Some(xml) = fetch_apk_entry(bridge, package_name, apk_path, &xml_path).or_else(|| {
-                apk_paths
-                    .iter()
-                    .find_map(|p| fetch_apk_entry(bridge, package_name, Some(p), &xml_path))
-            }) else {
+            let Some(xml) =
+                fetch_apk_entry(bridge, package_name, apk_path, &xml_path).or_else(|| {
+                    apk_paths
+                        .iter()
+                        .find_map(|p| fetch_apk_entry(bridge, package_name, Some(p), &xml_path))
+                })
+            else {
                 continue;
             };
             for resid in xml_drawable_refs(&xml) {
@@ -538,7 +599,9 @@ fn is_apk_image_path(path: &str) -> bool {
 }
 
 fn parse_application_meta(manifest: &[u8]) -> AppMeta {
-    let Ok(doc) = parse_manifest(manifest) else {
+    let Ok(Ok(doc)) =
+        std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| parse_manifest(manifest)))
+    else {
         return AppMeta {
             label: None,
             icon_res: None,
@@ -587,13 +650,147 @@ fn parse_label_value(raw: &str) -> Option<LabelValue> {
         return Some(LabelValue::Reference(id));
     }
     let value = raw.trim();
-    if value.is_empty()
-        || value.starts_with("ResourceValueType::")
-        || value.starts_with('@')
-    {
+    if value.is_empty() || value.starts_with("ResourceValueType::") || value.starts_with('@') {
         return None;
     }
     Some(LabelValue::Literal(value.to_string()))
+}
+
+const RECENT_MS: i64 = 7 * 24 * 60 * 60 * 1000;
+
+struct RiskSignals {
+    a11y: HashSet<String>,
+    overlay: HashSet<String>,
+    launchers: Option<HashSet<String>>,
+}
+
+impl RiskSignals {
+    fn load(bridge: &AdbBridge) -> Self {
+        let a11y = bridge
+            .shell("dumpsys accessibility")
+            .map(|text| parse_accessibility_packages(&text))
+            .unwrap_or_default();
+        let overlay = bridge
+            .shell("appops query-op SYSTEM_ALERT_WINDOW allow")
+            .map(|text| parse_appops_packages(&text))
+            .unwrap_or_default();
+        let launchers = bridge
+            .shell("cmd package query-activities -a android.intent.action.MAIN -c android.intent.category.LAUNCHER")
+            .ok()
+            .map(|text| parse_component_packages(&text))
+            .filter(|set| !set.is_empty());
+        Self {
+            a11y,
+            overlay,
+            launchers,
+        }
+    }
+}
+
+fn now_millis() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
+}
+
+fn attach_risk(
+    pkg: &mut ScannedPackage,
+    info: Option<&PackageDumpInfo>,
+    signals: &RiskSignals,
+    now_ms: i64,
+) {
+    pkg.sideloaded = is_sideloaded(pkg.installer.as_deref(), pkg.is_system);
+    pkg.installed_recently = !pkg.is_system
+        && info
+            .and_then(|info| info.first_install_ms)
+            .is_some_and(|ms| ms <= now_ms && now_ms.saturating_sub(ms) < RECENT_MS);
+    pkg.reads_screen = signals.a11y.contains(&pkg.package_name);
+    pkg.draws_over = signals.overlay.contains(&pkg.package_name);
+    pkg.no_launcher_icon = !pkg.is_system
+        && signals
+            .launchers
+            .as_ref()
+            .is_some_and(|set| !set.contains(&pkg.package_name));
+}
+
+fn is_sideloaded(installer: Option<&str>, is_system: bool) -> bool {
+    if is_system {
+        return false;
+    }
+    matches!(installer, Some(name) if !name.is_empty() && name != "com.android.vending")
+}
+
+fn parse_install_time(line: &str) -> Option<i64> {
+    let rest = line.trim().strip_prefix("firstInstallTime=")?.trim();
+    if rest.is_empty() || rest == "0" {
+        return None;
+    }
+    if let Ok(n) = rest.parse::<i64>() {
+        if n <= 0 {
+            return None;
+        }
+        return Some(if n < 10_000_000_000 { n * 1000 } else { n });
+    }
+    chrono::NaiveDateTime::parse_from_str(rest, "%Y-%m-%d %H:%M:%S")
+        .ok()
+        .map(|dt| dt.and_utc().timestamp_millis())
+}
+
+fn parse_accessibility_packages(text: &str) -> HashSet<String> {
+    let mut out = HashSet::new();
+    let mut capture = false;
+    for line in text.lines() {
+        if line.to_ascii_lowercase().contains("enabled services") {
+            capture = true;
+            collect_component_packages(line, &mut out);
+            continue;
+        }
+        if !capture {
+            continue;
+        }
+        if line.starts_with(' ') || line.starts_with('\t') || line.trim_start().starts_with('{') {
+            collect_component_packages(line, &mut out);
+        } else if !line.trim().is_empty() {
+            capture = false;
+        }
+    }
+    out
+}
+
+fn parse_appops_packages(text: &str) -> HashSet<String> {
+    let mut out = HashSet::new();
+    for line in text.lines() {
+        let Some((head, _)) = line.split_once(": allow") else {
+            continue;
+        };
+        let Some(pkg) = head.split_whitespace().last() else {
+            continue;
+        };
+        if pkg.contains('.') {
+            out.insert(pkg.to_string());
+        }
+    }
+    out
+}
+
+pub fn parse_component_packages(text: &str) -> HashSet<String> {
+    let mut out = HashSet::new();
+    collect_component_packages(text, &mut out);
+    out
+}
+
+fn collect_component_packages(text: &str, out: &mut HashSet<String>) {
+    for token in text.split(|c: char| {
+        c.is_whitespace() || matches!(c, '{' | '}' | ',' | ';' | '[' | ']' | '"' | '\'')
+    }) {
+        let Some((pkg, _)) = token.split_once('/') else {
+            continue;
+        };
+        if pkg.contains('.') && !pkg.contains(':') {
+            out.insert(pkg.to_string());
+        }
+    }
 }
 
 fn parse_bulk_dumpsys(output: &str) -> HashMap<String, PackageDumpInfo> {
@@ -610,6 +807,11 @@ fn parse_bulk_dumpsys(output: &str) -> HashMap<String, PackageDumpInfo> {
             if entry.installer.is_none() {
                 if let Some(inst) = extract_installer_from_line(line) {
                     entry.installer = Some(inst);
+                }
+            }
+            if entry.first_install_ms.is_none() {
+                if let Some(ms) = parse_install_time(line) {
+                    entry.first_install_ms = Some(ms);
                 }
             }
             if line.contains("certificate DN:") || line.contains("Signer #") {
@@ -656,15 +858,32 @@ fn extract_signing_from_line(line: &str) -> Option<String> {
     extract_dn_field(line, "O=")
 }
 
+fn shell_quote(value: &str) -> String {
+    format!("'{}'", value.replace('\'', "'\\''"))
+}
+
 /// Shell snippet that leaves the APK path in `$APK`: uses the known path when
 /// available, otherwise resolves it on-device via `pm path`.
 fn apk_path_prelude(package_name: &str, apk_path: Option<&str>) -> String {
     match apk_path {
-        Some(p) => format!("APK=\"{p}\""),
+        Some(p) => format!("APK={}", shell_quote(p)),
         None => format!(
-            "APK=$(pm path {package_name} 2>/dev/null | head -1 | cut -d: -f2 | tr -d '\\r')"
+            "APK=$(pm path {} 2>/dev/null | head -1 | cut -d: -f2 | tr -d '\\r')",
+            shell_quote(package_name)
         ),
     }
+}
+
+/// `unzip -p` command. Paths from the APK are single-quoted so `$(...)` stays text.
+fn apk_unzip_command(package_name: &str, apk_path: Option<&str>, entry: &str) -> Option<String> {
+    if entry.is_empty() || entry.contains("..") || entry.contains('\0') {
+        return None;
+    }
+    Some(format!(
+        "{}; [ -n \"$APK\" ] && unzip -p \"$APK\" {}",
+        apk_path_prelude(package_name, apk_path),
+        shell_quote(entry)
+    ))
 }
 
 fn fetch_apk_entry(
@@ -673,14 +892,7 @@ fn fetch_apk_entry(
     apk_path: Option<&str>,
     entry: &str,
 ) -> Option<Vec<u8>> {
-    let safe_entry = entry.replace('"', "");
-    if safe_entry.is_empty() || safe_entry.contains("..") {
-        return None;
-    }
-    let cmd = format!(
-        "{}; [ -n \"$APK\" ] && unzip -p \"$APK\" \"{safe_entry}\"",
-        apk_path_prelude(package_name, apk_path)
-    );
+    let cmd = apk_unzip_command(package_name, apk_path, entry)?;
     let bytes = if entry == "resources.arsc" {
         exec_out_gz(bridge, &cmd)?
     } else {
@@ -693,7 +905,9 @@ fn fetch_apk_entry(
 /// gzipped on-device; devices without gzip fall back to the raw stream.
 fn exec_out_gz(bridge: &AdbBridge, cmd: &str) -> Option<Vec<u8>> {
     let bytes = bridge
-        .exec_out(&format!("({cmd}) 2>/dev/null | (gzip -1 2>/dev/null || cat)"))
+        .exec_out(&format!(
+            "({cmd}) 2>/dev/null | (gzip -1 2>/dev/null || cat)"
+        ))
         .ok()?;
     maybe_gunzip(bytes)
 }
@@ -800,15 +1014,86 @@ fn extract_dn_field(line: &str, key: &str) -> Option<String> {
 }
 
 fn is_generic_org(org: &str) -> bool {
+    let compact: String = org
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .flat_map(|c| c.to_lowercase())
+        .collect();
+    if compact == "google" || compact == "googleinc" {
+        return true;
+    }
     matches!(
         org,
-        "Android" | "Android Debug" | "unknown" | "Unknown" | "CN" | "Google Inc."
+        "Android" | "Android Debug" | "unknown" | "Unknown" | "CN"
     )
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn helper_label_keeps_the_device_name() {
+        assert_eq!(
+            label_from_helper("com.whatsapp", Some("WhatsApp".into())).as_deref(),
+            Some("WhatsApp")
+        );
+        assert_eq!(
+            label_from_helper(
+                "com.google.android.gm",
+                Some("com.google.android.gm".into())
+            )
+            .as_deref(),
+            Some("Gmail")
+        );
+        assert_eq!(
+            label_from_helper("com.whatsapp", None).as_deref(),
+            Some("Whatsapp")
+        );
+    }
+
+    #[test]
+    fn missing_packages_are_the_ones_the_helper_skipped() {
+        let packages = vec![
+            PackageInfo {
+                package_name: "com.a".into(),
+                is_system: false,
+                apk_path: None,
+            },
+            PackageInfo {
+                package_name: "com.b".into(),
+                is_system: false,
+                apk_path: None,
+            },
+        ];
+        let seen = HashSet::from(["com.a".into()]);
+        let missing: Vec<_> = missing_packages(&packages, &seen)
+            .iter()
+            .map(|pkg| pkg.package_name.as_str())
+            .collect();
+        assert_eq!(missing, vec!["com.b"]);
+    }
+
+    #[test]
+    fn helper_author_drops_generic_orgs() {
+        let pkg = PackageInfo {
+            package_name: "com.whatsapp".into(),
+            is_system: false,
+            apk_path: None,
+        };
+        let app = helper::HelperApp {
+            package_name: pkg.package_name.clone(),
+            label: Some("WhatsApp".into()),
+            author: Some("Google Inc.".into()),
+            icon_png: None,
+        };
+        let scanned = package_from_helper(&pkg, &app, &HashMap::new(), &HashSet::new());
+        assert!(scanned.author.is_none());
+        assert_eq!(scanned.label.as_deref(), Some("WhatsApp"));
+        assert!(is_generic_org("Google, Inc"));
+        assert!(!is_generic_org("WhatsApp Inc."));
+        assert!(!is_generic_org("Facebook Inc."));
+    }
 
     #[test]
     fn parses_signing_organization() {
@@ -830,7 +1115,8 @@ Package [com.other.app] (def):
 "#;
         let map = parse_bulk_dumpsys(output);
         assert_eq!(
-            map.get("com.example.app").and_then(|i| i.installer.as_deref()),
+            map.get("com.example.app")
+                .and_then(|i| i.installer.as_deref()),
             Some("com.android.vending")
         );
         assert_eq!(
@@ -966,6 +1252,89 @@ Package [com.other.app] (def):
     }
 
     #[test]
+    fn risk_hints_come_from_dumpsys_not_the_icon_cache() {
+        let mut pkg = ScannedPackage {
+            package_name: "com.ads.cleaner".into(),
+            label: None,
+            author: None,
+            icon_url: None,
+            is_system: false,
+            installer: Some("com.android.chrome".into()),
+            is_device_admin: false,
+            sideloaded: false,
+            installed_recently: false,
+            reads_screen: false,
+            draws_over: false,
+            no_launcher_icon: false,
+        };
+        let info = PackageDumpInfo {
+            installer: pkg.installer.clone(),
+            signing_org: None,
+            first_install_ms: Some(1_000),
+        };
+        let signals = RiskSignals {
+            a11y: HashSet::from(["com.ads.cleaner".into()]),
+            overlay: HashSet::from(["com.ads.cleaner".into()]),
+            launchers: Some(HashSet::from(["com.real.app".into()])),
+        };
+        attach_risk(
+            &mut pkg,
+            Some(&info),
+            &signals,
+            1_000 + 3 * 24 * 60 * 60 * 1000,
+        );
+        assert!(pkg.sideloaded);
+        assert!(pkg.installed_recently);
+        assert!(pkg.reads_screen);
+        assert!(pkg.draws_over);
+        assert!(pkg.no_launcher_icon);
+
+        pkg.is_system = true;
+        pkg.installer = None;
+        attach_risk(&mut pkg, Some(&info), &signals, 1_000);
+        assert!(!pkg.sideloaded);
+        assert!(!pkg.installed_recently);
+        assert!(!pkg.no_launcher_icon);
+    }
+
+    #[test]
+    fn parses_install_time_and_signal_lists() {
+        assert_eq!(parse_install_time("firstInstallTime=0"), None);
+        assert_eq!(
+            parse_install_time("    firstInstallTime=2024-01-02 03:04:05"),
+            Some(
+                chrono::NaiveDateTime::parse_from_str("2024-01-02 03:04:05", "%Y-%m-%d %H:%M:%S")
+                    .unwrap()
+                    .and_utc()
+                    .timestamp_millis()
+            )
+        );
+        assert_eq!(
+            parse_install_time("firstInstallTime=1700000000000"),
+            Some(1700000000000)
+        );
+        let a11y = parse_accessibility_packages(
+            "Enabled services:\n    {com.spy/.A11y}\nBinding services:\n",
+        );
+        assert!(a11y.contains("com.spy"));
+        let ops = parse_appops_packages("  com.cover.app: allow; time=0\n");
+        assert!(ops.contains("com.cover.app"));
+        assert!(parse_component_packages("").is_empty());
+    }
+
+    #[test]
+    fn apk_unzip_command_quotes_metacharacters() {
+        let cmd =
+            apk_unzip_command("com.foo", Some("/data/a'b$(id).apk"), "res/$(id)'x.xml").unwrap();
+        assert!(cmd.contains("APK='/data/a'\\''b$(id).apk'"), "{cmd}");
+        assert!(
+            cmd.contains("unzip -p \"$APK\" 'res/$(id)'\\''x.xml'"),
+            "{cmd}"
+        );
+        assert!(apk_unzip_command("com.foo", None, "res/../x.png").is_none());
+    }
+
+    #[test]
     fn rejects_unzip_error_as_apk_entry() {
         assert!(!is_plausible_apk_entry(b""));
         assert!(!is_plausible_apk_entry(
@@ -998,9 +1367,7 @@ Package [com.other.app] (def):
 
     #[test]
     fn candidate_apk_paths_includes_density_splits() {
-        let paths = candidate_apk_paths(Some(
-            "/data/app/~~x/com.whatsapp.w4b-y/base.apk",
-        ));
+        let paths = candidate_apk_paths(Some("/data/app/~~x/com.whatsapp.w4b-y/base.apk"));
         assert_eq!(paths[0], "/data/app/~~x/com.whatsapp.w4b-y/base.apk");
         assert!(paths.iter().any(|p| p.ends_with("split_config.xxhdpi.apk")));
     }

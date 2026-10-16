@@ -79,3 +79,31 @@ create view package_stats with (security_invoker = false) as
 revoke execute on function push_uninstalls(jsonb), push_votes(jsonb) from public, anon;
 grant execute on function push_uninstalls(jsonb), push_votes(jsonb) to authenticated;
 grant select on package_stats to authenticated;
+
+-- I client si iscrivono solo a questa tabella. Poi rileggono package_stats.
+create table package_signals (
+  package_name text primary key,
+  changed_at timestamptz not null default now()
+);
+alter table package_signals enable row level security;
+create policy package_signals_read on package_signals
+  for select to authenticated using (true);
+grant select on package_signals to authenticated;
+
+create function touch_package_signal() returns trigger
+  language plpgsql security definer set search_path = public
+as $$
+begin
+  insert into package_signals (package_name) values (new.package_name)
+  on conflict (package_name) do update set changed_at = now();
+  return new;
+end $$;
+
+create trigger flag_votes_signal
+  after insert or update on flag_votes
+  for each row execute function touch_package_signal();
+create trigger uninstall_events_signal
+  after insert on uninstall_events
+  for each row execute function touch_package_signal();
+
+alter publication supabase_realtime add table package_signals;

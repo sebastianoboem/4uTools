@@ -1,5 +1,8 @@
+mod browsers;
 mod commands;
+mod dev_log;
 mod optimizer;
+mod realtime;
 mod state;
 
 use state::AppState;
@@ -7,6 +10,10 @@ use tauri::{Emitter, Manager};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    dev_log::init();
+    if dev_log::ENABLED {
+        adb_bridge::set_dev_logger(dev_log::record);
+    }
     let app_state = AppState::new().expect("failed to initialize app state");
 
     tauri::Builder::default()
@@ -29,6 +36,7 @@ pub fn run() {
                     }
                 });
             }
+            realtime::spawn(handle.clone());
             std::thread::spawn(move || {
                 if let Some(state) = handle.try_state::<AppState>() {
                     commands::reconcile_quiet(&state);
@@ -48,11 +56,14 @@ pub fn run() {
             commands::list_devices,
             commands::sync_pull,
             commands::push_reports,
-            commands::sync_push,
             commands::scan_packages,
             commands::bulk_uninstall,
+            commands::restore_packages,
+            commands::check_browsers,
+            commands::open_notification_settings,
+            commands::open_default_apps,
+            commands::set_browser_notifications,
             commands::set_package_marks,
-            commands::set_airplane_mode,
             commands::get_sync_status,
             commands::get_sync_settings,
             commands::set_sync_provider,
@@ -61,9 +72,9 @@ pub fn run() {
             commands::sync_now,
             commands::allow_app_close,
             commands::export_report,
-            commands::clear_metadata_cache,
             commands::scan_storage,
             commands::clean_storage,
+            commands::dev_log_enabled,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

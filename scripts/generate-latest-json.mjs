@@ -17,6 +17,8 @@
  *   ... --base-url http://127.0.0.1:8765
  */
 import { readFileSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const args = process.argv.slice(2);
 const opts = {
@@ -40,6 +42,21 @@ for (let i = 0; i < args.length; i++) {
 if (!opts.version || !opts.baseUrl) {
   console.error("Richiesti --version e --base-url");
   process.exit(1);
+}
+
+let githubHost = false;
+try {
+  githubHost = new URL(opts.baseUrl).hostname === "github.com";
+} catch {
+  githubHost = false;
+}
+if (githubHost) {
+  const check = spawnSync(
+    process.execPath,
+    [fileURLToPath(new URL("./check-dev-log.mjs", import.meta.url))],
+    { stdio: "inherit" },
+  );
+  if (check.status !== 0) process.exit(check.status ?? 1);
 }
 
 const artifactNames = {

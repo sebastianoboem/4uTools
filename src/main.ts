@@ -6,6 +6,7 @@ import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 
 import { isGoogleApp } from "./googleApps.mjs";
+import { isPreinstalled } from "./preinstalled.mjs";
 
 declare const __FULLSCAN__: boolean;
 
@@ -50,6 +51,12 @@ interface PackageRow {
   icon_url: string | null;
   is_system: boolean;
   is_device_admin: boolean;
+  sideloaded: boolean;
+  installed_recently: boolean;
+  reads_screen: boolean;
+  draws_over: boolean;
+  no_launcher_icon: boolean;
+  is_critical: boolean;
   uninstall_count: number;
   report_count: number;
   marked_system: boolean;
@@ -58,6 +65,9 @@ interface PackageRow {
   is_suspicious: boolean;
   is_reported: boolean;
   my_vote: string | null;
+  online_system: number;
+  online_trusted: number;
+  online_suspicious: number;
 }
 
 interface PackageReputation {
@@ -68,6 +78,9 @@ interface PackageReputation {
   marked_trusted: boolean;
   marked_suspicious: boolean;
   my_vote: string | null;
+  online_system?: number;
+  online_trusted?: number;
+  online_suspicious?: number;
 }
 
 const SUSPICIOUS_UNINSTALL_THRESHOLD = 5;
@@ -135,6 +148,7 @@ let deviceSerial = "";
 let deviceBrand = "";
 let deviceModel = "";
 let lastRemoved: string[] = [];
+let restoreNames: { name: string; label: string }[] = [];
 const selectedPackages = new Set<string>();
 let sortKey: keyof PackageRow | "name" = "uninstall_count";
 let sortAsc = false;
@@ -142,6 +156,7 @@ let guidesCache: DeviceGuides | null = null;
 let connectionAttempts = 0;
 const CONNECTION_ATTEMPTS_BEFORE_POPUP = 3;
 let deviceSession = 0;
+let showOnlineVotes = false;
 let guideDebounceTimer: number | null = null;
 
 const GENERIC_GUIDE_STEPS: GuideStep[] = [
@@ -459,11 +474,87 @@ async function showConnectionDialog() {
 async function tryConnect(): Promise<boolean> {
   const status = await invoke<AdbStatus>("get_adb_status");
   if (status.has_authorized_device) {
-    const dev = status.devices.find((d) => d.state === "device");
+    renderDevicePicker(status);
+    const dev = status.devices.find((d) => d.serial === deviceSerial && d.state === "device")
+      ?? status.devices.find((d) => d.state === "device");
     if (dev?.model) deviceModel = dev.model;
     return true;
   }
   return false;
+}
+
+function renderDevicePicker(status: AdbStatus, scanIfReady = false) {
+  const select = $("#device-select") as HTMLSelectElement | null;
+  if (!select) return;
+  const devices = status.devices.filter((d) => d.state === "device");
+  if (devices.length < 2) {
+    select.classList.add("hidden");
+    select.innerHTML = "";
+    if (devices.length === 1) {
+      const only = devices[0].serial;
+      const becameReady = deviceSerial !== only;
+      deviceSerial = only;
+      if (devices[0].model) deviceModel = devices[0].model;
+      if (scanIfReady && becameReady && !scanInFlight) void scanPackages();
+    }
+    return;
+  }
+  const known = devices.some((d) => d.serial === deviceSerial);
+  select.classList.remove("hidden");
+  select.innerHTML =
+    `<option value="">Scegli il telefono…</option>` +
+    devices
+      .map((d) => `<option value="${escapeHtml(d.serial)}">${escapeHtml(d.model || d.serial)}</option>`)
+      .join("");
+  select.value = known ? deviceSerial : "";
+  if (!known) deviceSerial = "";
+}
+
+type CriticalChoice = "others" | "all";
+let criticalChoice: ((choice: CriticalChoice | null) => void) | null = null;
+
+function closeCriticalDialog(choice: CriticalChoice | null) {
+  $("#dialog-critical")?.classList.add("hidden");
+  const resolve = criticalChoice;
+  criticalChoice = null;
+  resolve?.(choice);
+}
+
+function askCritical(names: string[]): Promise<CriticalChoice | null> {
+  const list = $("#critical-list");
+  if (list) {
+    list.innerHTML = names.map((name) => `<li>${escapeHtml(name)}</li>`).join("");
+  }
+  $("#dialog-critical")?.classList.remove("hidden");
+  return new Promise((resolve) => {
+    criticalChoice = resolve;
+  });
+}
+
+function closeRestoreDialog() {
+  $("#dialog-restore")?.classList.add("hidden");
+}
+
+function showRestoreDialog(systemApps: { name: string; label: string }[], removedCount: number) {
+  restoreNames = systemApps;
+  ($("#restore-summary") as HTMLElement).textContent =
+    `${removedCount} app rimosse. ${systemApps.length} si possono rimettere.`;
+  const list = $("#restore-list");
+  if (list) {
+    list.innerHTML = systemApps.map((app) => `<li>${escapeHtml(app.label)}</li>`).join("");
+  }
+  $("#dialog-restore")?.classList.remove("hidden");
+}
+
+function riskHints(p: PackageRow): string {
+  const parts: string[] = [];
+  if (p.sideloaded) parts.push("non da Play Store");
+  if (p.installed_recently) parts.push("installata da poco");
+  if (p.reads_screen) parts.push("legge lo schermo");
+  if (p.draws_over) parts.push("sta sopra le altre app");
+  if (p.no_launcher_icon) parts.push("senza icona");
+  if (p.is_device_admin) parts.push("amministratore");
+  return parts.join(" · ");
 }
 
 function deviceStillPresent(status: AdbStatus): boolean {
@@ -479,8 +570,11 @@ async function waitUntilDisconnected(session: number): Promise<void> {
     await delay(1000);
     if (session !== deviceSession) return;
     let present = false;
+    let status: AdbStatus | null = null;
     try {
-      present = deviceStillPresent(await invoke<AdbStatus>("get_adb_status"));
+      status = await invoke<AdbStatus>("get_adb_status");
+      renderDevicePicker(status, true);
+      present = deviceStillPresent(status);
     } catch {
       present = false;
     }
@@ -502,6 +596,7 @@ function dropDeviceSession() {
   deviceBrand = "";
   deviceModel = "";
   lastRemoved = [];
+  restoreNames = [];
   scanInFlight = false;
   operationInFlight = false;
   setPackagesLoading(false);
@@ -512,6 +607,12 @@ function dropDeviceSession() {
   optimizeRunning = false;
   closeOptimize();
   closeUpdateDialog();
+  closeCriticalDialog(null);
+  closeRestoreDialog();
+  browserCheck = null;
+  browserWarnSeen = false;
+  updateBrowserAttention();
+  closeBrowserDialog();
 }
 
 async function runPhase2(): Promise<void> {
@@ -572,6 +673,11 @@ async function onDeviceConnected(session: number) {
   }
 
   if (session !== deviceSession) return;
+  renderDevicePicker(await invoke<AdbStatus>("get_adb_status"));
+  if (!deviceSerial) {
+    ($("#scan-info") as HTMLElement).textContent = "Scegli il telefono";
+    return;
+  }
   try {
     await scanPackages();
   } catch (e) {
@@ -729,23 +835,19 @@ async function refreshDbPanel() {
     return;
   }
 
+  const online = status.provider_label === "Supabase";
+  if (online !== showOnlineVotes) {
+    showOnlineVotes = online;
+    if (packages.length) renderTable();
+  }
+
   const badgeClass = status.configured ? "sync-synced" : "sync-local";
 
   el.innerHTML = `
     <span class="sync-badge ${badgeClass}">DB: ${escapeHtml(status.provider_label)}</span>
     ${device}
-    ${status.last_pull ? `<span class="muted">↓ ${formatTime(status.last_pull)}</span>` : ""}
-    ${status.last_push ? `<span class="muted">↑ ${formatTime(status.last_push)}</span>` : ""}
     ${status.last_error ? `<span style="color:#f87171">${escapeHtml(status.last_error)}</span>` : ""}
   `;
-}
-
-function formatTime(iso: string) {
-  try {
-    return new Date(iso).toLocaleString("it-IT", { hour: "2-digit", minute: "2-digit" });
-  } catch {
-    return iso;
-  }
 }
 
 // --- FASE 4: lista app ---
@@ -755,6 +857,10 @@ function escapeHtml(s: string) {
 }
 
 const ICON_FALLBACK_HTML = `<span class="pkg-icon pkg-icon-fallback" aria-hidden="true">📦</span>`;
+
+function flagCount(count: number): string {
+  return showOnlineVotes ? `<span class="flag-count">${count}</span>` : "";
+}
 
 function packageIconHtml(iconUrl: string | null): string {
   if (
@@ -798,25 +904,26 @@ function pruneSelectedPackages() {
 function updateSelectAllState() {
   const el = $("#select-all") as HTMLInputElement | null;
   if (!el) return;
-  const visible = document.querySelectorAll<HTMLInputElement>(".pkg-check");
+  const visible = getFilteredPackages().filter((p) => !p.is_critical);
   if (visible.length === 0) {
     el.checked = false;
     el.indeterminate = false;
     return;
   }
-  const checkedCount = Array.from(visible).filter((c) => c.checked).length;
+  const checkedCount = visible.filter((p) => selectedPackages.has(p.package_name)).length;
   el.checked = checkedCount === visible.length;
   el.indeterminate = checkedCount > 0 && checkedCount < visible.length;
 }
 
-type PackageFlag = "suspicious" | "system" | "google" | "trusted";
+type PackageFlag = "suspicious" | "system" | "google" | "trusted" | "preinstalled" | "unclassified";
 
-function packageFlag(p: PackageRow): PackageFlag | null {
+function packageFlag(p: PackageRow): PackageFlag {
   if (p.is_suspicious) return "suspicious";
   if (p.marked_trusted) return "trusted";
   if (isGoogleApp(p.package_name)) return "google";
+  if (isPreinstalled(p.package_name)) return "preinstalled";
   if (p.is_system || p.marked_system) return "system";
-  return null;
+  return "unclassified";
 }
 
 function flagShown(flag: PackageFlag): boolean {
@@ -826,11 +933,9 @@ function flagShown(flag: PackageFlag): boolean {
 
 function packagePassesFilters(p: PackageRow): boolean {
   const filter = ($("#filter-text") as HTMLInputElement).value.toLowerCase();
-  const onlySuspicious = ($("#filter-suspicious") as HTMLInputElement).checked;
   const flag = packageFlag(p);
 
   if (flag && !flagShown(flag)) return false;
-  if (onlySuspicious && flag !== "suspicious") return false;
   const hay = `${p.package_name} ${p.label ?? ""} ${p.author ?? ""}`.toLowerCase();
   return hay.includes(filter);
 }
@@ -867,14 +972,12 @@ function setOperationProgress(
   }
 }
 
-function setPackagesLoading(loading: boolean, longHint = false) {
+function setPackagesLoading(loading: boolean) {
   const tbody = $("#packages-body");
   if (loading) {
     tbody!.innerHTML = "";
     setScanControlsDisabled(true);
-    setOperationProgress(true, 0, 0, longHint
-      ? "Scansione app… (con le app di sistema può richiedere alcuni minuti)"
-      : "Scansione app…");
+    setOperationProgress(true, 0, 0, "Scansione app…");
   } else {
     setOperationProgress(false, 0, 0, "");
     setScanControlsDisabled(false);
@@ -883,9 +986,11 @@ function setPackagesLoading(loading: boolean, longHint = false) {
 
 function buildPackageRowHtml(p: PackageRow): string {
   const badges = [];
+  const google = isGoogleApp(p.package_name);
   if (p.is_suspicious) badges.push('<span class="badge suspicious">sospetta</span>');
-  if (p.is_system) badges.push('<span class="badge system">sistema</span>');
-  if (p.marked_system && !p.is_system) badges.push('<span class="badge system">sistema DB</span>');
+  if (isPreinstalled(p.package_name)) badges.push('<span class="badge preinstalled">preinstallata</span>');
+  else if (!google && (p.is_system || p.marked_system)) badges.push('<span class="badge system">sistema</span>');
+  if (google) badges.push('<span class="badge google">google</span>');
   if (p.marked_trusted) badges.push('<span class="badge trusted">trusted</span>');
   if (p.is_device_admin) badges.push('<span class="badge admin">admin</span>');
 
@@ -895,12 +1000,13 @@ function buildPackageRowHtml(p: PackageRow): string {
     : "";
 
   const checked = selectedPackages.has(p.package_name) ? " checked" : "";
-  const suspiciousOn = p.marked_suspicious;
-  const systemOn = p.marked_system;
-  const trustedOn = p.marked_trusted;
+  const suspiciousOn = p.my_vote === "suspicious";
+  const systemOn = p.my_vote === "system";
+  const trustedOn = p.my_vote === "trusted";
+  const hints = riskHints(p);
   return `
-    <tr class="${p.is_suspicious ? "row-suspicious" : ""}" data-package="${p.package_name}">
-      <td class="col-check"><input type="checkbox" class="pkg-check" data-package="${p.package_name}"${checked} /></td>
+    <tr class="${p.is_suspicious ? "row-suspicious" : ""}" data-package="${escapeHtml(p.package_name)}">
+      <td class="col-check"><input type="checkbox" class="pkg-check" data-package="${escapeHtml(p.package_name)}"${checked} /></td>
       <td>
         <div class="pkg-row-main">
           ${packageIconHtml(p.icon_url)}
@@ -909,17 +1015,18 @@ function buildPackageRowHtml(p: PackageRow): string {
               <span class="pkg-title">${escapeHtml(title)}</span>${authorLine}${badges.join("")}
             </div>
             <span class="pkg-id">${escapeHtml(p.package_name)}</span>
+            ${hints ? `<span class="pkg-hints">${escapeHtml(hints)}</span>` : ""}
           </div>
         </div>
       </td>
       <td>${p.uninstall_count > 0 ? `<strong>${p.uninstall_count}×</strong>` : "—"}</td>
       <td class="col-flags">
         <button type="button" class="btn-flag btn-flag-suspicious ${suspiciousOn ? "active" : ""}"
-          data-package="${p.package_name}" title="${suspiciousOn ? "Ritira il voto sospetta" : "Vota sospetta"}">⚑</button>
+          data-package="${p.package_name}" title="${suspiciousOn ? "Ritira il voto sospetta" : "Vota sospetta"}">⚑${flagCount(p.online_suspicious)}</button>
         <button type="button" class="btn-flag btn-flag-system ${systemOn ? "active" : ""}"
-          data-package="${p.package_name}" title="${systemOn ? "Ritira il voto sistema" : "Vota sistema"}">⚙</button>
+          data-package="${p.package_name}" title="${systemOn ? "Ritira il voto sistema" : "Vota sistema"}">⚙${flagCount(p.online_system)}</button>
         <button type="button" class="btn-flag btn-flag-trusted ${trustedOn ? "active" : ""}"
-          data-package="${p.package_name}" title="${trustedOn ? "Ritira il voto trusted" : "Vota trusted"}">✓</button>
+          data-package="${p.package_name}" title="${trustedOn ? "Ritira il voto trusted" : "Vota trusted"}">✓${flagCount(p.online_trusted)}</button>
       </td>
     </tr>`;
 }
@@ -944,10 +1051,10 @@ function setScanControlsDisabled(disabled: boolean) {
   for (const el of document.querySelectorAll<HTMLButtonElement>("[data-flag-filter]")) {
     el.disabled = disabled;
   }
-  ($("#filter-suspicious") as HTMLInputElement).disabled = disabled;
   ($("#filter-text") as HTMLInputElement).disabled = disabled;
   ($("#btn-rescan") as HTMLButtonElement).disabled = disabled;
   ($("#btn-optimize") as HTMLButtonElement).disabled = disabled;
+  ($("#btn-browser") as HTMLButtonElement).disabled = disabled;
 }
 
 function renderTable() {
@@ -994,18 +1101,21 @@ function updateActionButtons() {
   ($("#btn-export") as HTMLButtonElement).disabled = lastRemoved.length === 0;
 }
 
-async function scanPackages(options?: { forceFull?: boolean }) {
+async function scanPackages() {
   if (scanInFlight || operationInFlight) return;
+  if (!deviceSerial) {
+    ($("#scan-info") as HTMLElement).textContent = "Scegli il telefono";
+    return;
+  }
 
   const session = deviceSession;
   const hideSystem = !flagShown("system");
-  const userOnly = options?.forceFull ? false : hideSystem;
-  const longHint = !userOnly;
+  const userOnly = hideSystem;
 
   scanInFlight = true;
   operationInFlight = true;
   packages = [];
-  setPackagesLoading(true, longHint);
+  setPackagesLoading(true);
   ($("#scan-info") as HTMLElement).textContent = "Scansione app…";
   beginDbOp();
   let pullSettled = false;
@@ -1027,14 +1137,7 @@ async function scanPackages(options?: { forceFull?: boolean }) {
       deviceSerial = event.device_serial;
       deviceBrand = event.device_brand ?? deviceBrand;
       deviceModel = event.device_model ?? deviceModel;
-      setOperationProgress(
-        true,
-        0,
-        total,
-        longHint
-          ? `Scansione app… 0 / ${total} (con le app di sistema può richiedere alcuni minuti)`
-          : `Scansione app… 0 / ${total}`,
-      );
+      setOperationProgress(true, 0, total, `Scansione app… 0 / ${total}`);
       updateScanInfo();
       return;
     }
@@ -1043,14 +1146,7 @@ async function scanPackages(options?: { forceFull?: boolean }) {
       packages.push(event.row);
       received += 1;
       appendPackageRow(event.row);
-      setOperationProgress(
-        true,
-        received,
-        total,
-        longHint
-          ? `Scansione app… ${received} / ${total} (con le app di sistema può richiedere alcuni minuti)`
-          : `Scansione app… ${received} / ${total}`,
-      );
+      setOperationProgress(true, received, total, `Scansione app… ${received} / ${total}`);
       ($("#scan-info") as HTMLElement).textContent = `Scansione app… ${received} / ${total}`;
       return;
     }
@@ -1071,6 +1167,7 @@ async function scanPackages(options?: { forceFull?: boolean }) {
     });
     if (session !== deviceSession) return;
     await refreshDbPanel();
+    void refreshBrowserCheck(session, true);
   } catch (e) {
     if (session !== deviceSession) return;
     ($("#scan-info") as HTMLElement).textContent = `Errore: ${e}`;
@@ -1081,17 +1178,168 @@ async function scanPackages(options?: { forceFull?: boolean }) {
     scanInFlight = false;
     operationInFlight = false;
     setPackagesLoading(false);
+    updateRescanAttention();
+  }
+}
+
+function updateRescanAttention() {
+  const show = flagShown("system") && packagesScanScope === "user";
+  $("#rescan-attention")?.classList.toggle("hidden", !show);
+  const btn = $("#btn-rescan") as HTMLButtonElement | null;
+  if (!btn) return;
+  if (show) btn.title = "Premi per caricare le app di sistema";
+  else btn.removeAttribute("title");
+}
+
+interface BrowserInfo {
+  package: string;
+  sites: string[];
+  blocked: boolean;
+}
+
+interface BrowserCheck {
+  sdk: number;
+  home: string | null;
+  default_browser: string | null;
+  browsers: BrowserInfo[];
+}
+
+let browserCheck: BrowserCheck | null = null;
+let browserWarnSeen = false;
+
+function appLabel(packageName: string): string {
+  return packages.find((row) => row.package_name === packageName)?.label || packageName;
+}
+
+function strangeReason(packageName: string | null): string | null {
+  if (!packageName) return null;
+  const row = packages.find((item) => item.package_name === packageName);
+  if (!row) return null;
+  const parts: string[] = [];
+  if (row.sideloaded) parts.push("non da Play Store");
+  if (row.is_suspicious) parts.push("sospetta");
+  return parts.length ? parts.join(" · ") : null;
+}
+
+function browserNeedsAttention(check: BrowserCheck): boolean {
+  if (check.browsers.some((browser) => !browser.blocked && browser.sites.length > 0)) return true;
+  return !!(strangeReason(check.home) || strangeReason(check.default_browser));
+}
+
+function updateBrowserAttention() {
+  const show = !!browserCheck && !browserWarnSeen && browserNeedsAttention(browserCheck);
+  $("#browser-attention")?.classList.toggle("hidden", !show);
+  const btn = $("#btn-browser") as HTMLButtonElement | null;
+  if (!btn) return;
+  if (show) btn.title = "Controlla browser e Home";
+  else btn.removeAttribute("title");
+}
+
+function closeBrowserDialog() {
+  $("#dialog-browser")?.classList.add("hidden");
+}
+
+function namedLine(title: string, packageName: string | null): string {
+  const name = packageName ? escapeHtml(appLabel(packageName)) : "Nessuno scelto";
+  const reason = strangeReason(packageName);
+  const hint = reason ? `<span class="pkg-hints">${escapeHtml(reason)}</span>` : "";
+  return `<p class="dialog-body">${title}: ${name}${hint}</p>`;
+}
+
+function renderBrowserDialog() {
+  const body = $("#browser-body");
+  if (!body) return;
+  const check = browserCheck;
+  if (!check) {
+    body.innerHTML = `<p class="dialog-body muted">Lettura in corso…</p>`;
+    return;
+  }
+  const browsers = check.browsers
+    .map((browser) => {
+      const sites = browser.sites.length
+        ? `<ul class="dialog-list">${browser.sites.map((site) => `<li>${escapeHtml(site)}</li>`).join("")}</ul>`
+        : `<p class="dialog-body muted">Nessun sito trovato</p>`;
+      const blocked = browser.blocked ? `<span class="pkg-hints">notifiche bloccate</span>` : "";
+      const toggle =
+        check.sdk >= 33
+          ? browser.blocked
+            ? `<button type="button" class="btn small" data-allow="${escapeHtml(browser.package)}">Riattiva</button>`
+            : `<button type="button" class="btn small" data-block="${escapeHtml(browser.package)}">Blocca tutte le notifiche</button>`
+          : "";
+      const guide =
+        browser.package === "com.android.chrome"
+          ? `<p class="dialog-body muted browser-guide">Per togliere schede, cookie e accessi ai siti senza cancellare le password: in Chrome tocca ⋮ → Cronologia → Elimina dati di navigazione, spunta «Cookie e dati dei siti» e lascia spento «Password salvate». Le schede si chiudono dal riquadro schede → ⋮ → Chiudi tutte le schede.</p>`
+          : "";
+      return `<section class="browser-section"><h3>${escapeHtml(appLabel(browser.package))}${blocked}</h3>${sites}<div class="browser-actions"><button type="button" class="btn small" data-open="${escapeHtml(browser.package)}">Apri notifiche sul telefono</button>${toggle}</div>${guide}</section>`;
+    })
+    .join("");
+  const list = browsers || `<p class="dialog-body muted">Nessun browser trovato</p>`;
+  body.innerHTML = `${namedLine("Home", check.home)}${namedLine("Browser predefinito", check.default_browser)}${list}`;
+}
+
+function openBrowserDialog() {
+  browserWarnSeen = true;
+  updateBrowserAttention();
+  $("#dialog-browser")?.classList.remove("hidden");
+  renderBrowserDialog();
+  void refreshBrowserCheck(deviceSession, false);
+}
+
+async function refreshBrowserCheck(session: number, fromScan: boolean) {
+  if (!deviceSerial) return;
+  if (fromScan) browserWarnSeen = false;
+  try {
+    const check = await invoke<BrowserCheck>("check_browsers", { serial: deviceSerial });
+    if (session !== deviceSession) return;
+    browserCheck = check;
+    updateBrowserAttention();
+    if (!$("#dialog-browser")?.classList.contains("hidden")) renderBrowserDialog();
+  } catch (e) {
+    if (session !== deviceSession) return;
+    if (!$("#dialog-browser")?.classList.contains("hidden")) {
+      const body = $("#browser-body");
+      if (body) body.innerHTML = `<p class="dialog-body">Errore: ${escapeHtml(String(e))}</p>`;
+    }
+  }
+}
+
+async function openPhoneNotificationSettings(packageName: string) {
+  try {
+    await invoke("open_notification_settings", {
+      package: packageName,
+      serial: deviceSerial || null,
+    });
+  } catch (e) {
+    toast(String(e), "error");
+  }
+}
+
+async function setBrowserNotifications(packageName: string, allowed: boolean) {
+  const session = deviceSession;
+  try {
+    await invoke("set_browser_notifications", {
+      package: packageName,
+      allowed,
+      serial: deviceSerial || null,
+    });
+    await refreshBrowserCheck(session, false);
+  } catch (e) {
+    toast(String(e), "error");
+  }
+}
+
+async function openDefaultApps() {
+  try {
+    await invoke("open_default_apps", { serial: deviceSerial || null });
+  } catch (e) {
+    toast(String(e), "error");
   }
 }
 
 function onHideSystemChange() {
-  const hideSystem = !flagShown("system");
-  if (!hideSystem && packagesScanScope === "user") {
-    void scanPackages({ forceFull: true });
-    return;
-  }
   updateScanInfo();
   renderTable();
+  if (!flagShown("system") || !scanInFlight) updateRescanAttention();
 }
 
 function applyReputationUpdate(rep: PackageReputation) {
@@ -1103,6 +1351,9 @@ function applyReputationUpdate(rep: PackageReputation) {
   row.marked_trusted = rep.marked_trusted;
   row.marked_suspicious = rep.marked_suspicious;
   row.my_vote = rep.my_vote;
+  row.online_system = rep.online_system ?? row.online_system;
+  row.online_trusted = rep.online_trusted ?? row.online_trusted;
+  row.online_suspicious = rep.online_suspicious ?? row.online_suspicious;
   row.is_reported = rep.marked_suspicious;
   const forced = row.report_count >= SUSPICIOUS_REPORT_THRESHOLD && row.marked_suspicious;
   const whitelisted = !forced && (row.marked_trusted || row.marked_system || row.is_system);
@@ -1132,12 +1383,7 @@ async function toggleMark(packageName: string, flag: "system" | "trusted" | "sus
     return;
   }
   const row = packages.find((p) => p.package_name === packageName);
-  const on =
-    flag === "system"
-      ? row?.marked_system
-      : flag === "trusted"
-        ? row?.marked_trusted
-        : row?.marked_suspicious;
+  const on = row?.my_vote === flag;
   const next = on ? "none" : flag;
   try {
     const rep = await invoke<PackageReputation>("set_package_marks", {
@@ -1164,10 +1410,46 @@ async function toggleMark(packageName: string, flag: "system" | "trusted" | "sus
 
 // --- FASE 5/6: disinstallazione → DB locale + push ---
 
+async function restoreRemoved() {
+  const names = restoreNames.map((app) => app.name);
+  if (!names.length || !deviceSerial || operationInFlight) return;
+  closeRestoreDialog();
+  try {
+    const results = await invoke<{ package_name: string; ok: boolean }[]>("restore_packages", {
+      req: { packages: names, serial: deviceSerial },
+    });
+    const ok = results.filter((result) => result.ok).length;
+    toast(
+      ok === names.length ? `${ok} app rimesse.` : `${ok} di ${names.length} app rimesse.`,
+      ok === names.length ? "success" : "warn",
+    );
+    restoreNames = [];
+    await scanPackages();
+  } catch (e) {
+    toast(`Errore ripristino: ${e}`, "error");
+  }
+}
+
 async function bulkUninstall() {
   const selected = getSelectedPackages();
   if (!selected.length || operationInFlight) return;
-  if (!confirm(`Disinstallare ${selected.length} app selezionate?`)) return;
+  if (!deviceSerial) return;
+
+  const critical = selected.filter((name) => packages.find((p) => p.package_name === name)?.is_critical);
+  let allowCritical = false;
+  let toRemove = selected;
+  if (critical.length) {
+    const labels = critical.map((name) => {
+      const row = packages.find((p) => p.package_name === name);
+      return row?.label ?? name;
+    });
+    const choice = await askCritical(labels);
+    if (choice === "all") allowCritical = true;
+    else if (choice === "others") toRemove = selected.filter((name) => !critical.includes(name));
+    else return;
+  }
+  if (!toRemove.length) return;
+  if (!critical.length && !confirm(`Disinstallare ${toRemove.length} app selezionate?`)) return;
 
   const session = deviceSession;
   operationInFlight = true;
@@ -1175,7 +1457,8 @@ async function bulkUninstall() {
   ($("#btn-uninstall") as HTMLButtonElement).disabled = true;
 
   const removed: string[] = [];
-  let total = selected.length;
+  const systemRemoved: { name: string; label: string }[] = [];
+  let total = toRemove.length;
 
   const onProgress = new Channel<UninstallProgressEvent>();
   onProgress.onmessage = (event) => {
@@ -1194,7 +1477,11 @@ async function bulkUninstall() {
         `Disinstallazione… ${event.current} / ${event.total} — ${event.package_name}`,
       );
       if (event.status === "success") {
+        const row = packages.find((p) => p.package_name === event.package_name);
         removed.push(event.package_name);
+        if (row?.is_system) {
+          systemRemoved.push({ name: event.package_name, label: row.label ?? event.package_name });
+        }
         removePackageRow(event.package_name);
       }
       return;
@@ -1203,7 +1490,12 @@ async function bulkUninstall() {
 
   try {
     await invoke("bulk_uninstall", {
-      req: { packages: selected, dry_run: false, serial: null },
+      req: {
+        packages: toRemove,
+        dry_run: false,
+        allow_critical: allowCritical,
+        serial: deviceSerial,
+      },
       on_progress: onProgress,
     });
     if (session !== deviceSession) return;
@@ -1213,7 +1505,8 @@ async function bulkUninstall() {
     await scanPackages();
     await refreshDbPanel();
     if (session !== deviceSession) return;
-    toast(`${lastRemoved.length} app rimosse.`, "success");
+    if (systemRemoved.length) showRestoreDialog(systemRemoved, removed.length);
+    else toast(`${removed.length} app rimosse.`, "success");
   } catch (e) {
     if (session !== deviceSession) return;
     toast(`Errore disinstallazione: ${e}`, "error");
@@ -1279,9 +1572,7 @@ async function updateSettingsStatusText() {
     return;
   }
   const parts = [`Stato: sincronizzato`, status.sync_path ?? ""];
-  if (status.last_pull) parts.push(`↓ ${formatTime(status.last_pull)}`);
-  if (status.last_push) parts.push(`↑ ${formatTime(status.last_push)}`);
-  el.textContent = parts.join(" · ");
+  el.textContent = parts.filter(Boolean).join(" · ");
 }
 
 async function openSettings() {
@@ -1346,11 +1637,6 @@ let closeInFlight = false;
 async function shutdownAndClose() {
   if (closeInFlight) return;
   closeInFlight = true;
-  $("#screen-closing")?.classList.remove("hidden");
-  await Promise.race([
-    invoke("push_reports").catch(() => undefined),
-    delay(8000),
-  ]);
   await invoke("allow_app_close");
 }
 
@@ -1701,15 +1987,20 @@ async function runOptimize() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
+  void invoke<boolean>("dev_log_enabled").then((on) => {
+    if (on) $("#dev-badge")?.classList.remove("hidden");
+  });
   installIconErrorFallback();
   if (__FULLSCAN__) {
     for (const el of document.querySelectorAll("[data-flag-filter]")) {
       el.setAttribute("aria-pressed", "true");
     }
-    ($("#filter-suspicious") as HTMLInputElement).checked = false;
   }
   void listen("sync-finished", () => {
     void refreshDbPanel();
+  });
+  void listen<PackageReputation>("reputation-changed", (event) => {
+    applyReputationUpdate(event.payload);
   });
   void listen("app-close-requested", () => {
     void shutdownAndClose();
@@ -1726,22 +2017,6 @@ window.addEventListener("DOMContentLoaded", () => {
   $("#btn-settings-close")?.addEventListener("click", closeSettings);
 
   $("#btn-settings-check-update")?.addEventListener("click", () => void checkForAppUpdates(false));
-
-  $("#btn-settings-clear-cache")?.addEventListener("click", async () => {
-    if (
-      !confirm(
-        "Cancellare la cache di nomi e icone? La prossima scansione li rileggerà dal telefono."
-      )
-    ) {
-      return;
-    }
-    try {
-      await invoke("clear_metadata_cache");
-      toast("Cache scansione cancellata", "success");
-    } catch (e) {
-      toast(String(e), "error");
-    }
-  });
 
   $("#btn-update-later")?.addEventListener("click", closeUpdateDialog);
   $("#btn-update-now")?.addEventListener("click", () => void installPendingUpdate());
@@ -1792,8 +2067,55 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  $("#device-select")?.addEventListener("change", () => {
+    const select = $("#device-select") as HTMLSelectElement;
+    if (select.value === deviceSerial) return;
+    deviceSerial = select.value;
+    packages = [];
+    selectedPackages.clear();
+    lastRemoved = [];
+    restoreNames = [];
+    browserCheck = null;
+    browserWarnSeen = false;
+    updateBrowserAttention();
+    closeBrowserDialog();
+    renderTable();
+    if (!deviceSerial) {
+      ($("#scan-info") as HTMLElement).textContent = "Scegli il telefono";
+      return;
+    }
+    void scanPackages();
+  });
+
+  $("#btn-critical-skip")?.addEventListener("click", () => closeCriticalDialog("others"));
+  $("#btn-critical-all")?.addEventListener("click", () => closeCriticalDialog("all"));
+  $("#dialog-critical")?.addEventListener("click", (e) => {
+    if (e.target === $("#dialog-critical")) closeCriticalDialog(null);
+  });
+  $("#btn-restore-close")?.addEventListener("click", closeRestoreDialog);
+  $("#btn-restore")?.addEventListener("click", () => void restoreRemoved());
+  $("#dialog-restore")?.addEventListener("click", (e) => {
+    if (e.target === $("#dialog-restore")) closeRestoreDialog();
+  });
+
   $("#btn-rescan")?.addEventListener("click", () => void scanPackages());
   $("#btn-optimize")?.addEventListener("click", () => void openOptimize());
+  $("#btn-browser")?.addEventListener("click", () => openBrowserDialog());
+  $("#btn-browser-close")?.addEventListener("click", closeBrowserDialog);
+  $("#btn-default-apps")?.addEventListener("click", () => void openDefaultApps());
+  $("#dialog-browser")?.addEventListener("click", (e) => {
+    if (e.target === $("#dialog-browser")) closeBrowserDialog();
+  });
+  $("#browser-body")?.addEventListener("click", (e) => {
+    const btn = (e.target as HTMLElement).closest("button");
+    if (!btn) return;
+    const open = btn.getAttribute("data-open");
+    const block = btn.getAttribute("data-block");
+    const allow = btn.getAttribute("data-allow");
+    if (open) void openPhoneNotificationSettings(open);
+    else if (block) void setBrowserNotifications(block, false);
+    else if (allow) void setBrowserNotifications(allow, true);
+  });
   $("#btn-optimize-cancel")?.addEventListener("click", closeOptimize);
   $("#btn-optimize-run")?.addEventListener("click", () => void runOptimize());
   $("#dialog-optimize")?.addEventListener("click", (e) => {
@@ -1835,10 +2157,6 @@ window.addEventListener("DOMContentLoaded", () => {
     updateScanInfo();
     renderTable();
   });
-  $("#filter-suspicious")?.addEventListener("change", () => {
-    updateScanInfo();
-    renderTable();
-  });
   document.querySelector(".flag-legend")?.addEventListener("click", (e) => {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-flag-filter]");
     if (!btn || btn.disabled) return;
@@ -1853,14 +2171,16 @@ window.addEventListener("DOMContentLoaded", () => {
   $("#select-all")?.addEventListener("change", (e) => {
     const checked = (e.target as HTMLInputElement).checked;
     for (const p of getFilteredPackages()) {
-      if (checked) selectedPackages.add(p.package_name);
-      else selectedPackages.delete(p.package_name);
+      if (checked) {
+        if (!p.is_critical) selectedPackages.add(p.package_name);
+      } else selectedPackages.delete(p.package_name);
     }
     renderTable();
   });
 
   $("#packages-body")?.addEventListener("click", (e) => {
     const t = e.target as HTMLElement;
+    const flagBtn = t.closest<HTMLElement>(".btn-flag");
     if (t.classList.contains("pkg-check")) {
       const input = t as HTMLInputElement;
       const pkg = input.dataset.package;
@@ -1872,11 +2192,12 @@ window.addEventListener("DOMContentLoaded", () => {
       updateSelectAllState();
       return;
     }
-    const pkg = t.dataset.package;
+    const vote = flagBtn ?? t;
+    const pkg = vote.dataset.package;
     if (!pkg) return;
-    if (t.classList.contains("btn-flag-suspicious")) toggleMark(pkg, "suspicious");
-    if (t.classList.contains("btn-flag-system")) toggleMark(pkg, "system");
-    if (t.classList.contains("btn-flag-trusted")) toggleMark(pkg, "trusted");
+    if (vote.classList.contains("btn-flag-suspicious")) toggleMark(pkg, "suspicious");
+    if (vote.classList.contains("btn-flag-system")) toggleMark(pkg, "system");
+    if (vote.classList.contains("btn-flag-trusted")) toggleMark(pkg, "trusted");
   });
 
   document.querySelectorAll("#packages-table th[data-sort]").forEach((th) => {

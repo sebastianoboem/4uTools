@@ -48,6 +48,10 @@ Rigenerare solo se persa (gli utenti già installati non potranno aggiornarsi co
 CI=true npm run tauri signer generate -- -w src-tauri/.tauri-signing.key -f -p ""
 ```
 
+## Log di sviluppo
+
+In `src-tauri/src/dev_log.rs`, `ENABLED` è `true` per i test in VM: scrive `dev.log` (comandi ed esito adb). Prima della build da pubblicare su GitHub metti `false` e ricompila. `npm run release:manifest` con `--base-url` su `github.com` si ferma se la costante è ancora `true`. Il manifest di test su `127.0.0.1` non fa questo controllo.
+
 ## Build release firmate
 
 ```bash

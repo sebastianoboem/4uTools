@@ -6,9 +6,9 @@ edition.workspace = true
 [dependencies]
 adb-bridge = { path = "../adb-bridge" }
 serde = { workspace = true }
-serde_json = { workspace = true }
 thiserror = { workspace = true }
 axmldecoder = "0.5.0"
 base64 = { workspace = true }
 rayon = "1.10"
 flate2 = "1"
+chrono = { workspace = true }

@@ -92,6 +92,13 @@ pub struct PackageReputation {
     /// Voto del telefono collegato: `system`, `trusted`, `suspicious`, oppure assente.
     #[serde(default)]
     pub my_vote: Option<String>,
+    /// Voti già aggregati online, uno per tipo. Zero se il remoto non ha righe.
+    #[serde(default)]
+    pub online_system: u64,
+    #[serde(default)]
+    pub online_trusted: u64,
+    #[serde(default)]
+    pub online_suspicious: u64,
 }
 
 impl PackageReputation {
@@ -101,7 +108,11 @@ impl PackageReputation {
 }
 
 /// Flag effettivo esclusivo. La soglia di segnalazioni scavalca sistema e trusted.
-pub fn effective_marks(system_votes: u64, trusted_votes: u64, suspicious_votes: u64) -> (bool, bool, bool) {
+pub fn effective_marks(
+    system_votes: u64,
+    trusted_votes: u64,
+    suspicious_votes: u64,
+) -> (bool, bool, bool) {
     if suspicious_votes >= SUSPICIOUS_REPORT_THRESHOLD {
         return (false, false, true);
     }
@@ -125,8 +136,7 @@ pub fn row_is_suspicious(rep: &PackageReputation, is_android_system: bool) -> bo
         return true;
     }
     let whitelisted = rep.marked_trusted || rep.marked_system || is_android_system;
-    !whitelisted
-        && (rep.marked_suspicious || rep.uninstall_count > SUSPICIOUS_UNINSTALL_THRESHOLD)
+    !whitelisted && (rep.marked_suspicious || rep.uninstall_count > SUSPICIOUS_UNINSTALL_THRESHOLD)
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

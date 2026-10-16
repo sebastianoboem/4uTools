@@ -1,7 +1,7 @@
 {
   "name": "android-adware-cleaner",
   "private": true,
-  "version": "0.9.10",
+  "version": "0.16.18",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,6 +10,7 @@
     "tauri": "tauri",
     "bump-version": "node scripts/bump-version.mjs",
     "release:manifest": "node scripts/generate-latest-json.mjs",
+    "build:scan-helper": "node scripts/build-scan-helper.mjs",
     "test:unit": "node --test scripts/test-google-apps.mjs"
   },
   "dependencies": {

@@ -164,6 +164,38 @@ impl SupabaseConfig {
         Ok(())
     }
 
+    pub fn push_vote(&self, vote: &FlagVote) -> Result<(), SyncError> {
+        let token = self.access_token()?;
+        self.rpc(&token, "push_votes", &vote_rows(std::slice::from_ref(vote)))
+    }
+
+    pub fn push_uninstall(&self, event: &UninstallEvent) -> Result<(), SyncError> {
+        let token = self.access_token()?;
+        self.rpc(
+            &token,
+            "push_uninstalls",
+            &uninstall_rows(std::slice::from_ref(event)),
+        )
+    }
+
+    pub fn fetch_stat(&self, package: &str) -> Result<Option<RemoteStat>, SyncError> {
+        let token = self.access_token()?;
+        let response = agent()
+            .get(&format!(
+                "{}/rest/v1/package_stats?package_name=eq.{}&select=*",
+                self.url,
+                query_encode(package)
+            ))
+            .set("apikey", &self.key)
+            .set("Authorization", &self.auth_header_value(&token))
+            .call()
+            .map_err(http_err)?;
+        let rows: Vec<StatRow> = response
+            .into_json()
+            .map_err(|e| SyncError::Http(e.to_string()))?;
+        Ok(rows.into_iter().next().map(stat_from_row))
+    }
+
     pub fn pull_stats(&self, db: &ReputationDb) -> Result<(), SyncError> {
         let token = self.access_token()?;
         let stats = self.fetch_stats(&token)?;
@@ -183,25 +215,79 @@ impl SupabaseConfig {
     }
 
     fn fetch_stats(&self, token: &str) -> Result<Vec<RemoteStat>, SyncError> {
-        let rows: Vec<StatRow> = agent()
-            .get(&format!("{}/rest/v1/package_stats?select=*", self.url))
+        self.fetch_stats_pages(token, 1000)
+    }
+
+    pub(crate) fn fetch_stats_pages(
+        &self,
+        token: &str,
+        page_size: usize,
+    ) -> Result<Vec<RemoteStat>, SyncError> {
+        let mut start = 0usize;
+        let mut all: Vec<RemoteStat> = Vec::new();
+        loop {
+            let rows = self.fetch_stats_range(token, start, start + page_size - 1)?;
+            let n = rows.len();
+            if n == 0 {
+                break;
+            }
+            let first = rows[0].package_name.clone();
+            if start > 0 && all.iter().any(|row| row.package_name == first) {
+                break;
+            }
+            all.extend(rows);
+            if n < page_size {
+                break;
+            }
+            start += page_size;
+        }
+        Ok(all)
+    }
+
+    fn fetch_stats_range(
+        &self,
+        token: &str,
+        from: usize,
+        to: usize,
+    ) -> Result<Vec<RemoteStat>, SyncError> {
+        let response = agent()
+            .get(&format!(
+                "{}/rest/v1/package_stats?select=*&order=package_name.asc",
+                self.url
+            ))
             .set("apikey", &self.key)
             .set("Authorization", &self.auth_header_value(token))
+            .set("Range", &format!("{from}-{to}"))
             .call()
-            .map_err(http_err)?
+            .map_err(http_err)?;
+        let rows: Vec<StatRow> = response
             .into_json()
             .map_err(|e| SyncError::Http(e.to_string()))?;
-        Ok(rows
-            .into_iter()
-            .map(|row| RemoteStat {
-                package_name: row.package_name,
-                uninstall_count: row.uninstall_count,
-                system_votes: row.system_votes,
-                trusted_votes: row.trusted_votes,
-                suspicious_votes: row.suspicious_votes,
-            })
-            .collect())
+        Ok(rows.into_iter().map(stat_from_row).collect())
     }
+}
+
+fn stat_from_row(row: StatRow) -> RemoteStat {
+    RemoteStat {
+        package_name: row.package_name,
+        uninstall_count: row.uninstall_count,
+        system_votes: row.system_votes,
+        trusted_votes: row.trusted_votes,
+        suspicious_votes: row.suspicious_votes,
+    }
+}
+
+fn query_encode(value: &str) -> String {
+    let mut out = String::with_capacity(value.len());
+    for byte in value.bytes() {
+        match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(byte as char);
+            }
+            _ => out.push_str(&format!("%{byte:02X}")),
+        }
+    }
+    out
 }
 
 fn uninstall_rows(events: &[UninstallEvent]) -> serde_json::Value {

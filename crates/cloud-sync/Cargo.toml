@@ -10,6 +10,6 @@ serde_json = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }
-dirs = { workspace = true }
 ureq = { workspace = true }
 sha2 = { workspace = true }
+tungstenite = { version = "0.26", features = ["native-tls"] }

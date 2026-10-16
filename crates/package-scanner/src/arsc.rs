@@ -21,7 +21,10 @@ pub fn parse_resource_ref(raw: &str) -> Option<u32> {
     if token.is_empty() {
         return None;
     }
-    if let Some(hex) = token.strip_prefix("0x").or_else(|| token.strip_prefix("0X")) {
+    if let Some(hex) = token
+        .strip_prefix("0x")
+        .or_else(|| token.strip_prefix("0X"))
+    {
         u32::from_str_radix(hex, 16).ok()
     } else {
         token.parse().ok()
@@ -214,13 +217,13 @@ fn read_type_entry(
     // ResTable_entry is 8 bytes, then Res_value { size:u16, res0:u8, dataType:u8, data:u32 }.
     // FLAG_COMPACT packs dataType into flags' high byte and data into the key field.
     let parsed = if flags & COMPACT_FLAG != 0 {
-        data.get(epos + 3).copied().and_then(|dtype| {
-            u32_at(data, epos + 4).map(|value_data| (dtype, value_data))
-        })
+        data.get(epos + 3)
+            .copied()
+            .and_then(|dtype| u32_at(data, epos + 4).map(|value_data| (dtype, value_data)))
     } else {
-        data.get(epos + 11).copied().and_then(|dtype| {
-            u32_at(data, epos + 12).map(|value_data| (dtype, value_data))
-        })
+        data.get(epos + 11)
+            .copied()
+            .and_then(|dtype| u32_at(data, epos + 12).map(|value_data| (dtype, value_data)))
     };
     let Some((dtype, value_data)) = parsed else {
         return Vec::new();

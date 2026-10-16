@@ -243,7 +243,11 @@ pub fn plan(
         selected.insert(id.as_str());
     }
 
-    let allowed: HashSet<&str> = snapshot.large_files.iter().map(|f| f.path.as_str()).collect();
+    let allowed: HashSet<&str> = snapshot
+        .large_files
+        .iter()
+        .map(|f| f.path.as_str())
+        .collect();
     let mut ops = Vec::new();
     if selected.contains(SYSTEM_CACHE) {
         ops.push(DeleteOp::TrimCaches);
@@ -310,9 +314,12 @@ where
                 0,
                 true,
             ),
-            DeleteOp::Remove { path, bytes } => {
-                (path.clone(), format!("rm -rf -- {}", shell_quote(path)), *bytes, false)
-            }
+            DeleteOp::Remove { path, bytes } => (
+                path.clone(),
+                format!("rm -rf -- {}", shell_quote(path)),
+                *bytes,
+                false,
+            ),
         };
         match run(&command) {
             Ok(_) => {
@@ -455,7 +462,10 @@ fn parse_cache_size_line(line: &str) -> Option<u64> {
 }
 
 fn parse_du_line(line: &str) -> Option<(String, u64)> {
-    let (size, path) = line.trim().split_once('\t').or_else(|| line.trim().split_once(' '))?;
+    let (size, path) = line
+        .trim()
+        .split_once('\t')
+        .or_else(|| line.trim().split_once(' '))?;
     let kb = size.trim().parse::<u64>().ok()?;
     let path = path.trim();
     if kb == 0 || path.is_empty() {
@@ -464,11 +474,19 @@ fn parse_du_line(line: &str) -> Option<(String, u64)> {
     Some((path.to_string(), kb.saturating_mul(1024)))
 }
 
-fn system_cache_sizes(cache_sizes: &[u64], disk_total: Option<u64>, du: &[(String, u64)]) -> Vec<u64> {
+fn system_cache_sizes(
+    cache_sizes: &[u64],
+    disk_total: Option<u64>,
+    du: &[(String, u64)],
+) -> Vec<u64> {
     let mut sizes: Vec<u64> = if let Some(total) = disk_total {
         vec![total]
     } else {
-        cache_sizes.iter().copied().filter(|bytes| *bytes > 0).collect()
+        cache_sizes
+            .iter()
+            .copied()
+            .filter(|bytes| *bytes > 0)
+            .collect()
     };
     let apps_known = !sizes.is_empty();
     for (path, bytes) in du {
@@ -514,7 +532,8 @@ fn ad_dir(path: &str) -> Option<String> {
         acc.push('/');
         acc.push_str(part);
         let name = part.to_ascii_lowercase();
-        if AD_DIR_NAMES.iter().any(|token| name.contains(token)) && validate_deletable(&acc).is_ok() {
+        if AD_DIR_NAMES.iter().any(|token| name.contains(token)) && validate_deletable(&acc).is_ok()
+        {
             return Some(acc);
         }
     }
@@ -522,7 +541,11 @@ fn ad_dir(path: &str) -> Option<String> {
 }
 
 fn is_apk(path: &str) -> bool {
-    path.rsplit('/').next().unwrap_or("").to_ascii_lowercase().ends_with(".apk")
+    path.rsplit('/')
+        .next()
+        .unwrap_or("")
+        .to_ascii_lowercase()
+        .ends_with(".apk")
 }
 
 fn is_package_dir(name: &str) -> bool {
@@ -531,7 +554,10 @@ fn is_package_dir(name: &str) -> bool {
         return false;
     };
     if first.is_empty()
-        || !first.chars().next().is_some_and(|c| c.is_ascii_alphabetic())
+        || !first
+            .chars()
+            .next()
+            .is_some_and(|c| c.is_ascii_alphabetic())
         || !first.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
     {
         return false;
@@ -556,7 +582,10 @@ fn split_storage(path: &str) -> Option<(&str, Vec<&str>)> {
 }
 
 fn storage_root(path: &str) -> Option<&str> {
-    ROOTS.iter().copied().find(|root| path == *root || path.starts_with(&format!("{root}/")))
+    ROOTS
+        .iter()
+        .copied()
+        .find(|root| path == *root || path.starts_with(&format!("{root}/")))
 }
 
 fn normalize_storage_path(path: &str) -> Option<String> {
@@ -627,8 +656,14 @@ mod tests {
                 ("/sdcard/Android/data/com.gone/files/left.cfg", 30),
                 ("/sdcard/Android/data/com.live/cache/thumb.jpg", 20),
                 ("/sdcard/Android/data/com.live/files/vungle/ad.bin", 7),
-                ("/sdcard/Android/data/com.live/cache/UnityAdsCache/video.mp4", 9),
-                ("/sdcard/Android/data/com.live/files/mb/res/.mbridge700/m.tar", 3),
+                (
+                    "/sdcard/Android/data/com.live/cache/UnityAdsCache/video.mp4",
+                    9,
+                ),
+                (
+                    "/sdcard/Android/data/com.live/files/mb/res/.mbridge700/m.tar",
+                    3,
+                ),
                 ("/sdcard/Download/app.apk", 11),
                 ("/sdcard/Download/video.mp4", LARGE_FILE_MIN_BYTES),
                 ("/sdcard/Download/small.mp4", LARGE_FILE_MIN_BYTES - 1),
@@ -638,7 +673,10 @@ mod tests {
         let residual = cat(&snapshot, RESIDUAL);
         assert_eq!(residual.count, 2);
         assert_eq!(residual.bytes, 30);
-        assert!(residual.targets.iter().any(|t| t.path.ends_with("/com.gone.obb") && t.bytes == 0));
+        assert!(residual
+            .targets
+            .iter()
+            .any(|t| t.path.ends_with("/com.gone.obb") && t.bytes == 0));
 
         let cache = cat(&snapshot, APP_CACHE);
         assert_eq!(cache.targets.len(), 1);
@@ -647,7 +685,10 @@ mod tests {
 
         let ads = cat(&snapshot, AD_JUNK);
         assert!(ads.targets.iter().any(|t| t.path.ends_with("/vungle")));
-        assert!(ads.targets.iter().any(|t| t.path.ends_with("/UnityAdsCache")));
+        assert!(ads
+            .targets
+            .iter()
+            .any(|t| t.path.ends_with("/UnityAdsCache")));
         assert!(ads.targets.iter().any(|t| t.path.ends_with("/.mbridge700")));
         assert_eq!(ads.bytes, 19);
 
@@ -683,7 +724,10 @@ mod tests {
             &[],
             &["com.gone"],
             &[],
-            &[("/sdcard/Android/data/com.gone/movie.mp4", LARGE_FILE_MIN_BYTES)],
+            &[(
+                "/sdcard/Android/data/com.gone/movie.mp4",
+                LARGE_FILE_MIN_BYTES,
+            )],
         ));
         let ops = plan(
             &snapshot,
@@ -733,8 +777,14 @@ mod tests {
 
     #[test]
     fn scanned_path_reads_stat_lines_and_dir_names() {
-        assert_eq!(scanned_path("12\t/sdcard/a b", None).as_deref(), Some("/sdcard/a b"));
-        assert_eq!(scanned_path("---END DATA---", Some("/sdcard/Android/data/")), None);
+        assert_eq!(
+            scanned_path("12\t/sdcard/a b", None).as_deref(),
+            Some("/sdcard/a b")
+        );
+        assert_eq!(
+            scanned_path("---END DATA---", Some("/sdcard/Android/data/")),
+            None
+        );
         assert_eq!(
             scanned_path("com.foo", Some("/sdcard/Android/data/")).as_deref(),
             Some("/sdcard/Android/data/com.foo")

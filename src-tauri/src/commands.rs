@@ -3,8 +3,11 @@ use adb_bridge::{AdbBridge, AdbDevice};
 use package_scanner::ScannedPackage;
 use reputation_db::{row_is_suspicious, PackageReputation};
 use serde::{Deserialize, Serialize};
-use system_setup::{load_guides, resolve_guide, DeviceGuides, GuideStep};
+use std::collections::{HashMap, HashSet};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc};
+use std::thread;
+use system_setup::{load_guides, resolve_guide, DeviceGuides, GuideStep};
 use tauri::ipc::Channel;
 use tauri::{AppHandle, Manager, State};
 
@@ -25,6 +28,13 @@ pub fn allow_app_close(app: AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.close();
     }
+    crate::dev_log::command("allow_app_close", None);
+}
+
+#[tauri::command]
+pub fn dev_log_enabled() -> bool {
+    crate::dev_log::command("dev_log_enabled", None);
+    crate::dev_log::ENABLED
 }
 use uninstall_engine::{UninstallEngine, UninstallResult};
 
@@ -39,6 +49,11 @@ pub struct PackageRow {
     pub is_system: bool,
     pub installer: Option<String>,
     pub is_device_admin: bool,
+    pub sideloaded: bool,
+    pub installed_recently: bool,
+    pub reads_screen: bool,
+    pub draws_over: bool,
+    pub no_launcher_icon: bool,
     pub uninstall_count: u64,
     pub report_count: u64,
     pub marked_system: bool,
@@ -47,6 +62,10 @@ pub struct PackageRow {
     pub is_suspicious: bool,
     pub is_reported: bool,
     pub my_vote: Option<String>,
+    pub online_system: u64,
+    pub online_trusted: u64,
+    pub online_suspicious: u64,
+    pub is_critical: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -69,23 +88,29 @@ pub struct ConnectionGuide {
 
 #[tauri::command(rename_all = "snake_case")]
 pub fn check_setup() -> system_setup::SetupStatus {
-    system_setup::check_setup()
+    let status = system_setup::check_setup();
+    crate::dev_log::command("check_setup", None);
+    status
 }
 
 #[tauri::command(rename_all = "snake_case")]
 pub fn run_setup(state: State<'_, AppState>) -> Result<system_setup::SetupStatus, String> {
-    let install_dir = state.platform_tools_dir.clone();
-    let status = system_setup::run_setup(&install_dir)?;
-    std::env::set_var(
-        "ANDROID_ADWARE_PLATFORM_TOOLS",
-        install_dir.to_string_lossy().as_ref(),
-    );
-    Ok(status)
+    crate::dev_log::logged("run_setup", || {
+        let install_dir = state.platform_tools_dir.clone();
+        let status = system_setup::run_setup(&install_dir)?;
+        std::env::set_var(
+            "ANDROID_ADWARE_PLATFORM_TOOLS",
+            install_dir.to_string_lossy().as_ref(),
+        );
+        Ok(status)
+    })
 }
 
 #[tauri::command(rename_all = "snake_case")]
 pub fn get_device_guides() -> DeviceGuides {
-    load_guides()
+    let guides = load_guides();
+    crate::dev_log::command("get_device_guides", None);
+    guides
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -134,6 +159,7 @@ pub fn get_connection_guide(
 
     let safe_mode_steps = matched.map(|g| g.safe_mode_steps.clone());
 
+    crate::dev_log::command("get_connection_guide", None);
     ConnectionGuide {
         brand,
         model,
@@ -150,17 +176,19 @@ pub fn set_custom_adb_path(
     state: State<'_, AppState>,
     path: Option<String>,
 ) -> Result<system_setup::SetupStatus, String> {
-    {
-        let mut config = state.config.lock().map_err(|e| e.to_string())?;
-        config.custom_adb_path = path.clone();
-    }
-    state.save_config()?;
-    if let Some(ref p) = path {
-        std::env::set_var("ANDROID_ADWARE_CUSTOM_ADB", p);
-    } else {
-        std::env::remove_var("ANDROID_ADWARE_CUSTOM_ADB");
-    }
-    Ok(system_setup::check_setup())
+    crate::dev_log::logged("set_custom_adb_path", || {
+        {
+            let mut config = state.config.lock().map_err(|e| e.to_string())?;
+            config.custom_adb_path = path.clone();
+        }
+        state.save_config()?;
+        if let Some(ref p) = path {
+            std::env::set_var("ANDROID_ADWARE_CUSTOM_ADB", p);
+        } else {
+            std::env::remove_var("ANDROID_ADWARE_CUSTOM_ADB");
+        }
+        Ok(system_setup::check_setup())
+    })
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -170,26 +198,35 @@ pub fn get_adb_status() -> Result<AdbStatus, String> {
         Ok(b) => b.list_devices().unwrap_or_default(),
         Err(_) => vec![],
     };
-    let has_authorized_device = devices.iter().any(|d| d.state == adb_bridge::DeviceState::Device);
-    Ok(AdbStatus {
+    let has_authorized_device = devices
+        .iter()
+        .any(|d| d.state == adb_bridge::DeviceState::Device);
+    let status = Ok(AdbStatus {
         adb_path,
         devices,
         has_authorized_device,
-    })
+    });
+    crate::dev_log::log_result("get_adb_status", &status);
+    status
 }
 
 #[tauri::command(rename_all = "snake_case")]
 pub fn list_devices() -> Result<Vec<AdbDevice>, String> {
-    AdbBridge::new()
-        .map_err(|e| e.to_string())?
-        .list_devices()
-        .map_err(|e| e.to_string())
+    crate::dev_log::logged("list_devices", || {
+        AdbBridge::new()
+            .map_err(|e| e.to_string())?
+            .list_devices()
+            .map_err(|e| e.to_string())
+    })
 }
 
 fn sync_status(state: &AppState) -> Result<cloud_sync::SyncStatus, String> {
     let provider_id = {
         let config = state.config.lock().map_err(|e| e.to_string())?;
-        config.sync_provider.clone().unwrap_or_else(|| "local".into())
+        config
+            .sync_provider
+            .clone()
+            .unwrap_or_else(|| "local".into())
     };
     let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
     let mut status = sync.status_for(&provider_id);
@@ -208,24 +245,31 @@ async fn reconcile_off_main(app: AppHandle) -> Result<cloud_sync::SyncStatus, St
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn push_reports(app: AppHandle) -> Result<(), String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        let state = app.state::<AppState>();
-        let state = state.inner();
-        let mut sync = match state.cloud_sync.try_lock() {
-            Ok(guard) => guard,
-            Err(std::sync::TryLockError::WouldBlock) => return Ok(()),
-            Err(err) => return Err(err.to_string()),
-        };
-        let db = state.db.lock().map_err(|e| e.to_string())?;
-        sync.push_pending(&db).map_err(|e| e.to_string())
-    })
-    .await
-    .map_err(|e| format!("invio interrotto: {e}"))?
+    let result = async move {
+        tauri::async_runtime::spawn_blocking(move || {
+            let state = app.state::<AppState>();
+            let state = state.inner();
+            let mut sync = match state.cloud_sync.try_lock() {
+                Ok(guard) => guard,
+                Err(std::sync::TryLockError::WouldBlock) => return Ok(()),
+                Err(err) => return Err(err.to_string()),
+            };
+            let db = state.db.lock().map_err(|e| e.to_string())?;
+            sync.push_pending(&db).map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|e| format!("invio interrotto: {e}"))?
+    }
+    .await;
+    crate::dev_log::log_result("push_reports", &result);
+    result
 }
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn sync_pull(app: AppHandle) -> Result<cloud_sync::SyncStatus, String> {
-    reconcile_off_main(app).await
+    let result = reconcile_off_main(app).await;
+    crate::dev_log::log_result("sync_pull", &result);
+    result
 }
 
 pub fn reconcile_quiet(state: &AppState) {
@@ -243,11 +287,6 @@ fn reconcile_state_inner(state: &AppState) -> Result<cloud_sync::SyncStatus, Str
     drop(db);
     drop(sync);
     sync_status(state)
-}
-
-#[tauri::command(rename_all = "snake_case")]
-pub async fn sync_push(app: AppHandle) -> Result<cloud_sync::SyncStatus, String> {
-    reconcile_off_main(app).await
 }
 
 #[derive(Clone, Serialize)]
@@ -268,7 +307,9 @@ pub enum ScanProgressEvent {
 #[derive(Clone, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum UninstallProgressEvent {
-    Started { total: usize },
+    Started {
+        total: usize,
+    },
     Item {
         current: usize,
         total: usize,
@@ -279,43 +320,93 @@ pub enum UninstallProgressEvent {
     Finished,
 }
 
+struct ScanMeta {
+    model: Option<String>,
+    brand: Option<String>,
+    critical: HashSet<String>,
+    reputations: Result<HashMap<String, PackageReputation>, String>,
+}
+
 fn scan_packages_streaming(
     user_only: bool,
     serial: Option<String>,
-    reputations: std::collections::HashMap<String, PackageReputation>,
-    metadata_cache_path: std::path::PathBuf,
+    reputations: mpsc::Receiver<Result<HashMap<String, PackageReputation>, String>>,
     on_progress: Channel<ScanProgressEvent>,
 ) -> Result<(), String> {
-    let bridge = match serial {
+    let bridge = Arc::new(match serial {
         Some(s) => AdbBridge::with_serial(s).map_err(|e| e.to_string())?,
         None => AdbBridge::new().map_err(|e| e.to_string())?,
-    };
+    });
     let device_serial = bridge.get_serial().map_err(|e| e.to_string())?;
-    let device_model = bridge.get_device_property("ro.product.model").ok();
-    let device_brand = bridge.get_device_property("ro.product.brand").ok();
 
-    let mut scanner = package_scanner::PackageScanner::new(bridge);
-    // `npm run tauri dev --noCache` → npm exports npm_config_nocache=true
-    if std::env::var("npm_config_nocache").as_deref() != Ok("true") {
-        scanner = scanner.with_cache_path(metadata_cache_path);
-    }
+    let model_bridge = Arc::clone(&bridge);
+    let mut model_handle = Some(thread::spawn(move || {
+        model_bridge.get_device_property("ro.product.model").ok()
+    }));
+    let brand_bridge = Arc::clone(&bridge);
+    let mut brand_handle = Some(thread::spawn(move || {
+        brand_bridge.get_device_property("ro.product.brand").ok()
+    }));
+    let crit_bridge = Arc::clone(&bridge);
+    let mut crit_handle = Some(thread::spawn(move || {
+        uninstall_engine::dynamic_critical(&crit_bridge)
+    }));
+    let mut reputations = Some(reputations);
+
+    let scanner = package_scanner::PackageScanner::new(Arc::clone(&bridge));
+    let mut meta: Option<ScanMeta> = None;
+    let mut rep_error: Option<String> = None;
     scanner
-        .scan_with_progress(user_only, |event| match event {
-            package_scanner::ScanProgress::Started { total } => {
-                let _ = on_progress.send(ScanProgressEvent::Started {
-                    total,
-                    device_serial: device_serial.clone(),
-                    device_model: device_model.clone(),
-                    device_brand: device_brand.clone(),
-                });
+        .scan_with_progress(user_only, |event| {
+            let meta = meta.get_or_insert_with(|| ScanMeta {
+                model: model_handle
+                    .take()
+                    .and_then(|handle| handle.join().ok().flatten()),
+                brand: brand_handle
+                    .take()
+                    .and_then(|handle| handle.join().ok().flatten()),
+                critical: crit_handle
+                    .take()
+                    .and_then(|handle| handle.join().ok())
+                    .unwrap_or_default(),
+                reputations: reputations
+                    .take()
+                    .and_then(|rx| rx.recv().ok())
+                    .unwrap_or_else(|| Err("reputazioni non disponibili".into())),
+            });
+            if let Err(err) = &meta.reputations {
+                if rep_error.is_none() {
+                    rep_error = Some(err.clone());
+                }
+                return;
             }
-            package_scanner::ScanProgress::Package(pkg) => {
-                let row = package_to_row(pkg, &reputations);
-                let _ = on_progress.send(ScanProgressEvent::Package { row });
+            let reputations = meta.reputations.as_ref().unwrap();
+            match event {
+                package_scanner::ScanProgress::Started { total } => {
+                    let _ = on_progress.send(ScanProgressEvent::Started {
+                        total,
+                        device_serial: device_serial.clone(),
+                        device_model: meta.model.clone(),
+                        device_brand: meta.brand.clone(),
+                    });
+                }
+                package_scanner::ScanProgress::Package(pkg) => {
+                    let row = package_to_row(pkg, reputations, &meta.critical);
+                    let _ = on_progress.send(ScanProgressEvent::Package { row });
+                }
             }
         })
         .map_err(|e| e.to_string())?;
 
+    if meta.is_none() {
+        let _ = model_handle.take().map(|handle| handle.join());
+        let _ = brand_handle.take().map(|handle| handle.join());
+        let _ = crit_handle.take().map(|handle| handle.join());
+        let _ = reputations.take().map(|rx| rx.recv());
+    }
+    if let Some(err) = rep_error {
+        return Err(err);
+    }
     let _ = on_progress.send(ScanProgressEvent::Finished);
     Ok(())
 }
@@ -331,9 +422,14 @@ fn load_reputations(
             let _ = sync.pull_stats(&db);
         }
     }
+    let pending = state
+        .pending_push
+        .lock()
+        .map(|set| set.clone())
+        .unwrap_or_default();
     let db = state.db.lock().map_err(|e| e.to_string())?;
     Ok(db
-        .all_reputations(viewer.as_deref())
+        .all_reputations_pending(viewer.as_deref(), &pending)
         .unwrap_or_default()
         .into_iter()
         .map(|r| (r.package_name.clone(), r))
@@ -343,43 +439,45 @@ fn load_reputations(
 #[tauri::command(rename_all = "snake_case")]
 pub async fn scan_packages(
     app: AppHandle,
-    state: State<'_, AppState>,
+    _state: State<'_, AppState>,
     user_only: bool,
     serial: Option<String>,
     on_progress: Channel<ScanProgressEvent>,
 ) -> Result<(), String> {
-    let viewer = if serial.as_ref().is_some_and(|s| !s.is_empty()) {
-        serial.clone()
-    } else {
-        AdbBridge::new().ok().and_then(|bridge| bridge.get_serial().ok())
-    };
-    let metadata_cache_path = state.metadata_cache_path.clone();
-    let reputations = tauri::async_runtime::spawn_blocking(move || {
-        let state = app.state::<AppState>();
-        load_reputations(state.inner(), viewer)
-    })
-    .await
-    .map_err(|e| format!("sync interrotta: {e}"))??;
-
-    tauri::async_runtime::spawn_blocking(move || {
-        scan_packages_streaming(user_only, serial, reputations, metadata_cache_path, on_progress)
-    })
-    .await
-    .map_err(|e| format!("scansione interrotta: {e}"))??;
-
-    Ok(())
-}
-
-#[tauri::command(rename_all = "snake_case")]
-pub fn clear_metadata_cache(state: State<'_, AppState>) -> Result<(), String> {
-    let path = state.metadata_cache_path.clone();
-    let mut cache = package_scanner::MetadataCache::load(Some(path));
-    cache.clear().map_err(|e| e.to_string())
+    let result = async {
+        if let Some(serial) = serial.as_ref().filter(|s| !s.is_empty()) {
+            remember_viewer(_state.inner(), serial);
+        }
+        let viewer = if serial.as_ref().is_some_and(|s| !s.is_empty()) {
+            serial.clone()
+        } else {
+            AdbBridge::new()
+                .ok()
+                .and_then(|bridge| bridge.get_serial().ok())
+        };
+        let (rep_tx, rep_rx) = mpsc::channel();
+        let app_for_rep = app.clone();
+        let rep_task = tauri::async_runtime::spawn_blocking(move || {
+            let state = app_for_rep.state::<AppState>();
+            let _ = rep_tx.send(load_reputations(state.inner(), viewer));
+        });
+        let scan_result = tauri::async_runtime::spawn_blocking(move || {
+            scan_packages_streaming(user_only, serial, rep_rx, on_progress)
+        })
+        .await
+        .map_err(|e| format!("scansione interrotta: {e}"))?;
+        let _ = rep_task.await;
+        scan_result
+    }
+    .await;
+    crate::dev_log::log_result("scan_packages", &result);
+    result
 }
 
 fn package_to_row(
     p: ScannedPackage,
     reputations: &std::collections::HashMap<String, PackageReputation>,
+    critical: &std::collections::HashSet<String>,
 ) -> PackageRow {
     let rep = reputations.get(&p.package_name);
     let uninstall_count = rep.map(|r| r.uninstall_count).unwrap_or(0);
@@ -392,6 +490,7 @@ fn package_to_row(
         .map(|r| row_is_suspicious(r, p.is_system))
         .unwrap_or_else(|| !p.is_system && uninstall_count > SUSPICIOUS_THRESHOLD);
 
+    let is_critical = uninstall_engine::is_critical(&p.package_name, critical);
     PackageRow {
         package_name: p.package_name,
         label: p.label,
@@ -400,6 +499,11 @@ fn package_to_row(
         is_system: p.is_system,
         installer: p.installer,
         is_device_admin: p.is_device_admin,
+        sideloaded: p.sideloaded,
+        installed_recently: p.installed_recently,
+        reads_screen: p.reads_screen,
+        draws_over: p.draws_over,
+        no_launcher_icon: p.no_launcher_icon,
         uninstall_count,
         report_count,
         marked_system,
@@ -408,6 +512,10 @@ fn package_to_row(
         is_suspicious,
         is_reported,
         my_vote: rep.and_then(|r| r.my_vote.clone()),
+        online_system: rep.map(|r| r.online_system).unwrap_or(0),
+        online_trusted: rep.map(|r| r.online_trusted).unwrap_or(0),
+        online_suspicious: rep.map(|r| r.online_suspicious).unwrap_or(0),
+        is_critical,
     }
 }
 
@@ -415,6 +523,7 @@ fn package_to_row(
 pub struct UninstallRequest {
     pub packages: Vec<String>,
     pub dry_run: bool,
+    pub allow_critical: bool,
     pub serial: Option<String>,
 }
 
@@ -424,62 +533,206 @@ pub async fn bulk_uninstall(
     req: UninstallRequest,
     on_progress: Channel<UninstallProgressEvent>,
 ) -> Result<(), String> {
-    let packages = req.packages.clone();
-    let dry_run = req.dry_run;
-    let serial = req.serial.clone();
-    let total = packages.len();
-    let on_progress_worker = on_progress.clone();
+    let result = async {
+        let packages = req.packages.clone();
+        let dry_run = req.dry_run;
+        let allow_critical = req.allow_critical;
+        let serial = req.serial.clone();
+        let total = packages.len();
+        let on_progress_worker = on_progress.clone();
 
-    let results = tauri::async_runtime::spawn_blocking(move || {
-        let _ = on_progress_worker.send(UninstallProgressEvent::Started { total });
+        let results = tauri::async_runtime::spawn_blocking(move || {
+            let _ = on_progress_worker.send(UninstallProgressEvent::Started { total });
 
-        let bridge = match serial {
-            Some(s) => AdbBridge::with_serial(s).map_err(|e| e.to_string())?,
-            None => AdbBridge::new().map_err(|e| e.to_string())?,
-        };
-        let device_serial = bridge.get_serial().map_err(|e| e.to_string())?;
-        let engine = UninstallEngine::new(bridge);
-        let results = engine
-            .bulk_uninstall_with_progress(&packages, dry_run, |current, total, result| {
-                let status = match result.status {
-                    uninstall_engine::UninstallStatus::Success => "success",
-                    uninstall_engine::UninstallStatus::Failed => "failed",
-                    uninstall_engine::UninstallStatus::Skipped => "skipped",
-                };
-                let _ = on_progress_worker.send(UninstallProgressEvent::Item {
-                    current,
-                    total,
-                    package_name: result.package_name.clone(),
-                    status: status.into(),
-                    message: result.message.clone(),
+            let bridge = match serial {
+                Some(s) => AdbBridge::with_serial(s).map_err(|e| e.to_string())?,
+                None => AdbBridge::new().map_err(|e| e.to_string())?,
+            };
+            let device_serial = bridge.get_serial().map_err(|e| e.to_string())?;
+            let engine = UninstallEngine::new(bridge);
+            let results = engine
+                .bulk_uninstall_with_progress(
+                    &packages,
+                    dry_run,
+                    allow_critical,
+                    |current, total, result| {
+                        let status = match result.status {
+                            uninstall_engine::UninstallStatus::Success => "success",
+                            uninstall_engine::UninstallStatus::Failed => "failed",
+                            uninstall_engine::UninstallStatus::Skipped => "skipped",
+                        };
+                        let _ = on_progress_worker.send(UninstallProgressEvent::Item {
+                            current,
+                            total,
+                            package_name: result.package_name.clone(),
+                            status: status.into(),
+                            message: result.message.clone(),
+                        });
+                    },
+                )
+                .map_err(|e| e.to_string())?;
+
+            Ok::<(Vec<UninstallResult>, String), String>((results, device_serial))
+        })
+        .await
+        .map_err(|e| format!("disinstallazione interrotta: {e}"))??;
+
+        let (results, device_serial) = results;
+
+        if !dry_run {
+            let mut events = Vec::new();
+            {
+                let db = state.db.lock().map_err(|e| e.to_string())?;
+                for r in &results {
+                    if r.status == uninstall_engine::UninstallStatus::Success {
+                        if let Ok(event) = db.record_uninstall(
+                            &r.package_name,
+                            &device_serial,
+                            true,
+                            Some(&r.message),
+                        ) {
+                            events.push(event);
+                        }
+                    }
+                }
+            }
+            remember_viewer(state.inner(), &device_serial);
+            for event in &events {
+                publish_change(state.inner(), &event.package_name, |sync| {
+                    sync.push_uninstall(event)
                 });
-            })
-            .map_err(|e| e.to_string())?;
-
-        Ok::<(Vec<UninstallResult>, String), String>((results, device_serial))
-    })
-    .await
-    .map_err(|e| format!("disinstallazione interrotta: {e}"))??;
-
-    let (results, device_serial) = results;
-
-    if !dry_run {
-        let db = state.db.lock().map_err(|e| e.to_string())?;
-        for r in &results {
-            if r.status == uninstall_engine::UninstallStatus::Success {
-                let _ = db.record_uninstall(
-                    &r.package_name,
-                    &device_serial,
-                    true,
-                    Some(&r.message),
-                );
             }
         }
-        drop(db);
-    }
 
-    let _ = on_progress.send(UninstallProgressEvent::Finished);
-    Ok(())
+        let _ = on_progress.send(UninstallProgressEvent::Finished);
+        Ok(())
+    }
+    .await;
+    crate::dev_log::log_result("bulk_uninstall", &result);
+    result
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RestoreRequest {
+    pub packages: Vec<String>,
+    pub serial: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct RestoreResult {
+    pub package_name: String,
+    pub ok: bool,
+    pub message: String,
+}
+
+fn restore_message_ok(message: &str) -> bool {
+    let lower = message.to_lowercase();
+    lower.contains("installed") && !lower.contains("failure") && !lower.contains("exception")
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn restore_packages(req: RestoreRequest) -> Result<Vec<RestoreResult>, String> {
+    let result = async {
+        tauri::async_runtime::spawn_blocking(move || {
+            let bridge = open_bridge(req.serial)?;
+            let mut results = Vec::with_capacity(req.packages.len());
+            for package in req.packages {
+                let (ok, message) = match bridge.install_existing(&package) {
+                    Ok(message) => (restore_message_ok(&message), message),
+                    Err(err) => (false, err.to_string()),
+                };
+                results.push(RestoreResult {
+                    package_name: package,
+                    ok,
+                    message,
+                });
+            }
+            Ok(results)
+        })
+        .await
+        .map_err(|e| format!("ripristino interrotto: {e}"))?
+    }
+    .await;
+    crate::dev_log::log_result("restore_packages", &result);
+    result
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn check_browsers(
+    serial: Option<String>,
+) -> Result<crate::browsers::BrowserCheck, String> {
+    let result = async {
+        tauri::async_runtime::spawn_blocking(move || {
+            let bridge = open_bridge(serial)?;
+            crate::browsers::check(&bridge)
+        })
+        .await
+        .map_err(|e| format!("controllo browser interrotto: {e}"))?
+    }
+    .await;
+    crate::dev_log::log_result("check_browsers", &result);
+    result
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn open_notification_settings(
+    package: String,
+    serial: Option<String>,
+) -> Result<(), String> {
+    let result = async {
+        tauri::async_runtime::spawn_blocking(move || {
+            let bridge = open_bridge(serial)?;
+            bridge
+                .open_notification_settings(&package)
+                .map(|_| ())
+                .map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|e| format!("apertura notifiche interrotta: {e}"))?
+    }
+    .await;
+    crate::dev_log::log_result("open_notification_settings", &result);
+    result
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn open_default_apps(serial: Option<String>) -> Result<(), String> {
+    let result = async {
+        tauri::async_runtime::spawn_blocking(move || {
+            let bridge = open_bridge(serial)?;
+            bridge
+                .open_default_apps()
+                .map(|_| ())
+                .map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|e| format!("apertura app predefinite interrotta: {e}"))?
+    }
+    .await;
+    crate::dev_log::log_result("open_default_apps", &result);
+    result
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn set_browser_notifications(
+    package: String,
+    allowed: bool,
+    serial: Option<String>,
+) -> Result<(), String> {
+    let result = async {
+        tauri::async_runtime::spawn_blocking(move || {
+            let bridge = open_bridge(serial)?;
+            bridge
+                .set_notifications_allowed(&package, allowed)
+                .map(|_| ())
+                .map_err(|e| e.to_string())
+        })
+        .await
+        .map_err(|e| format!("notifiche browser interrotte: {e}"))?
+    }
+    .await;
+    crate::dev_log::log_result("set_browser_notifications", &result);
+    result
 }
 
 #[derive(Debug, Deserialize)]
@@ -494,58 +747,113 @@ pub fn set_package_marks(
     state: State<'_, AppState>,
     req: SetPackageMarksRequest,
 ) -> Result<PackageReputation, String> {
-    let db = state.db.lock().map_err(|e| e.to_string())?;
-    db.set_vote(&req.package_name, &req.device_serial, &req.flag)
-        .map_err(|e| e.to_string())?;
-    db.get_reputation(&req.package_name, Some(&req.device_serial))
-        .map_err(|e| e.to_string())
+    crate::dev_log::logged("set_package_marks", || {
+        let vote = {
+            let db = state.db.lock().map_err(|e| e.to_string())?;
+            db.set_vote(&req.package_name, &req.device_serial, &req.flag)
+                .map_err(|e| e.to_string())?
+        };
+        remember_viewer(state.inner(), &req.device_serial);
+        publish_change(state.inner(), &vote.package_name, |sync| {
+            sync.push_vote(&vote)
+        });
+        let pending = state
+            .pending_push
+            .lock()
+            .map(|set| set.clone())
+            .unwrap_or_default();
+        let db = state.db.lock().map_err(|e| e.to_string())?;
+        db.get_reputation_pending(&req.package_name, Some(&req.device_serial), &pending)
+            .map_err(|e| e.to_string())
+    })
 }
 
-#[tauri::command(rename_all = "snake_case")]
-pub fn set_airplane_mode(enabled: bool, serial: Option<String>) -> Result<String, String> {
-    let bridge = match serial {
-        Some(s) => AdbBridge::with_serial(s).map_err(|e| e.to_string())?,
-        None => AdbBridge::new().map_err(|e| e.to_string())?,
-    };
-    bridge
-        .set_airplane_mode(enabled)
-        .map_err(|e| e.to_string())
+fn remember_viewer(state: &AppState, serial: &str) {
+    if serial.is_empty() {
+        return;
+    }
+    if let Ok(mut slot) = state.viewer_serial.lock() {
+        *slot = Some(serial.to_string());
+    }
+}
+
+fn publish_change(
+    state: &AppState,
+    package: &str,
+    push: impl FnOnce(&mut cloud_sync::CloudSync) -> Result<(), cloud_sync::SyncError>,
+) {
+    let supabase = state
+        .cloud_sync
+        .lock()
+        .map(|sync| sync.is_supabase())
+        .unwrap_or(false);
+    if !supabase {
+        return;
+    }
+    if let Ok(mut pending) = state.pending_push.lock() {
+        pending.insert(package.to_string());
+    }
+    let pushed = state
+        .cloud_sync
+        .lock()
+        .map(|mut sync| push(&mut sync).is_ok())
+        .unwrap_or(false);
+    if !pushed {
+        return;
+    }
+    if let (Ok(mut sync), Ok(db)) = (state.cloud_sync.lock(), state.db.lock()) {
+        let _ = sync.pull_package(&db, package);
+    }
+    if let Ok(mut pending) = state.pending_push.lock() {
+        pending.remove(package);
+    }
 }
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn get_sync_status(app: AppHandle) -> Result<cloud_sync::SyncStatus, String> {
-    tauri::async_runtime::spawn_blocking(move || {
-        let state = app.state::<AppState>();
-        sync_status(state.inner())
-    })
-    .await
-    .map_err(|e| format!("stato sync interrotto: {e}"))?
+    let result = async move {
+        tauri::async_runtime::spawn_blocking(move || {
+            let state = app.state::<AppState>();
+            sync_status(state.inner())
+        })
+        .await
+        .map_err(|e| format!("stato sync interrotto: {e}"))?
+    }
+    .await;
+    crate::dev_log::log_result("get_sync_status", &result);
+    result
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub fn get_sync_settings(state: State<'_, AppState>) -> Result<cloud_sync::SyncSettingsView, String> {
-    let config = state.config.lock().map_err(|e| e.to_string())?;
-    let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
-    let provider_id = config
-        .sync_provider
-        .clone()
-        .unwrap_or_else(|| "local".into());
-    Ok(cloud_sync::SyncSettingsView {
-        provider_id,
-        sync_folder: config.sync_folder.clone().or_else(|| {
-            sync.sync_path().and_then(|p| {
-                p.parent()
-                    .map(|d| d.to_string_lossy().into_owned())
-            })
-        }),
-        subfolder: cloud_sync::SYNC_SUBFOLDER.into(),
-        providers: cloud_sync::list_providers(),
-        supabase_url: config.supabase_url.clone(),
-        supabase_key: config.supabase_key.clone(),
+pub fn get_sync_settings(
+    state: State<'_, AppState>,
+) -> Result<cloud_sync::SyncSettingsView, String> {
+    crate::dev_log::logged("get_sync_settings", || {
+        let config = state.config.lock().map_err(|e| e.to_string())?;
+        let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
+        let provider_id = config
+            .sync_provider
+            .clone()
+            .unwrap_or_else(|| "local".into());
+        Ok(cloud_sync::SyncSettingsView {
+            provider_id,
+            sync_folder: config.sync_folder.clone().or_else(|| {
+                sync.sync_path()
+                    .and_then(|p| p.parent().map(|d| d.to_string_lossy().into_owned()))
+            }),
+            subfolder: cloud_sync::SYNC_SUBFOLDER.into(),
+            providers: cloud_sync::list_providers(),
+            supabase_url: config.supabase_url.clone(),
+            supabase_key: config.supabase_key.clone(),
+        })
     })
 }
 
-fn apply_sync_folder(state: &AppState, provider_id: &str, folder: Option<String>) -> Result<(), String> {
+fn apply_sync_folder(
+    state: &AppState,
+    provider_id: &str,
+    folder: Option<String>,
+) -> Result<(), String> {
     {
         let mut config = state.config.lock().map_err(|e| e.to_string())?;
         config.sync_provider = Some(provider_id.into());
@@ -580,50 +888,65 @@ fn reload_backend(state: &AppState) -> Result<(), String> {
     let mut sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
     sync.set_backend(backend);
     let db = state.db.lock().map_err(|e| e.to_string())?;
-    let _ = sync.reconcile(&db);
+    let pushed = sync.reconcile(&db).is_ok();
+    drop(db);
+    drop(sync);
+    if pushed {
+        if let Ok(mut pending) = state.pending_push.lock() {
+            pending.clear();
+        }
+    }
+    state
+        .realtime_gen
+        .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     Ok(())
 }
 
 #[tauri::command(rename_all = "snake_case")]
-pub fn set_sync_provider(state: State<'_, AppState>, provider_id: String) -> Result<cloud_sync::SyncStatus, String> {
-    if provider_id == "local" {
-        apply_sync_folder(&state, "local", None)?;
-        let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
-        return Ok(sync.status());
-    }
-    if provider_id == "supabase" {
-        let ready = {
-            let config = state.config.lock().map_err(|e| e.to_string())?;
-            config
-                .supabase_url
-                .as_ref()
-                .is_some_and(|s| !s.trim().is_empty())
-                && config
-                    .supabase_key
+pub fn set_sync_provider(
+    state: State<'_, AppState>,
+    provider_id: String,
+) -> Result<cloud_sync::SyncStatus, String> {
+    crate::dev_log::logged("set_sync_provider", || {
+        if provider_id == "local" {
+            apply_sync_folder(&state, "local", None)?;
+            let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
+            return Ok(sync.status());
+        }
+        if provider_id == "supabase" {
+            let ready = {
+                let config = state.config.lock().map_err(|e| e.to_string())?;
+                config
+                    .supabase_url
                     .as_ref()
                     .is_some_and(|s| !s.trim().is_empty())
-        };
-        if !ready {
-            return Err("inserisci URL e chiave publishable".into());
+                    && config
+                        .supabase_key
+                        .as_ref()
+                        .is_some_and(|s| !s.trim().is_empty())
+            };
+            if !ready {
+                return Err("inserisci URL e chiave publishable".into());
+            }
+            apply_sync_folder(&state, "supabase", None)?;
+            let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
+            return Ok(sync.status());
         }
-        apply_sync_folder(&state, "supabase", None)?;
+        if provider_id == "custom" {
+            return Err("usa set_sync_folder per una cartella personalizzata".into());
+        }
+        let folder = cloud_sync::resolve_sync_folder(&provider_id, None).ok_or_else(|| {
+            format!(
+                "cartella {} non trovata — installa il client sul PC o usa «Cartella personalizzata»",
+                provider_id
+            )
+        })?;
+        cloud_sync::ensure_sync_folder(&folder).map_err(|e| e.to_string())?;
+        let folder_str = folder.to_string_lossy().into_owned();
+        apply_sync_folder(&state, &provider_id, Some(folder_str))?;
         let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
-        return Ok(sync.status());
-    }
-    if provider_id == "custom" {
-        return Err("usa set_sync_folder per una cartella personalizzata".into());
-    }
-    let folder = cloud_sync::resolve_sync_folder(&provider_id, None).ok_or_else(|| {
-        format!(
-            "cartella {} non trovata — installa il client sul PC o usa «Cartella personalizzata»",
-            provider_id
-        )
-    })?;
-    cloud_sync::ensure_sync_folder(&folder).map_err(|e| e.to_string())?;
-    let folder_str = folder.to_string_lossy().into_owned();
-    apply_sync_folder(&state, &provider_id, Some(folder_str))?;
-    let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
-    Ok(sync.status())
+        Ok(sync.status())
+    })
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -632,35 +955,42 @@ pub fn set_supabase_config(
     url: String,
     key: String,
 ) -> Result<cloud_sync::SyncStatus, String> {
-    let url = url.trim().trim_end_matches('/').to_string();
-    let key = key.trim().to_string();
-    if url.is_empty() || key.is_empty() {
-        return Err("servono URL del progetto e chiave publishable".into());
-    }
-    {
-        let mut config = state.config.lock().map_err(|e| e.to_string())?;
-        config.sync_provider = Some("supabase".into());
-        config.sync_folder = None;
-        config.supabase_url = Some(url);
-        config.supabase_key = Some(key);
-    }
-    state.save_config()?;
-    reload_backend(&state)?;
-    let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
-    Ok(sync.status())
+    crate::dev_log::logged("set_supabase_config", || {
+        let url = url.trim().trim_end_matches('/').to_string();
+        let key = key.trim().to_string();
+        if url.is_empty() || key.is_empty() {
+            return Err("servono URL del progetto e chiave publishable".into());
+        }
+        {
+            let mut config = state.config.lock().map_err(|e| e.to_string())?;
+            config.sync_provider = Some("supabase".into());
+            config.sync_folder = None;
+            config.supabase_url = Some(url);
+            config.supabase_key = Some(key);
+        }
+        state.save_config()?;
+        reload_backend(&state)?;
+        let sync = state.cloud_sync.lock().map_err(|e| e.to_string())?;
+        Ok(sync.status())
+    })
 }
 
 #[tauri::command(rename_all = "snake_case")]
 pub fn set_sync_folder(state: State<'_, AppState>, folder: Option<String>) -> Result<(), String> {
-    if let Some(ref path) = folder {
-        cloud_sync::ensure_sync_folder(std::path::Path::new(path)).map_err(|e| e.to_string())?;
-    }
-    apply_sync_folder(&state, "custom", folder)
+    crate::dev_log::logged("set_sync_folder", || {
+        if let Some(ref path) = folder {
+            cloud_sync::ensure_sync_folder(std::path::Path::new(path))
+                .map_err(|e| e.to_string())?;
+        }
+        apply_sync_folder(&state, "custom", folder)
+    })
 }
 
 #[tauri::command(rename_all = "snake_case")]
 pub async fn sync_now(app: AppHandle) -> Result<cloud_sync::SyncStatus, String> {
-    reconcile_off_main(app).await
+    let result = reconcile_off_main(app).await;
+    crate::dev_log::log_result("sync_now", &result);
+    result
 }
 
 #[derive(Debug, Deserialize)]
@@ -674,12 +1004,14 @@ pub struct ExportReportRequest {
 
 #[tauri::command(rename_all = "snake_case")]
 pub fn export_report(req: ExportReportRequest) -> Result<String, String> {
-    let timestamp = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC");
-    match req.format.as_str() {
-        "csv" => export_csv(&req, &timestamp.to_string()),
-        "pdf" => export_pdf(&req, &timestamp.to_string()),
-        _ => Err("format must be csv or pdf".into()),
-    }
+    crate::dev_log::logged("export_report", || {
+        let timestamp = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S UTC");
+        match req.format.as_str() {
+            "csv" => export_csv(&req, &timestamp.to_string()),
+            "pdf" => export_pdf(&req, &timestamp.to_string()),
+            _ => Err("format must be csv or pdf".into()),
+        }
+    })
 }
 
 fn export_csv(req: &ExportReportRequest, timestamp: &str) -> Result<String, String> {
@@ -739,7 +1071,9 @@ fn build_simple_pdf(text: &str) -> Vec<u8> {
 #[derive(Clone, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum OptimizeProgressEvent {
-    Started { total: usize },
+    Started {
+        total: usize,
+    },
     Item {
         current: usize,
         total: usize,
@@ -747,7 +1081,9 @@ pub enum OptimizeProgressEvent {
         status: String,
         message: String,
     },
-    Finished { freed_bytes: u64 },
+    Finished {
+        freed_bytes: u64,
+    },
 }
 
 #[derive(Debug, Deserialize)]
@@ -776,31 +1112,36 @@ pub async fn scan_storage(
     serial: Option<String>,
     on_progress: Channel<OptimizeScanProgress>,
 ) -> Result<crate::optimizer::OptimizeScan, String> {
-    let scan_id = {
-        let mut slot = state.optimize.lock().map_err(|e| e.to_string())?;
-        slot.seq += 1;
-        slot.seq
-    };
-    let mut snapshot = tauri::async_runtime::spawn_blocking(move || {
-        crate::optimizer::scan(&open_bridge(serial)?, |label| {
-            let _ = on_progress.send(OptimizeScanProgress {
-                label: label.to_string(),
-            });
+    let result = async {
+        let scan_id = {
+            let mut slot = state.optimize.lock().map_err(|e| e.to_string())?;
+            slot.seq += 1;
+            slot.seq
+        };
+        let mut snapshot = tauri::async_runtime::spawn_blocking(move || {
+            crate::optimizer::scan(&open_bridge(serial)?, |label| {
+                let _ = on_progress.send(OptimizeScanProgress {
+                    label: label.to_string(),
+                });
+            })
         })
-    })
-    .await
-    .map_err(|e| format!("analisi interrotta: {e}"))??;
-    snapshot.scan_id = scan_id;
-    let view = crate::optimizer::OptimizeScan {
-        scan_id,
-        categories: snapshot.categories.clone(),
-        large_files: snapshot.large_files.clone(),
-    };
-    let mut slot = state.optimize.lock().map_err(|e| e.to_string())?;
-    if slot.seq == scan_id {
-        slot.current = Some(snapshot);
+        .await
+        .map_err(|e| format!("analisi interrotta: {e}"))??;
+        snapshot.scan_id = scan_id;
+        let view = crate::optimizer::OptimizeScan {
+            scan_id,
+            categories: snapshot.categories.clone(),
+            large_files: snapshot.large_files.clone(),
+        };
+        let mut slot = state.optimize.lock().map_err(|e| e.to_string())?;
+        if slot.seq == scan_id {
+            slot.current = Some(snapshot);
+        }
+        Ok(view)
     }
-    Ok(view)
+    .await;
+    crate::dev_log::log_result("scan_storage", &result);
+    result
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -809,40 +1150,45 @@ pub async fn clean_storage(
     req: CleanStorageRequest,
     on_progress: Channel<OptimizeProgressEvent>,
 ) -> Result<crate::optimizer::CleanResult, String> {
-    let snapshot = {
-        let slot = state.optimize.lock().map_err(|e| e.to_string())?;
-        let current = slot.current.as_ref().ok_or("Nessuna scansione")?;
-        if current.scan_id != req.scan_id {
-            return Err("Scansione non più valida".into());
-        }
-        current.clone()
-    };
-    let ops = crate::optimizer::plan(&snapshot, &req.categories, &req.large_files)?;
-    let serial = req.serial;
-    let on_progress_worker = on_progress.clone();
-    let total = ops.len();
+    let result = async {
+        let snapshot = {
+            let slot = state.optimize.lock().map_err(|e| e.to_string())?;
+            let current = slot.current.as_ref().ok_or("Nessuna scansione")?;
+            if current.scan_id != req.scan_id {
+                return Err("Scansione non più valida".into());
+            }
+            current.clone()
+        };
+        let ops = crate::optimizer::plan(&snapshot, &req.categories, &req.large_files)?;
+        let serial = req.serial;
+        let on_progress_worker = on_progress.clone();
+        let total = ops.len();
 
-    tauri::async_runtime::spawn_blocking(move || {
-        let _ = on_progress_worker.send(OptimizeProgressEvent::Started { total });
-        let bridge = open_bridge(serial)?;
-        let result = crate::optimizer::execute(
-            &ops,
-            |command| bridge.shell(command).map_err(|e| e.to_string()),
-            |current, total, label, ok, message| {
-                let _ = on_progress_worker.send(OptimizeProgressEvent::Item {
-                    current,
-                    total,
-                    label: label.to_string(),
-                    status: if ok { "success" } else { "failed" }.into(),
-                    message: message.to_string(),
-                });
-            },
-        );
-        let _ = on_progress_worker.send(OptimizeProgressEvent::Finished {
-            freed_bytes: result.freed_bytes,
-        });
-        Ok(result)
-    })
-    .await
-    .map_err(|e| format!("pulizia interrotta: {e}"))?
+        tauri::async_runtime::spawn_blocking(move || {
+            let _ = on_progress_worker.send(OptimizeProgressEvent::Started { total });
+            let bridge = open_bridge(serial)?;
+            let result = crate::optimizer::execute(
+                &ops,
+                |command| bridge.shell(command).map_err(|e| e.to_string()),
+                |current, total, label, ok, message| {
+                    let _ = on_progress_worker.send(OptimizeProgressEvent::Item {
+                        current,
+                        total,
+                        label: label.to_string(),
+                        status: if ok { "success" } else { "failed" }.into(),
+                        message: message.to_string(),
+                    });
+                },
+            );
+            let _ = on_progress_worker.send(OptimizeProgressEvent::Finished {
+                freed_bytes: result.freed_bytes,
+            });
+            Ok(result)
+        })
+        .await
+        .map_err(|e| format!("pulizia interrotta: {e}"))?
+    }
+    .await;
+    crate::dev_log::log_result("clean_storage", &result);
+    result
 }

@@ -1,14 +1,16 @@
 mod providers;
+mod realtime;
 mod supabase;
 
 pub use providers::{
-    ensure_sync_folder, list_providers, resolve_sync_folder, SyncProviderId,
-    SyncProviderInfo, SyncSettingsView, SYNC_SUBFOLDER,
+    ensure_sync_folder, list_providers, resolve_sync_folder, SyncProviderId, SyncProviderInfo,
+    SyncSettingsView, SYNC_SUBFOLDER,
 };
+pub use realtime::{listen, package_name_from_realtime};
 pub use supabase::{phone_hash, SupabaseConfig};
 
 use chrono::{DateTime, Utc};
-use reputation_db::{DbError, ReputationDb, ReputationSnapshot};
+use reputation_db::{DbError, FlagVote, ReputationDb, ReputationSnapshot, UninstallEvent};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -86,6 +88,74 @@ impl CloudSync {
 
     pub fn is_supabase(&self) -> bool {
         matches!(self.backend, SyncBackend::Supabase(_))
+    }
+
+    pub fn supabase_config(&self) -> Option<SupabaseConfig> {
+        match &self.backend {
+            SyncBackend::Supabase(cfg) => Some(cfg.clone()),
+            _ => None,
+        }
+    }
+
+    pub fn push_vote(&mut self, vote: &FlagVote) -> Result<(), SyncError> {
+        let SyncBackend::Supabase(cfg) = &self.backend else {
+            return Ok(());
+        };
+        let cfg = cfg.clone();
+        match cfg.push_vote(vote) {
+            Ok(()) => {
+                self.last_push = Some(Utc::now());
+                self.last_error = None;
+                Ok(())
+            }
+            Err(e) => {
+                self.last_error = Some(e.to_string());
+                Err(e)
+            }
+        }
+    }
+
+    pub fn push_uninstall(&mut self, event: &UninstallEvent) -> Result<(), SyncError> {
+        let SyncBackend::Supabase(cfg) = &self.backend else {
+            return Ok(());
+        };
+        let cfg = cfg.clone();
+        match cfg.push_uninstall(event) {
+            Ok(()) => {
+                self.last_push = Some(Utc::now());
+                self.last_error = None;
+                Ok(())
+            }
+            Err(e) => {
+                self.last_error = Some(e.to_string());
+                Err(e)
+            }
+        }
+    }
+
+    pub fn pull_package(&mut self, db: &ReputationDb, package: &str) -> Result<(), SyncError> {
+        let SyncBackend::Supabase(cfg) = &self.backend else {
+            return Ok(());
+        };
+        let cfg = cfg.clone();
+        match cfg.fetch_stat(package) {
+            Ok(Some(stat)) => {
+                db.upsert_remote_stat(&stat)?;
+                self.last_pull = Some(Utc::now());
+                self.last_error = None;
+                Ok(())
+            }
+            Ok(None) => {
+                db.delete_remote_stat(package)?;
+                self.last_pull = Some(Utc::now());
+                self.last_error = None;
+                Ok(())
+            }
+            Err(e) => {
+                self.last_error = Some(e.to_string());
+                Err(e)
+            }
+        }
     }
 
     pub fn sync_path(&self) -> Option<PathBuf> {
@@ -284,10 +354,19 @@ fn canonical(snapshot: &ReputationSnapshot) -> String {
         })
         .collect();
     marks.sort();
-    format!("{}\n{}\n{}", events.join("\n"), votes.join("\n"), marks.join("\n"))
+    format!(
+        "{}\n{}\n{}",
+        events.join("\n"),
+        votes.join("\n"),
+        marks.join("\n")
+    )
 }
 
-fn try_replace(path: &Path, expected: Option<String>, content: &str) -> Result<WriteOutcome, SyncError> {
+fn try_replace(
+    path: &Path,
+    expected: Option<String>,
+    content: &str,
+) -> Result<WriteOutcome, SyncError> {
     let current = read_optional(path)?;
     if current != expected {
         return Ok(WriteOutcome::Conflict);
@@ -350,12 +429,20 @@ mod tests {
         let db_b = ReputationDb::open(dir.join("b.db")).unwrap();
         db_b.set_vote("com.b", "phone-b", "trusted").unwrap();
         sync.reconcile(&db_b).unwrap();
-        assert!(db_b.get_reputation("com.a", None).unwrap().marked_suspicious);
+        assert!(
+            db_b.get_reputation("com.a", None)
+                .unwrap()
+                .marked_suspicious
+        );
         assert!(db_b.get_reputation("com.b", None).unwrap().marked_trusted);
 
         let db_c = ReputationDb::open(dir.join("c.db")).unwrap();
         sync.reconcile(&db_c).unwrap();
-        assert!(db_c.get_reputation("com.a", None).unwrap().marked_suspicious);
+        assert!(
+            db_c.get_reputation("com.a", None)
+                .unwrap()
+                .marked_suspicious
+        );
         assert!(db_c.get_reputation("com.b", None).unwrap().marked_trusted);
         let pushed = sync.status().last_push;
         sync.reconcile(&db_c).unwrap();
@@ -397,7 +484,11 @@ mod tests {
         let db = ReputationDb::open(dir.join("local.db")).unwrap();
         let mut sync = CloudSync::new(SyncBackend::Folder(dir));
         sync.reconcile(&db).unwrap();
-        assert!(db.get_reputation("com.bank.app", None).unwrap().marked_trusted);
+        assert!(
+            db.get_reputation("com.bank.app", None)
+                .unwrap()
+                .marked_trusted
+        );
     }
 
     #[test]
@@ -417,7 +508,8 @@ mod tests {
         };
         let db = ReputationDb::open(dir.join("local.db")).unwrap();
         db.set_vote("com.app", "phone-1", "suspicious").unwrap();
-        db.record_uninstall("com.app", "phone-1", true, None).unwrap();
+        db.record_uninstall("com.app", "phone-1", true, None)
+            .unwrap();
         let mut sync = CloudSync::new(SyncBackend::Supabase(cfg));
         sync.reconcile(&db).unwrap();
         sync.reconcile(&db).unwrap();
@@ -437,6 +529,57 @@ mod tests {
         }));
         assert!(offline.reconcile(&db).is_err());
         assert!(offline.status().last_error.is_some());
+    }
+
+    #[test]
+    fn stats_pages_follow_the_range_header() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        thread::spawn(move || {
+            for mut stream in listener.incoming().flatten() {
+                let mut buf = [0u8; 4096];
+                let n = stream.read(&mut buf).unwrap_or(0);
+                let header = String::from_utf8_lossy(&buf[..n]).to_ascii_lowercase();
+                let start: usize = header
+                    .lines()
+                    .find_map(|line| line.strip_prefix("range:"))
+                    .and_then(|value| value.trim().split('-').next()?.parse().ok())
+                    .unwrap_or(0);
+                let names = ["com.a", "com.b", "com.c"];
+                let page: Vec<_> = names
+                    .iter()
+                    .skip(start)
+                    .take(1)
+                    .map(|name| {
+                        serde_json::json!({
+                            "package_name": name,
+                            "uninstall_count": 1,
+                            "system_votes": 0,
+                            "trusted_votes": 0,
+                            "suspicious_votes": 0
+                        })
+                    })
+                    .collect();
+                let body = serde_json::to_string(&page).unwrap();
+                let raw = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                    body.len()
+                );
+                let _ = stream.write_all(raw.as_bytes());
+            }
+        });
+        let cfg = SupabaseConfig {
+            url: format!("http://127.0.0.1:{port}"),
+            key: "k".into(),
+            session_path: std::env::temp_dir().join(format!("aac-pages-{}", Uuid::new_v4())),
+        };
+        let rows = cfg.fetch_stats_pages("token", 1).unwrap();
+        assert_eq!(
+            rows.iter()
+                .map(|row| row.package_name.as_str())
+                .collect::<Vec<_>>(),
+            ["com.a", "com.b", "com.c"]
+        );
     }
 
     #[derive(Default)]
@@ -487,7 +630,10 @@ mod tests {
             }
             buf.extend_from_slice(&tmp[..n]);
         }
-        let body = String::from_utf8_lossy(&buf[header_end..header_end + length.min(buf.len() - header_end)]).to_string();
+        let body = String::from_utf8_lossy(
+            &buf[header_end..header_end + length.min(buf.len() - header_end)],
+        )
+        .to_string();
         let request_line = header.lines().next().unwrap_or("");
         let mut guard = state.lock().unwrap();
         let (status, response) = if request_line.starts_with("POST /auth/v1/signup") {

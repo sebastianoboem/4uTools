@@ -1,8 +1,8 @@
 # AndroidAdwareCleaner
 
-[![release](https://img.shields.io/github/v/release/sebastianoboem/AndroidAdwareCleaner?label=release)](https://github.com/sebastianoboem/AndroidAdwareCleaner/releases)
-[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-[![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)](https://github.com/sebastianoboem/AndroidAdwareCleaner/releases)
+![release](https://img.shields.io/github/v/release/sebastianoboem/AndroidAdwareCleaner?label=release)
+![license](https://img.shields.io/badge/license-MIT-blue)
+![platform](https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey)
 
 **Pulizia adware e app sospette su Android.**
 
@@ -17,7 +17,7 @@ App desktop per **macOS** e **Windows** che collega il telefono via USB (ADB), e
 - **Workflow rapido:** niente menu Android a mano — vedi subito cleaner, VPN truffaldine e adware.
 - **Database reputazione:** disinstallazioni e flag (sospetta, sistema, trusted) alimentano un database locale e, se configurato, Supabase o una cartella condivisa.
 - **Sicuro:** conferma prima della disinstallazione e della pulizia memoria; niente bypass di FRP o autorizzazione ADB.
-- **Multi-PC:** la sync unisce i voti tra più computer. Un flag conta nel totale remoto anche senza disinstallare.
+- **Multi-PC:** con Supabase un voto o una disinstallazione arriva agli altri computer aperti. Un flag conta nel totale remoto anche senza disinstallare.
 
 ---
 
@@ -33,11 +33,20 @@ All’avvio l’app verifica ADB e guida alla connessione USB: opzioni sviluppat
 
 ### 2. Scansiona e filtra
 
-Lista app con **icona**, nome, autore e package. Si cerca per nome. All’avvio è acceso solo il filtro **Sospetta**: le app trusted restano nascoste, **Solo sospette** è spento (le app senza flag si vedono). Sistema e Google si riaccendono dai pulsanti in testata.
+Lista app con **icona**, nome, autore e package. Si cerca per nome. In testata, accesi all’avvio: **Sospetta** e **Non classificate**. Spenti: **Sistema**, **Google**, **Trusted** e **Preinstallate**.
+
+| Filtro | Cosa mostra |
+|--------|-------------|
+| **Sospetta** | Adware e app sopra la soglia di segnalazioni o disinstallazioni |
+| **Sistema** | Moduli, overlay, librerie e app del produttore (Meteo, Shelf, Cuffie). Non YouTube e le altre GApps |
+| **Google** | App visibili all’utente: YouTube, Home, Chrome, Lens |
+| **Trusted** | App segnate come sicure |
+| **Preinstallate** | Assistente giochi e Netflix Partner Activation |
+| **Non classificate** | Il resto, comprese le app Meta preinstallate |
 
 ### 3. Segnala con le flag
 
-Ogni riga ha tre flag:
+Ogni riga ha tre flag. Il pulsante acceso è il voto **di questo telefono**. Il numero accanto all’icona è quanti telefoni hanno già quel voto online.
 
 | Flag | Significato |
 |------|-------------|
@@ -45,13 +54,15 @@ Ogni riga ha tre flag:
 | ⚙️ **Sistema** | Tratta come app di sistema |
 | ✅ **Trusted** | App sicura — sparisce dall’elenco finché il filtro Trusted è spento |
 
+Sul nome compare un solo badge: **sistema**, **google**, **trusted**, **sospetta** o **preinstallata**.
+
 ![Screenshot di app segnate come sospette con badge arancioni e flag rosse attive.](/docs/screenshots/04-flags-suspicious.png)
 
-Il pulsante acceso riflette il flag nel database, anche se è arrivato da un altro computer. La colonna **Rim.** conta le disinstallazioni (locale + sync).
+La colonna **Rim.** conta le disinstallazioni (locale + sync).
 
 ### 4. Disinstalla in blocco
 
-Seleziona più app → **Disinstalla**. Il database locale si aggiorna subito. Il cloud si allinea alla sync successiva, non nel momento del click.
+Seleziona più app → **Disinstalla**. Il database locale si aggiorna subito. Con Supabase il voto e la disinstallazione partono in quel momento; se l’invio fallisce, riparte all’apertura successiva.
 
 ![Screenshot della selezione multipla di app sospette pronte per la disinstallazione.](/docs/screenshots/06-bulk-uninstall.png)
 
@@ -67,15 +78,9 @@ Durante l’analisi, sotto il titolo compaiono gli ultimi tre percorsi letti, ac
 
 ### 6. Sync e aggiornamenti
 
-La sync completa parte:
+Con **Supabase** ogni voto e ogni disinstallazione viene mandato subito, una riga sola. Gli altri PC aperti aggiornano conteggi e badge da soli. All’avvio, al collegamento del telefono e a inizio scansione si scaricano i totali già online, così chi era spento si allinea. **Sync** rifà invio e scarico a mano. La chiusura non aspetta l’invio.
 
-- all’avvio dell’app, in background;
-- quando il telefono risulta collegato;
-- dal pulsante **Sync** e da **Sync** nelle impostazioni;
-- quando si cambia fornitore, cartella o credenziali Supabase;
-- alla chiusura dell’app.
-
-Un flag impostato senza disinstallare viene inviato lo stesso e conta nel totale remoto, un voto per telefono. All’inizio di una scansione app, con Supabase, vengono solo scaricati i totali già presenti sul server.
+Senza Supabase resta la cartella condivisa (`reputation-sync.json`) oppure solo il database di questo computer. Un voto conta nel totale remoto anche senza disinstallare, uno per telefono.
 
 - **Aggiornamenti automatici** — all’avvio controlla GitHub Releases e propone l’installazione della nuova versione.
 
@@ -113,6 +118,8 @@ bash scripts/download-platform-tools.sh   # opzionale: adb locale
 npm run tauri dev
 ```
 
+Per ricompilare l'helper di scansione: `brew install --cask android-commandlinetools`, poi `sdkmanager "platforms;android-35" "build-tools;35.0.0"` e `npm run build:scan-helper` (usa `ANDROID_HOME`, altrimenti il root predefinito del cask).
+
 Build release:
 
 ```bash
@@ -126,7 +133,7 @@ Versioning e pubblicazione release: [docs/RELEASE.md](docs/RELEASE.md).
 ## Struttura dati
 
 - **Database locale:** `~/Library/Application Support/AndroidAdwareCleaner/` (macOS) o equivalente Windows.
-- **Sync:** Supabase, oppure il file `reputation-sync.json` in una cartella Drive/OneDrive scelta nelle impostazioni. Senza fornitore il database resta solo su questo computer.
+- **Sync:** Supabase, oppure il file `reputation-sync.json` in una cartella scelta nelle impostazioni. Senza fornitore il database resta solo su questo computer.
 
 ---
 

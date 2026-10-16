@@ -47,12 +47,15 @@ fn default_guides() -> DeviceGuides {
             },
             GuideStep {
                 title: "Collega il cavo USB".into(),
-                body: "Cavo dati al PC; sul telefono scegli Trasferimento file / MTP se richiesto.".into(),
+                body: "Cavo dati al PC; sul telefono scegli Trasferimento file / MTP se richiesto."
+                    .into(),
                 phase: "cable".into(),
             },
             GuideStep {
                 title: "Autorizza il PC".into(),
-                body: "Sblocca lo schermo e accetta «Consenti debug USB?» (spunta «Consenti sempre»).".into(),
+                body:
+                    "Sblocca lo schermo e accetta «Consenti debug USB?» (spunta «Consenti sempre»)."
+                        .into(),
                 phase: "authorize".into(),
             },
         ],
@@ -61,7 +64,11 @@ fn default_guides() -> DeviceGuides {
     }
 }
 
-pub fn find_guide<'a>(guides: &'a DeviceGuides, brand: &str, model: &str) -> Option<&'a DeviceGuide> {
+pub fn find_guide<'a>(
+    guides: &'a DeviceGuides,
+    brand: &str,
+    model: &str,
+) -> Option<&'a DeviceGuide> {
     let brand_lower = brand.to_lowercase();
     let model_lower = model.to_lowercase();
 
