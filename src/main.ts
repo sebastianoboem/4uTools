@@ -325,8 +325,6 @@ async function runPhase1(): Promise<boolean> {
     });
   }
 
-  await setLoadingStep("Sistema pronto", 400);
-  toast("Sistema pronto per la connessione", "success");
   return true;
 }
 
@@ -1204,11 +1202,42 @@ interface BrowserCheck {
   browsers: BrowserInfo[];
 }
 
+const CLEARABLE_BROWSERS = new Set([
+  "com.android.chrome",
+  "com.chrome.beta",
+  "org.mozilla.firefox",
+  "com.sec.android.app.sbrowser",
+  "com.mi.globalbrowser",
+]);
+
 let browserCheck: BrowserCheck | null = null;
 let browserWarnSeen = false;
+let clearBusy = false;
+let clearPackage = "";
+const clearErrors = new Map<string, string>();
+
+const KNOWN_APP_NAMES: Record<string, string> = {
+  "com.android.chrome": "Chrome",
+  "com.chrome.beta": "Chrome Beta",
+  "org.mozilla.firefox": "Firefox",
+  "com.sec.android.app.sbrowser": "Samsung Internet",
+  "com.mi.globalbrowser": "Mi Browser",
+  "com.android.launcher": "Launcher",
+  "com.android.launcher3": "Launcher",
+};
 
 function appLabel(packageName: string): string {
-  return packages.find((row) => row.package_name === packageName)?.label || packageName;
+  const scanned = packages.find((row) => row.package_name === packageName)?.label;
+  if (scanned) return scanned;
+  // shortcut: nome fisso se l'app di sistema non è nella scansione utente
+  return KNOWN_APP_NAMES[packageName] ?? readableName(packageName);
+}
+
+function readableName(packageName: string): string {
+  const skip = new Set(["com", "org", "net", "android", "app", "google"]);
+  const segment = [...packageName.split(".")].reverse().find((part) => part.length >= 3 && !skip.has(part));
+  if (!segment) return packageName;
+  return segment.charAt(0).toUpperCase() + segment.slice(1);
 }
 
 function strangeReason(packageName: string | null): string | null {
@@ -1236,7 +1265,48 @@ function updateBrowserAttention() {
 }
 
 function closeBrowserDialog() {
+  clearErrors.clear();
   $("#dialog-browser")?.classList.add("hidden");
+}
+
+function askClearBrowsing(packageName: string): Promise<boolean> {
+  const dialog = $("#dialog-clear-confirm");
+  const body = $("#clear-confirm-body");
+  if (!dialog || !body) return Promise.resolve(false);
+  body.textContent = `In ${appLabel(packageName)} si cancellano cronologia, cookie e schede. Le password restano.`;
+  dialog.classList.remove("hidden");
+  return new Promise((resolve) => {
+    const finish = (accepted: boolean) => {
+      dialog.classList.add("hidden");
+      dialog.removeEventListener("click", onClick);
+      resolve(accepted);
+    };
+    const onClick = (event: Event) => {
+      const target = event.target as HTMLElement;
+      if (target.id === "btn-clear-go") finish(true);
+      else if (target.id === "btn-clear-cancel" || target === dialog) finish(false);
+    };
+    dialog.addEventListener("click", onClick);
+  });
+}
+
+async function clearBrowsingData(packageName: string) {
+  if (clearBusy || !deviceSerial) return;
+  if (!(await askClearBrowsing(packageName))) return;
+  clearBusy = true;
+  clearPackage = packageName;
+  clearErrors.delete(packageName);
+  renderBrowserDialog();
+  try {
+    await invoke("clear_browsing_data", { package: packageName, serial: deviceSerial });
+    await refreshBrowserCheck(deviceSession, false);
+  } catch (error) {
+    clearErrors.set(packageName, String(error));
+  } finally {
+    clearBusy = false;
+    clearPackage = "";
+    renderBrowserDialog();
+  }
 }
 
 function namedLine(title: string, packageName: string | null): string {
@@ -1266,11 +1336,16 @@ function renderBrowserDialog() {
             ? `<button type="button" class="btn small" data-allow="${escapeHtml(browser.package)}">Riattiva</button>`
             : `<button type="button" class="btn small" data-block="${escapeHtml(browser.package)}">Blocca tutte le notifiche</button>`
           : "";
-      const guide =
-        browser.package === "com.android.chrome"
-          ? `<p class="dialog-body muted browser-guide">Per togliere schede, cookie e accessi ai siti senza cancellare le password: in Chrome tocca ⋮ → Cronologia → Elimina dati di navigazione, spunta «Cookie e dati dei siti» e lascia spento «Password salvate». Le schede si chiudono dal riquadro schede → ⋮ → Chiudi tutte le schede.</p>`
-          : "";
-      return `<section class="browser-section"><h3>${escapeHtml(appLabel(browser.package))}${blocked}</h3>${sites}<div class="browser-actions"><button type="button" class="btn small" data-open="${escapeHtml(browser.package)}">Apri notifiche sul telefono</button>${toggle}</div>${guide}</section>`;
+      const clearable = CLEARABLE_BROWSERS.has(browser.package);
+      const clearing = clearBusy && clearPackage === browser.package;
+      const clearError = clearErrors.get(browser.package);
+      const clearBtn = clearable
+        ? `<button type="button" class="btn small" data-clear="${escapeHtml(browser.package)}" ${clearBusy ? "disabled" : ""}>${clearing ? "Cancellazione in corso…" : "Elimina dati di navigazione"}</button>`
+        : "";
+      const clearNote = clearError
+        ? `<p class="browser-clear-error">${escapeHtml(clearError)}</p>`
+        : "";
+      return `<section class="browser-section"><h3>${escapeHtml(appLabel(browser.package))}${blocked}</h3>${sites}<div class="browser-actions"><button type="button" class="btn small" data-open="${escapeHtml(browser.package)}" ${clearBusy ? "disabled" : ""}>Apri notifiche sul telefono</button>${toggle}${clearBtn}</div>${clearNote}</section>`;
     })
     .join("");
   const list = browsers || `<p class="dialog-body muted">Nessun browser trovato</p>`;
@@ -1640,10 +1715,42 @@ async function shutdownAndClose() {
   await invoke("allow_app_close");
 }
 
+interface StartupDbPhase {
+  remote: boolean;
+  startup_pending: boolean;
+}
+
+async function verifyDatabaseOnStartup(): Promise<void> {
+  await setLoadingStep("Verifico locazione Database…", 700);
+  let phase: StartupDbPhase;
+  try {
+    phase = await invoke<StartupDbPhase>("startup_db_phase");
+  } catch {
+    return;
+  }
+  if (!phase.remote) return;
+
+  setLoading("Connessione al database in corso…");
+  const shownAt = Date.now();
+  while (phase.startup_pending) {
+    await delay(200);
+    try {
+      phase = await invoke<StartupDbPhase>("startup_db_phase");
+    } catch {
+      break;
+    }
+  }
+  const waited = Date.now() - shownAt;
+  if (waited < 600) await delay(600 - waited);
+}
+
 async function boot() {
   const ok = await runPhase1();
   if (!ok) return;
   await checkForAppUpdatesOnStartup();
+  await verifyDatabaseOnStartup();
+  await setLoadingStep("Sistema pronto", 400);
+  toast("Sistema pronto per la connessione", "success");
   await runPhase2();
 }
 
@@ -2112,9 +2219,11 @@ window.addEventListener("DOMContentLoaded", () => {
     const open = btn.getAttribute("data-open");
     const block = btn.getAttribute("data-block");
     const allow = btn.getAttribute("data-allow");
+    const clear = btn.getAttribute("data-clear");
     if (open) void openPhoneNotificationSettings(open);
     else if (block) void setBrowserNotifications(block, false);
     else if (allow) void setBrowserNotifications(allow, true);
+    else if (clear) void clearBrowsingData(clear);
   });
   $("#btn-optimize-cancel")?.addEventListener("click", closeOptimize);
   $("#btn-optimize-run")?.addEventListener("click", () => void runOptimize());

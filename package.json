@@ -1,7 +1,7 @@
 {
   "name": "android-adware-cleaner",
   "private": true,
-  "version": "0.16.18",
+  "version": "0.17.19",
   "type": "module",
   "scripts": {
     "dev": "vite",

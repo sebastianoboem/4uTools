@@ -1,4 +1,5 @@
 mod browsers;
+mod clear_browsing;
 mod commands;
 mod dev_log;
 mod optimizer;
@@ -60,11 +61,13 @@ pub fn run() {
             commands::bulk_uninstall,
             commands::restore_packages,
             commands::check_browsers,
+            commands::clear_browsing_data,
             commands::open_notification_settings,
             commands::open_default_apps,
             commands::set_browser_notifications,
             commands::set_package_marks,
             commands::get_sync_status,
+            commands::startup_db_phase,
             commands::get_sync_settings,
             commands::set_sync_provider,
             commands::set_sync_folder,

@@ -4,6 +4,13 @@ use std::collections::HashMap;
 
 const VIEW_HTTPS: &str = "cmd package resolve-activity --brief -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d https://example.com";
 const QUERY_HTTPS: &str = "cmd package query-activities -a android.intent.action.VIEW -c android.intent.category.BROWSABLE -d https://example.com";
+const CLEARABLE: &[&str] = &[
+    "com.android.chrome",
+    "com.chrome.beta",
+    "org.mozilla.firefox",
+    "com.sec.android.app.sbrowser",
+    "com.mi.globalbrowser",
+];
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BrowserCheck {
@@ -50,7 +57,7 @@ pub fn check(bridge: &AdbBridge) -> Result<BrowserCheck, String> {
             packages.push(package);
         }
     }
-    packages.sort();
+    packages = include_installed(packages, &installed_clearable(bridge));
 
     let channels = bridge
         .shell("dumpsys notification --noredact")
@@ -82,6 +89,33 @@ pub fn check(bridge: &AdbBridge) -> Result<BrowserCheck, String> {
         default_browser,
         browsers,
     })
+}
+
+fn installed_clearable(bridge: &AdbBridge) -> Vec<String> {
+    let script = CLEARABLE
+        .iter()
+        .map(|package| format!("pm path {package} >/dev/null 2>&1 && echo {package}"))
+        .collect::<Vec<_>>()
+        .join("; ");
+    bridge
+        .shell(&script)
+        .unwrap_or_default()
+        .lines()
+        .map(str::trim)
+        .filter(|line| CLEARABLE.contains(line))
+        .map(str::to_string)
+        .collect()
+}
+
+fn include_installed(mut packages: Vec<String>, present: &[String]) -> Vec<String> {
+    for package in CLEARABLE {
+        if present.iter().any(|name| name == package) && !packages.iter().any(|name| name == *package) {
+            packages.push((*package).to_string());
+        }
+    }
+    packages.sort();
+    packages.dedup();
+    packages
 }
 
 fn safe_package(package: &str) -> bool {
@@ -205,6 +239,24 @@ mod tests {
         NotificationChannel{mId='web:https://work.example;1', mImportance=3, mDeleted=false}\n\
       AppSettings: com.sec.android.app.sbrowser (10100) importance=NONE userSet=true\n\
         NotificationChannel{mId='web:https://samsung.example;2', mImportance=4, mDeleted=false}\n";
+
+    #[test]
+    fn installed_clearable_browsers_join_the_default() {
+        let present = [
+            "com.android.chrome".to_string(),
+            "org.mozilla.firefox".to_string(),
+            "com.mi.globalbrowser".to_string(),
+        ];
+        let packages = include_installed(vec!["com.android.chrome".to_string()], &present);
+        assert_eq!(
+            packages,
+            vec![
+                "com.android.chrome".to_string(),
+                "com.mi.globalbrowser".to_string(),
+                "org.mozilla.firefox".to_string(),
+            ]
+        );
+    }
 
     #[test]
     fn site_channels_skip_deleted_muted_other_user_and_non_sites() {

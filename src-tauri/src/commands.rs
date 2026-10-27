@@ -276,6 +276,39 @@ pub fn reconcile_quiet(state: &AppState) {
     let _ = reconcile_state_inner(state);
 }
 
+#[derive(Debug, Serialize)]
+pub struct StartupDbPhase {
+    pub remote: bool,
+    pub startup_pending: bool,
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub fn startup_db_phase(state: State<'_, AppState>) -> Result<StartupDbPhase, String> {
+    let config = state.config.lock().map_err(|e| e.to_string())?;
+    let provider = config.sync_provider.as_deref().unwrap_or("local");
+    let remote = match provider {
+        "local" => false,
+        "supabase" => {
+            config
+                .supabase_url
+                .as_ref()
+                .is_some_and(|s| !s.trim().is_empty())
+                && config
+                    .supabase_key
+                    .as_ref()
+                    .is_some_and(|s| !s.trim().is_empty())
+        }
+        _ => config
+            .sync_folder
+            .as_ref()
+            .is_some_and(|s| !s.trim().is_empty()),
+    };
+    Ok(StartupDbPhase {
+        remote,
+        startup_pending: !STARTUP_SYNC_DONE.load(Ordering::SeqCst),
+    })
+}
+
 fn reconcile_state(state: &AppState) -> Result<cloud_sync::SyncStatus, String> {
     reconcile_state_inner(state)
 }
@@ -671,6 +704,21 @@ pub async fn check_browsers(
     }
     .await;
     crate::dev_log::log_result("check_browsers", &result);
+    result
+}
+
+#[tauri::command(rename_all = "snake_case")]
+pub async fn clear_browsing_data(package: String, serial: Option<String>) -> Result<(), String> {
+    let result = async {
+        tauri::async_runtime::spawn_blocking(move || {
+            let bridge = open_bridge(serial)?;
+            crate::clear_browsing::clear(&bridge, &package)
+        })
+        .await
+        .map_err(|e| format!("pulizia browser interrotta: {e}"))?
+    }
+    .await;
+    crate::dev_log::log_result("clear_browsing_data", &result);
     result
 }
 

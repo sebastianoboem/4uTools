@@ -285,8 +285,17 @@ body { margin: 0; min-height: 100vh; overflow: hidden; }
   margin-top: 0.4rem;
 }
 
-.browser-guide {
+#dialog-browser .dialog-actions {
+  margin-top: 1.5rem;
+}
+
+.browser-clear-error {
   margin: 0.45rem 0 0;
+  color: #f87171;
+}
+
+#dialog-clear-confirm {
+  z-index: 10001;
 }
 
 .btn-sync-wrap {
