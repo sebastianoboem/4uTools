@@ -1,11 +1,11 @@
 use adb_bridge::AdbBridge;
 
 use crate::battery::{
-    capacity_health_percent, estimate_full_from_charge_counter, format_temperature,
-    is_plausible_full_capacity, merge_battery_sysfs, merged_health, parse_dumpsys_battery,
-    parse_sysfs_battery,
+    capacity_health_percent, format_temperature, is_plausible_full_capacity,
+    looks_like_design_capacity, merge_battery_sysfs, merged_health, parse_batterystats_capacities,
+    parse_dumpsys_battery, parse_sysfs_battery, refine_full_capacity,
 };
-use crate::battery_catalog::lookup_design_capacity;
+use crate::battery_catalog::lookup_design_capacity_with_hints;
 use crate::details::{
     build_battery_details, build_device_details, build_storage_details, build_verification_checks,
     DetailsInput,
@@ -82,6 +82,10 @@ const SHELL_COMMANDS: &[ShellCmd] = &[
     },
     ShellCmd {
         cmd: "service call iphonesubinfo 3 s16 com.android.shell 2>/dev/null",
+        optional: true,
+    },
+    ShellCmd {
+        cmd: "dumpsys batterystats 2>/dev/null | grep -E 'Estimated battery capacity|Last learned battery capacity|Min learned battery capacity|Max learned battery capacity|Capacity:.*, Rated:'",
         optional: true,
     },
 ];
@@ -168,11 +172,15 @@ pub fn load_device_summary(serial: &str) -> Result<DeviceSummary, String> {
         device_name.to_string()
     };
 
+    let batterystats = parse_batterystats_capacities(&results[16]);
+
     let is_charging = dumpsys.status == "Charging";
     let charge_cycles = if dumpsys.cycle_count > 0 {
         dumpsys.cycle_count
-    } else {
+    } else if sysfs.cycle_count > 0 {
         sysfs.cycle_count
+    } else {
+        0
     };
 
     let boot_state = get_prop(&props, "ro.boot.verifiedbootstate");
@@ -208,27 +216,46 @@ pub fn load_device_summary(serial: &str) -> Result<DeviceSummary, String> {
     };
     let mut design_from_catalog = false;
     if design_capacity == 0 {
-        if let Some(mah) = lookup_design_capacity(&brand, &model, &product) {
+        let hints = [device_name.as_str()];
+        if let Some(mah) =
+            lookup_design_capacity_with_hints(&brand, &model, &product, &hints)
+        {
             design_capacity = mah;
             design_from_catalog = true;
             dumpsys.design_capacity = mah;
+        } else if batterystats.learned_mah > 0 {
+            design_capacity = batterystats.learned_mah;
+            dumpsys.design_capacity = design_capacity;
         }
     }
     if !is_plausible_full_capacity(max_capacity, design_capacity, dumpsys.charge_counter_mah) {
         max_capacity = 0;
     }
-    if max_capacity == 0 {
-        if let Some(est) =
-            estimate_full_from_charge_counter(dumpsys.charge_counter_mah, dumpsys.level)
-        {
-            if is_plausible_full_capacity(est, design_capacity, dumpsys.charge_counter_mah) {
-                max_capacity = est;
-                dumpsys.full_charge_capacity = est;
-            }
-        }
+    // OnePlus/Oppo often report batterystats "Estimated" == nominal design, not worn full.
+    if max_capacity == 0
+        && batterystats.estimated_mah > 0
+        && !looks_like_design_capacity(batterystats.estimated_mah, design_capacity)
+        && is_plausible_full_capacity(
+            batterystats.estimated_mah,
+            design_capacity,
+            dumpsys.charge_counter_mah,
+        )
+    {
+        max_capacity = batterystats.estimated_mah;
+    }
+    max_capacity = refine_full_capacity(
+        max_capacity,
+        design_capacity,
+        dumpsys.charge_counter_mah,
+        dumpsys.level,
+    );
+    if max_capacity > 0 {
+        dumpsys.full_charge_capacity = max_capacity;
     }
     let health = if max_capacity > 0 && design_capacity > 0 {
         capacity_health_percent(max_capacity, design_capacity)
+    } else if dumpsys.health > 0 {
+        dumpsys.health
     } else {
         merged_health(&dumpsys, &sysfs)
     };

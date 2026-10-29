@@ -361,12 +361,37 @@ function animateDonutArc(container: HTMLElement) {
   });
 }
 
+/** Exclusive used categories + free (no double-counting audio/downloads). */
+function storageBarSegments(b: StorageBreakdown): { label: string; color: string; val: number }[] {
+  const used = Math.max(0, b.total - b.free);
+  const apps = b.apps; // backend already folds downloads into apps
+  const photos = b.photos;
+  const av = b.audio + b.videos;
+  const other = Math.max(0, b.other - b.audio); // b.other includes audio
+  const accounted = apps + photos + av + other;
+  const system = Math.max(0, used - accounted);
+  const usedSegs = [
+    { label: "Apps", color: "#ef4444", val: apps },
+    { label: "Photos", color: "#eab308", val: photos },
+    { label: "Audio & Video", color: "#3b82f6", val: av },
+    { label: "System", color: "#9ca3af", val: system },
+    { label: "Other", color: "#a855f7", val: other },
+  ].filter((s) => s.val > 0);
+
+  // Keep used portion ≤ used; leave remainder of the bar for free.
+  const usedSum = usedSegs.reduce((n, s) => n + s.val, 0);
+  const scale = usedSum > used && usedSum > 0 ? used / usedSum : 1;
+  const scaled = usedSegs.map((s) => ({ ...s, val: s.val * scale }));
+  if (b.free > 0) {
+    scaled.push({ label: "Free", color: "#e5e7eb", val: b.free });
+  }
+  return scaled;
+}
+
 function renderStorageLegendMini(b: StorageBreakdown) {
-  const items: [string, string, number][] = [
-    ["Apps", "#ef4444", b.apps],
-    ["Photos", "#eab308", b.photos],
-    ["System", "#9ca3af", b.system],
-  ];
+  const items = storageBarSegments(b).map(
+    (s) => [s.label, s.color, s.val] as [string, string, number],
+  );
   return items
     .filter(([, , val]) => val > 0)
     .map(
@@ -421,17 +446,10 @@ function modalSegAnimation(delayMs: number, durationMs: number) {
 
 function renderStorageBar(b: StorageBreakdown, sequential = false) {
   if (!b.total) return "";
-  const segments = [
-    { label: "Apps", color: "#ef4444", val: b.apps },
-    { label: "Photos", color: "#eab308", val: b.photos },
-    { label: "Audio & Video", color: "#3b82f6", val: b.audio + b.videos },
-    { label: "System", color: "#9ca3af", val: b.system },
-    { label: "Other & Downloads", color: "#a855f7", val: b.other + b.downloads },
-  ];
+  const segments = storageBarSegments(b);
   let left = 0;
   let delayMs = 0;
   return segments
-    .filter((s) => s.val > 0)
     .map((s) => {
       const width = (s.val / b.total) * 100;
       const durationMs = width * MODAL_MS_PER_PERCENT;
@@ -448,14 +466,9 @@ function renderStorageBar(b: StorageBreakdown, sequential = false) {
 }
 
 function renderStorageLegend(b: StorageBreakdown) {
-  const items: [string, string, number][] = [
-    ["System", "#9ca3af", b.system],
-    ["Apps", "#ef4444", b.apps],
-    ["Photos", "#eab308", b.photos],
-    ["Audio & Video", "#3b82f6", b.audio + b.videos],
-    ["Downloads", "#8b5cf6", b.downloads],
-    ["Other", "#a855f7", b.other],
-  ];
+  const items = storageBarSegments(b).map(
+    (s) => [s.label, s.color, s.val] as [string, string, number],
+  );
   return `<div class="storage-legend">${items
     .filter(([, , v]) => v > 0)
     .map(

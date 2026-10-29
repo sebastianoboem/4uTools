@@ -67,19 +67,31 @@ pub fn parse_dumpsys_battery(output: &str) -> BatteryPartial {
         estimate_watts(voltage_v, current_ua)
     };
 
+    // Samsung exposes cumulative discharge units (~1 unit = 1% of one full cycle).
+    let samsung_cycles = parse_bracketed_u32(output, "mSavedBatteryUsage").map(|u| u / 100);
+    let samsung_asoc = parse_bracketed_u32(output, "mSavedBatteryAsoc")
+        .or_else(|| parse_plain_u32(output, "mSavedBatteryBsoh"));
+
     BatteryPartial {
         level: if scale > 0 {
             ((level as f64 / scale as f64) * 100.0).round() as u32
         } else {
             level
         },
-        health: capacity_health_percent(full_charge_capacity, design_capacity),
+        health: {
+            let from_cap = capacity_health_percent(full_charge_capacity, design_capacity);
+            if from_cap > 0 {
+                from_cap
+            } else {
+                samsung_asoc.unwrap_or(0)
+            }
+        },
         health_code,
         status: status_label(status_code),
         charging_watts,
         design_capacity,
         full_charge_capacity,
-        cycle_count: 0,
+        cycle_count: samsung_cycles.unwrap_or(0),
         temperature_tenths_c,
         technology,
         charge_counter_mah,
@@ -90,6 +102,48 @@ pub fn parse_dumpsys_battery(output: &str) -> BatteryPartial {
         manufacturer: None,
         serial_number: None,
     }
+}
+
+/// Capacities from `dumpsys batterystats` (often available without root).
+#[derive(Debug, Default, Clone, Copy)]
+pub struct BatterystatsCapacities {
+    pub estimated_mah: u32,
+    pub learned_mah: u32,
+}
+
+pub fn parse_batterystats_capacities(output: &str) -> BatterystatsCapacities {
+    let mut out = BatterystatsCapacities::default();
+    let re_est = regex::Regex::new(r"(?i)Estimated battery capacity:\s*(\d+)").ok();
+    let re_learned = regex::Regex::new(r"(?i)Last learned battery capacity:\s*(\d+)").ok();
+    let re_typical = regex::Regex::new(r"(?i)Typical:\s*(\d+)").ok();
+    if let Some(re) = &re_est {
+        if let Some(c) = re.captures(output) {
+            out.estimated_mah = c[1].parse().unwrap_or(0);
+        }
+    }
+    if let Some(re) = &re_learned {
+        if let Some(c) = re.captures(output) {
+            out.learned_mah = c[1].parse().unwrap_or(0);
+        }
+    }
+    if out.learned_mah == 0 {
+        if let Some(re) = &re_typical {
+            if let Some(c) = re.captures(output) {
+                out.learned_mah = c[1].parse().unwrap_or(0);
+            }
+        }
+    }
+    out
+}
+
+fn parse_bracketed_u32(output: &str, key: &str) -> Option<u32> {
+    let re = regex::Regex::new(&format!(r"(?m)^\s*{key}:\s*\[?(\d+)\]?\s*$")).ok()?;
+    re.captures(output)?.get(1)?.as_str().parse().ok()
+}
+
+fn parse_plain_u32(output: &str, key: &str) -> Option<u32> {
+    let re = regex::Regex::new(&format!(r"(?m)^\s*{key}:\s*(\d+)\s*$")).ok()?;
+    re.captures(output)?.get(1)?.as_str().parse().ok()
 }
 
 pub fn parse_sysfs_battery(output: &str) -> BatteryPartial {
@@ -203,6 +257,41 @@ pub fn estimate_full_from_charge_counter(charge_counter_mah: u32, level_percent:
     Some(est)
 }
 
+/// True when a "full" reading is basically the design value (OEM nominal), not wear.
+pub fn looks_like_design_capacity(full_mah: u32, design_mah: u32) -> bool {
+    design_mah > 0 && full_mah + 50 >= design_mah
+}
+
+/// Prefer charge-counter estimate when a claimed full capacity looks too optimistic.
+pub fn refine_full_capacity(
+    claimed_full: u32,
+    design_mah: u32,
+    charge_counter_mah: u32,
+    level_percent: u32,
+) -> u32 {
+    let Some(est) = estimate_full_from_charge_counter(charge_counter_mah, level_percent) else {
+        return claimed_full;
+    };
+    if !is_plausible_full_capacity(est, design_mah, charge_counter_mah) {
+        return claimed_full;
+    }
+    // High SOC: charge counter ≈ present full capacity.
+    if level_percent >= 85 && claimed_full > 0 && est + 100 < claimed_full {
+        return est;
+    }
+    // Claimed full equals design, but counter shows wear.
+    if looks_like_design_capacity(claimed_full, design_mah)
+        && est + 100 < design_mah
+        && level_percent >= 50
+    {
+        return est;
+    }
+    if claimed_full == 0 {
+        return est;
+    }
+    claimed_full
+}
+
 fn capacity_level_label(level: u32) -> String {
     match level {
         1 => "Critical".to_string(),
@@ -277,5 +366,44 @@ mod tests {
     fn estimates_full_from_charge_counter() {
         assert_eq!(estimate_full_from_charge_counter(1948, 48), Some(4058));
         assert_eq!(estimate_full_from_charge_counter(1948, 0), None);
+    }
+
+    #[test]
+    fn refines_oneplus_estimated_design_disguised_as_full() {
+        // Estimated 4510 == design; charge counter at 100% shows real full ~3703.
+        let refined = refine_full_capacity(4510, 4510, 3703, 100);
+        assert_eq!(refined, 3703);
+        assert_eq!(capacity_health_percent(refined, 4510), 82);
+    }
+
+    #[test]
+    fn parses_samsung_usage_cycles_and_asoc() {
+        let out = r#"
+  level: 91
+  scale: 100
+  status: 2
+  health: 2
+  Charge counter: 3080000
+  technology: Li-ion
+  mSavedBatteryAsoc: [86]
+  mSavedBatteryUsage: [127096]
+  mSavedBatteryBsoh: 90
+"#;
+        let b = parse_dumpsys_battery(out);
+        assert_eq!(b.cycle_count, 1270);
+        assert_eq!(b.health, 86);
+        assert_eq!(b.charge_counter_mah, 3080);
+    }
+
+    #[test]
+    fn parses_batterystats_learned_capacity() {
+        let out = r#"
+  Estimated battery capacity: 3373 mAh
+  Last learned battery capacity: 3700 mAh
+  Min learned battery capacity: 3700 mAh
+"#;
+        let c = parse_batterystats_capacities(out);
+        assert_eq!(c.estimated_mah, 3373);
+        assert_eq!(c.learned_mah, 3700);
     }
 }

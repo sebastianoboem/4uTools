@@ -80,7 +80,18 @@ impl BatteryCatalog {
 
     /// Lookup design capacity (mAh) by device brand / model / product.
     pub fn lookup(&self, brand: &str, model: &str, product: &str) -> Option<u32> {
-        let candidates = device_keys(brand, model, product);
+        self.lookup_with_hints(brand, model, product, &[])
+    }
+
+    /// Same as [`lookup`], plus free-form marketing hints (device name, aliases).
+    pub fn lookup_with_hints(
+        &self,
+        brand: &str,
+        model: &str,
+        product: &str,
+        hints: &[&str],
+    ) -> Option<u32> {
+        let candidates = device_keys(brand, model, product, hints);
         for key in &candidates {
             if let Some(&mah) = self.index.get(key) {
                 return Some(mah);
@@ -107,10 +118,19 @@ pub fn load_battery_catalog_path(path: &Path) -> Result<(), String> {
 }
 
 pub fn lookup_design_capacity(brand: &str, model: &str, product: &str) -> Option<u32> {
+    lookup_design_capacity_with_hints(brand, model, product, &[])
+}
+
+pub fn lookup_design_capacity_with_hints(
+    brand: &str,
+    model: &str,
+    product: &str,
+    hints: &[&str],
+) -> Option<u32> {
     catalog_lock()
         .read()
         .ok()
-        .and_then(|c| c.lookup(brand, model, product))
+        .and_then(|c| c.lookup_with_hints(brand, model, product, hints))
 }
 
 pub fn battery_catalog_stats() -> (usize, String) {
@@ -156,7 +176,7 @@ fn entry_keys(e: &BatteryCatalogEntry) -> Vec<String> {
     keys
 }
 
-fn device_keys(brand: &str, model: &str, product: &str) -> Vec<String> {
+fn device_keys(brand: &str, model: &str, product: &str, hints: &[&str]) -> Vec<String> {
     let mut keys = Vec::new();
     let b = normalize_key(brand);
     let m = normalize_key(model);
@@ -170,6 +190,35 @@ fn device_keys(brand: &str, model: &str, product: &str) -> Vec<String> {
     }
     for variant in product_key_variants(&p) {
         keys.push(variant);
+    }
+    for hint in hints {
+        let h = normalize_key(hint);
+        if h.len() >= 3 {
+            keys.push(h.clone());
+            if !b.is_empty() {
+                keys.push(format!("{b}{h}"));
+            }
+            // "Galaxy S22" / "S22" style marketing names
+            if let Some(rest) = h.strip_prefix("galaxy") {
+                if rest.len() >= 2 {
+                    keys.push(format!("galaxy{rest}"));
+                    keys.push(rest.to_string());
+                    if !b.is_empty() {
+                        keys.push(format!("{b}galaxy{rest}"));
+                    }
+                }
+            }
+        }
+    }
+    if let Some(alias) = samsung_model_alias(model) {
+        let a = normalize_key(alias);
+        keys.push(a.clone());
+        keys.push(format!("samsung{a}"));
+        if let Some(rest) = a.strip_prefix("galaxy") {
+            if rest.len() >= 2 {
+                keys.push(rest.to_string());
+            }
+        }
     }
     // Strip common brand prefixes duplicated in model ("POCO F4 GT" with brand Xiaomi/POCO)
     for prefix in [
@@ -191,6 +240,41 @@ fn device_keys(brand: &str, model: &str, product: &str) -> Vec<String> {
         }
     }
     keys
+}
+
+/// Map common Samsung model codes (SM-S901B, …) to Galeazzi marketing names.
+fn samsung_model_alias(model: &str) -> Option<&'static str> {
+    let compact = model
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .flat_map(|c| c.to_uppercase())
+        .collect::<String>();
+    // Longest prefixes first so Ultra/Plus win over base.
+    const MAP: &[(&str, &str)] = &[
+        ("SMS908", "Galaxy S22 Ultra"),
+        ("SMS906", "Galaxy S22+"),
+        ("SMS901", "Galaxy S22"),
+        ("SMS918", "Galaxy S23 Ultra"),
+        ("SMS916", "Galaxy S23+"),
+        ("SMS911", "Galaxy S23"),
+        ("SMS928", "Galaxy S24 Ultra"),
+        ("SMS926", "Galaxy S24+"),
+        ("SMS921", "Galaxy S24"),
+        ("SMS938", "Galaxy S25 Ultra"),
+        ("SMS937", "Galaxy S25+"),
+        ("SMS931", "Galaxy S25"),
+        ("SMF946", "Galaxy Z Fold5"),
+        ("SMF731", "Galaxy Z Flip5"),
+        ("SMA556", "Galaxy A55"),
+        ("SMA546", "Galaxy A54"),
+        ("SMA536", "Galaxy A53"),
+    ];
+    for (prefix, name) in MAP {
+        if compact.starts_with(prefix) {
+            return Some(name);
+        }
+    }
+    None
 }
 
 /// Product names often include sales-region suffixes (`OnePlus8Pro_EEA` → `oneplus8proeea`).
@@ -256,8 +340,29 @@ mod tests {
     #[test]
     fn finds_samsung_s24_not_ultra() {
         let c = sample_catalog();
-        assert_eq!(c.lookup("samsung", "SM-S921B", "e1s"), None);
+        assert_eq!(c.lookup("samsung", "SM-S921B", "e1s"), Some(4000));
         assert_eq!(c.lookup("samsung", "Galaxy S24", "e1s"), Some(4000));
+        assert_eq!(c.lookup("samsung", "SM-S928B", "e3q"), None); // Ultra not in sample
+    }
+
+    #[test]
+    fn finds_samsung_s22_from_model_code_and_device_name() {
+        let c = BatteryCatalog::from_file(BatteryCatalogFile {
+            version: 1,
+            updated_at: "test".into(),
+            source: "test".into(),
+            entries: vec![BatteryCatalogEntry {
+                slug: "samsung-galaxy-s22".into(),
+                marca: "Samsung".into(),
+                nome: "Galaxy S22".into(),
+                batteria_mah: 3700,
+            }],
+        });
+        assert_eq!(c.lookup("samsung", "SM-S901B", "r0sxeea"), Some(3700));
+        assert_eq!(
+            c.lookup_with_hints("samsung", "SM-S901B", "r0sxeea", &["S22 di Paolo"]),
+            Some(3700)
+        );
     }
 
     #[test]
