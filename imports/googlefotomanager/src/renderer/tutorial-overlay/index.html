@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tutorial</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="tutorial-spotlight" class="tutorial-spotlight hidden"></div>
+    <div id="tutorial-card" class="tutorial-card">
+      <p id="tutorial-step" class="tutorial-step"></p>
+      <p id="tutorial-text" class="tutorial-text"></p>
+      <label class="tutorial-dismiss">
+        <input type="checkbox" id="tutorial-dismiss" />
+        Non mostrare più al prossimo avvio
+      </label>
+      <div class="tutorial-actions">
+        <button id="tutorial-skip" type="button" class="secondary">Salta tutorial</button>
+        <button id="tutorial-next" type="button">Inizia</button>
+      </div>
+    </div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

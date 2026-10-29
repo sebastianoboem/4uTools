@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pannello — Google Foto Manager</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Google Foto Manager</h1>
+      <p class="app-version" id="app-version" aria-label="Versione applicazione"></p>
+    </header>
+
+    <section class="panel-section" id="access-section">
+      <h2>Accesso</h2>
+      <button id="btn-chrome-login" type="button" class="secondary">Accedi con Chrome</button>
+    </section>
+
+    <section class="panel-section" id="session-section">
+      <h2>Gestione delle sessioni</h2>
+      <div class="profile-controls">
+        <label class="profile-label">
+          Sessione
+          <select id="profile-select">
+            <option value="">Temporanea (non salvata)</option>
+          </select>
+        </label>
+        <div class="profile-actions">
+          <button id="btn-save-profile" type="button" class="secondary compact">Salva sessione</button>
+          <button id="btn-remove-profile" type="button" class="secondary compact hidden">Elimina sessione</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="actions actions-idle" id="actions-section">
+      <div class="run-controls">
+        <button id="btn-start" type="button">▶ Avvia</button>
+        <button id="btn-delete" type="button" class="btn-delete">Elimina</button>
+        <button id="btn-pause" type="button" class="hidden">⏸ Pausa</button>
+      </div>
+      <label class="checkbox-label download-option" title="Con Avvia: scarica al termine della selezione. Con Elimina: scarica e poi sposta nel cestino.">
+        <input type="checkbox" id="chk-download" name="downloadAfterSelection" />
+        Scarica
+      </label>
+    </section>
+
+    <section class="panel-section" id="zoom-section">
+      <h2>Zoom</h2>
+      <div class="zoom-controls">
+        <div class="zoom-buttons">
+          <button id="btn-zoom-out" type="button" class="zoom-btn" aria-label="Riduci zoom">−</button>
+          <span id="zoom-level" class="zoom-level">50%</span>
+          <button id="btn-zoom-in" type="button" class="zoom-btn" aria-label="Aumenta zoom">+</button>
+          <span class="zoom-divider" aria-hidden="true"></span>
+          <button id="btn-zoom-reset" type="button" class="zoom-btn" aria-label="Reimposta zoom" title="50%">⤢</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-section hidden" id="log-section">
+      <h2>Log</h2>
+      <button id="btn-log" type="button">Log ⧉</button>
+    </section>
+
+    <section class="status" id="status-section">
+      <h2>Stato</h2>
+      <div class="status-row"><span>Stato</span><strong id="status-state">Inattivo</strong></div>
+      <div class="status-row"><span>Selezionate</span><strong id="status-count">0</strong></div>
+      <div class="progress-block">
+        <div class="status-row progress-label-row">
+          <span>Avanzamento</span>
+          <strong id="status-pct-label">0%</strong>
+        </div>
+        <progress id="status-progress" max="100" value="0" aria-label="Avanzamento selezione"></progress>
+      </div>
+      <div class="status-row"><span>Tempo</span><strong id="status-time">0:00</strong></div>
+      <div class="alert error hidden" id="error-alert"></div>
+      <button id="btn-rediagnose" type="button" class="hidden secondary">Ridiagnostica</button>
+    </section>
+
+    <section class="params" id="params-section">
+      <h2>Parametri</h2>
+      <form id="params-form">
+        <fieldset>
+          <legend>Base</legend>
+          <label class="param-slider">
+            <span class="param-header">
+              <span class="param-name">Pausa tra click (ms)</span>
+              <output id="clickDelay-value" for="clickDelay">80</output>
+            </span>
+            <input type="range" id="clickDelay" name="clickDelay" />
+          </label>
+          <label class="param-slider">
+            <span class="param-header">
+              <span class="param-name">Passo scroll (% altezza)</span>
+              <output id="scrollFraction-value" for="scrollFraction">70</output>
+            </span>
+            <input type="range" id="scrollFraction" name="scrollFraction" />
+          </label>
+          <label class="param-slider">
+            <span class="param-header">
+              <span class="param-name">Attesa dopo scroll (ms)</span>
+              <output id="settleDelay-value" for="settleDelay">1200</output>
+            </span>
+            <input type="range" id="settleDelay" name="settleDelay" />
+          </label>
+        </fieldset>
+
+        <details id="advanced-details">
+          <summary>Avanzate</summary>
+          <label class="param-slider">
+            <span class="param-header">
+              <span class="param-name">Riselezioni per passo</span>
+              <output id="passesPerStep-value" for="passesPerStep">2</output>
+            </span>
+            <input type="range" id="passesPerStep" name="passesPerStep" />
+          </label>
+          <label class="param-slider">
+            <span class="param-header">
+              <span class="param-name">Iterazioni ferme</span>
+              <output id="stallPasses-value" for="stallPasses">6</output>
+            </span>
+            <input type="range" id="stallPasses" name="stallPasses" />
+          </label>
+          <label>
+            Prefisso etichetta da saltare
+            <input type="text" name="skipLabelPrefix" />
+          </label>
+          <label class="param-slider">
+            <span class="param-header">
+              <span class="param-name">Limite selezioni (0 = nessuno)</span>
+              <output id="maxSelections-value" for="maxSelections">0</output>
+            </span>
+            <input type="range" id="maxSelections" name="maxSelections" />
+          </label>
+        </details>
+
+        <button type="button" id="btn-reset" class="secondary">Ripristina predefiniti</button>
+      </form>
+    </section>
+
+    <script type="module" src="./main.ts"></script>
+
+    <dialog id="save-profile-dialog">
+      <form id="save-profile-form" method="dialog">
+        <h2>Salva sessione</h2>
+        <label>
+          Nome sessione
+          <input id="save-profile-name" type="text" required placeholder="Es. Cliente Rossi" />
+        </label>
+        <div class="dialog-actions">
+          <button type="submit" value="save">Salva</button>
+          <button type="button" id="save-profile-cancel">Annulla</button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

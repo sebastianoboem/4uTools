@@ -1,0 +1,40 @@
+appId: com.googlefoto.manager
+productName: Google Foto Manager
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+publish:
+  provider: github
+  owner: sebastianoboem
+  repo: GoogleFotoManager
+afterPack: scripts/after-pack.cjs
+afterAllArtifactBuild: scripts/rename-artifacts.cjs
+mac:
+  category: public.app-category.photography
+  target:
+    - target: dmg
+      arch:
+        - arm64
+        - x64
+    - target: zip
+      arch:
+        - arm64
+        - x64
+  artifactName: ${productName}-${version}-${arch}.${ext}
+dmg:
+  writeUpdateInfo: false
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: ${productName}-${version}.${ext}
+nsis:
+  differentialPackage: false
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  guid: 2f8e4a1b-9c3d-4e5f-a6b7-cd8e9f0a1b2c
+  include: build/installer.nsh
