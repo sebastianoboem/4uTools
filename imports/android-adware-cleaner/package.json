@@ -1,0 +1,28 @@
+{
+  "name": "android-adware-cleaner",
+  "private": true,
+  "version": "0.17.19",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "bump-version": "node scripts/bump-version.mjs",
+    "release:manifest": "node scripts/generate-latest-json.mjs",
+    "build:scan-helper": "node scripts/build-scan-helper.mjs",
+    "test:unit": "node --test scripts/test-google-apps.mjs"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-dialog": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "@tauri-apps/plugin-process": "^2.3.1",
+    "@tauri-apps/plugin-updater": "^2.10.1"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.3"
+  }
+}

@@ -1,0 +1,47 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Rust
+target/
+rust_out
+
+# Bundled adb (download via scripts/download-platform-tools.sh)
+resources/platform-tools/
+
+# Supabase URL e chiave pubblica (letta in compilazione da crates/cloud-sync/build.rs)
+.env
+
+# Tauri updater signing (never commit private key)
+src-tauri/.tauri-signing.key
+
+# Screenshot grezzi (versione pubblicata in docs/screenshots/)
+.screenshots/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/
+
+# Local updater staging / release artifacts (not committed)
+release/
+latest.json
