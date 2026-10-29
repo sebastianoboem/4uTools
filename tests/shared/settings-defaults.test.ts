@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_SELECTION_PARAMS, isDefaultInRange, PARAM_RANGES } from '../../src/shared/settings-defaults'
+import {
+  clampParams,
+  DEFAULT_SELECTION_PARAMS,
+  isDefaultInRange,
+  PARAM_RANGES
+} from '../../src/shared/settings-defaults'
 
 describe('settings defaults', () => {
   it('defaults are within defined ranges', () => {
@@ -18,5 +23,11 @@ describe('settings defaults', () => {
     expect(p.passesPerStep).toBeLessThanOrEqual(PARAM_RANGES.passesPerStep.max)
     expect(p.stallPasses).toBeGreaterThanOrEqual(PARAM_RANGES.stallPasses.min)
     expect(p.stallPasses).toBeLessThanOrEqual(PARAM_RANGES.stallPasses.max)
+  })
+
+  it('maps a saved scroll step above 80 back to the default', () => {
+    expect(clampParams({ ...DEFAULT_SELECTION_PARAMS, scrollFraction: 150 }).scrollFraction).toBe(70)
+    expect(clampParams({ ...DEFAULT_SELECTION_PARAMS, scrollFraction: 80 }).scrollFraction).toBe(80)
+    expect(clampParams({ ...DEFAULT_SELECTION_PARAMS, scrollFraction: 40 }).scrollFraction).toBe(40)
   })
 })

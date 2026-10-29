@@ -6,7 +6,7 @@ import type {
   ProgressEvent,
   SelectionParams
 } from '../shared/types'
-import { DEFAULT_SELECTION_PARAMS } from '../shared/settings-defaults'
+import { DEFAULT_SELECTION_PARAMS, PARAM_RANGES } from '../shared/settings-defaults'
 import {
   detectLoginBlock,
   findClearSelectionButton,
@@ -49,6 +49,8 @@ export class SelectionEngine {
   private callbacks: EngineCallbacks = {}
   private shouldDownload = false
   private shouldDelete = false
+  private failedChecks = new Set<HTMLElement>()
+  private failedLabel = new WeakMap<HTMLElement, string>()
 
   setCallbacks(callbacks: EngineCallbacks): void {
     this.callbacks = callbacks
@@ -98,6 +100,8 @@ export class SelectionEngine {
 
   private async runSelection(): Promise<void> {
     this.totalSelected = 0
+    this.failedChecks = new Set()
+    this.failedLabel = new WeakMap()
     this.estPct = 0
     this.startedAt = Date.now()
     this.accumulatedPauseMs = 0
@@ -168,6 +172,11 @@ export class SelectionEngine {
       if (this.shouldDownload && !downloadOk) {
         this.emitLog('avviso', 'Eliminazione saltata perché il download non è riuscito')
       } else {
+        if (leftovers > 0) {
+          const warning = `${leftovers} checkbox non selezionate. Elimino comunque le altre.`
+          this.emitLog('avviso', warning)
+          this.emitProgress(warning)
+        }
         await this.triggerDelete()
       }
     }
@@ -274,6 +283,8 @@ export class SelectionEngine {
   private resetRunState(): void {
     this.stopProgressTicker()
     this.totalSelected = 0
+    this.failedChecks = new Set()
+    this.failedLabel = new WeakMap()
     this.estPct = 0
     this.startedAt = 0
     this.accumulatedPauseMs = 0
@@ -334,16 +345,9 @@ export class SelectionEngine {
 
       if (this.controlState === 'stopped') break
 
-      const step = scrollEl.clientHeight * (this.params.scrollFraction / 100)
-      if (typeof scrollEl.scrollBy === 'function') {
-        scrollEl.scrollBy({ top: step, behavior: 'auto' })
-      } else {
-        scrollEl.scrollTop = Math.min(
-          scrollEl.scrollTop + step,
-          scrollEl.scrollHeight - scrollEl.clientHeight
-        )
-      }
-      await delay(this.params.settleDelay)
+      const beforePreviews = this.snapshotPreviews(mainEl)
+      this.scrollByStep(scrollEl, mainEl)
+      await this.waitForPreviews(mainEl, beforePreviews)
 
       for (let pass = 0; pass < this.params.passesPerStep; pass++) {
         await this.selectVisible(mainEl)
@@ -479,11 +483,19 @@ export class SelectionEngine {
 
       const label = cb.getAttribute('aria-label') || ''
       const alreadyChecked = cb.getAttribute('aria-checked') === 'true'
+      if (this.failedChecks.has(cb) && this.failedLabel.get(cb) !== label) {
+        this.failedChecks.delete(cb)
+      }
 
-      if (!alreadyChecked && !isSkipLabel(label, this.params.skipLabelPrefix)) {
-        cb.click()
-        newSelected++
-        this.totalSelected++
+      if (
+        !alreadyChecked &&
+        !isSkipLabel(label, this.params.skipLabelPrefix) &&
+        !this.failedChecks.has(cb)
+      ) {
+        if (await this.clickCheckbox(cb)) {
+          newSelected++
+          this.totalSelected++
+        }
         await delay(this.params.clickDelay)
       }
     }
@@ -496,20 +508,65 @@ export class SelectionEngine {
     return newSelected
   }
 
+  private async clickCheckbox(cb: HTMLElement): Promise<boolean> {
+    const label = cb.getAttribute('aria-label') || ''
+    cb.click()
+    if (await this.selectionLanded(cb, label)) return true
+    if (this.tileChanged(cb, label)) return false
+    this.retryClick(cb)
+    if (await this.selectionLanded(cb, label)) return true
+    if (!this.tileChanged(cb, label)) {
+      this.failedChecks.add(cb)
+      this.failedLabel.set(cb, label)
+    }
+    return false
+  }
+
+  private tileChanged(cb: HTMLElement, label: string): boolean {
+    return (cb.getAttribute('aria-label') || '') !== label
+  }
+
+  /** Google Foto updates aria-checked after the click handler. A second click in the same turn undoes the first. */
+  private async selectionLanded(cb: HTMLElement, label: string): Promise<boolean> {
+    if (cb.getAttribute('aria-checked') === 'true') {
+      this.failedChecks.delete(cb)
+      return true
+    }
+    await delay(Math.max(this.params.clickDelay, 16))
+    if (this.tileChanged(cb, label)) return false
+    if (cb.getAttribute('aria-checked') !== 'true') return false
+    this.failedChecks.delete(cb)
+    return true
+  }
+
+  private retryClick(cb: HTMLElement): void {
+    const view = cb.ownerDocument.defaultView
+    if (view && typeof view.PointerEvent === 'function') {
+      cb.dispatchEvent(new view.PointerEvent('pointerdown', { bubbles: true }))
+      cb.dispatchEvent(new view.PointerEvent('pointerup', { bubbles: true }))
+    }
+    cb.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  }
+
   private async verifyLeftovers(mainEl: HTMLElement): Promise<number> {
-    let leftovers = 0
-    const checkboxes = mainEl.querySelectorAll<HTMLElement>('div[role="checkbox"]')
-    for (const cb of checkboxes) {
+    const unchecked = (cb: HTMLElement): boolean => {
       const label = cb.getAttribute('aria-label') || ''
-      if (
-        cb.getAttribute('aria-checked') !== 'true' &&
-        !isSkipLabel(label, this.params.skipLabelPrefix)
-      ) {
-        leftovers++
-      }
+      return cb.getAttribute('aria-checked') !== 'true' && !isSkipLabel(label, this.params.skipLabelPrefix)
+    }
+
+    const failed = [...this.failedChecks].filter((cb) => {
+      if (!unchecked(cb)) return false
+      const remembered = this.failedLabel.get(cb)
+      if (remembered === undefined) return true
+      return remembered === (cb.getAttribute('aria-label') || '')
+    })
+    let leftovers = failed.length
+    const failedSet = new Set(failed)
+    for (const cb of mainEl.querySelectorAll<HTMLElement>('div[role="checkbox"]')) {
+      if (unchecked(cb) && !failedSet.has(cb)) leftovers++
     }
     if (leftovers > 0) {
-      this.emitLog('avviso', `${leftovers} checkbox non selezionate nel viewport finale`)
+      this.emitLog('avviso', `${leftovers} checkbox non selezionate`)
     }
     return leftovers
   }
@@ -530,12 +587,115 @@ export class SelectionEngine {
     }
   }
 
-  private emitProgress(): void {
+  private scrollByStep(scrollEl: HTMLElement, mainEl: HTMLElement): void {
+    const step = this.scrollStep(scrollEl, mainEl)
+    if (typeof scrollEl.scrollBy === 'function') {
+      scrollEl.scrollBy({ top: step, behavior: 'auto' })
+    } else {
+      scrollEl.scrollTop = Math.min(
+        scrollEl.scrollTop + step,
+        scrollEl.scrollHeight - scrollEl.clientHeight
+      )
+    }
+  }
+
+  private scrollStep(scrollEl: HTMLElement, mainEl: HTMLElement): number {
+    const fraction =
+      this.params.scrollFraction > PARAM_RANGES.scrollFraction.max
+        ? DEFAULT_SELECTION_PARAMS.scrollFraction
+        : this.params.scrollFraction
+    const safe = this.safeScrollDistance(scrollEl, mainEl)
+    if (safe > 0) return Math.max(1, (safe * fraction) / 100)
+    const client = scrollEl.clientHeight
+    if (client <= 0) return 0
+    return (client * fraction) / 100
+  }
+
+  /** Largest scroll that keeps the lowest mounted checkbox inside the viewport. */
+  private safeScrollDistance(scrollEl: HTMLElement, mainEl: HTMLElement): number {
+    const viewTop = scrollEl.getBoundingClientRect().top
+    const margin = 24
+    let lowestBottom = Number.NEGATIVE_INFINITY
+    for (const box of mainEl.querySelectorAll<HTMLElement>('div[role="checkbox"]')) {
+      const rect = box.getBoundingClientRect()
+      if (rect.width <= 0 || rect.height <= 0) continue
+      lowestBottom = Math.max(lowestBottom, rect.bottom)
+    }
+    if (!Number.isFinite(lowestBottom)) return 0
+    const distance = lowestBottom - viewTop - margin
+    return distance > 1 ? distance : 0
+  }
+
+  private snapshotPreviews(mainEl: HTMLElement): Map<HTMLImageElement, string> {
+    const shot = new Map<HTMLImageElement, string>()
+    for (const img of mainEl.querySelectorAll('img')) shot.set(img, this.previewSrc(img))
+    return shot
+  }
+
+  private freshPreviews(
+    mainEl: HTMLElement,
+    before: Map<HTMLImageElement, string>
+  ): HTMLImageElement[] {
+    const fresh: HTMLImageElement[] = []
+    for (const img of mainEl.querySelectorAll('img')) {
+      const src = this.previewSrc(img)
+      const prev = before.get(img)
+      if (prev === undefined || prev !== src) fresh.push(img)
+    }
+    return fresh
+  }
+
+  private previewSrc(img: HTMLImageElement): string {
+    return img.currentSrc || img.getAttribute('src') || img.src || ''
+  }
+
+  private previewSettled(img: HTMLImageElement): boolean {
+    return img.dataset.gfmPreviewError === '1' || (img.complete && img.naturalWidth > 0)
+  }
+
+  private async waitForPreviews(
+    mainEl: HTMLElement,
+    before: Map<HTMLImageElement, string>
+  ): Promise<void> {
+    // shortcut: imgs mounted after this turn are not waited for; upgrade if Google inserts them on a later frame
+    const deadline = Date.now() + this.params.settleDelay
+    while (this.controlState !== 'stopped') {
+      await this.waitIfPaused()
+      if (this.controlState === 'stopped') return
+      const fresh = this.freshPreviews(mainEl, before)
+      if (fresh.length === 0 || fresh.every((img) => this.previewSettled(img))) return
+      if (Date.now() >= deadline) return
+      await this.nextPreviewBeat(mainEl, Math.min(50, Math.max(0, deadline - Date.now())))
+    }
+  }
+
+  private nextPreviewBeat(mainEl: HTMLElement, ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      const timer = setTimeout(finish, ms)
+      const onLoad = (): void => finish()
+      const onError = (ev: Event): void => {
+        const target = ev.target
+        if (target instanceof HTMLImageElement) target.dataset.gfmPreviewError = '1'
+        finish()
+      }
+      function finish(): void {
+        clearTimeout(timer)
+        mainEl.removeEventListener('load', onLoad, true)
+        mainEl.removeEventListener('error', onError, true)
+        resolve()
+      }
+      mainEl.addEventListener('load', onLoad, true)
+      mainEl.addEventListener('error', onError, true)
+    })
+  }
+
+  private emitProgress(warning?: string): void {
     this.callbacks.onProgress?.({
       selected: this.getReportedSelectedCount(),
       estPct: Math.min(100, Math.max(0, this.estPct)),
       elapsedMs: this.getElapsedMs(),
-      state: this.state
+      state: this.state,
+      ...(warning ? { warning } : {})
     })
   }
 

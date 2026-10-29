@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { downloadPercent } from '../../src/main/download-monitor'
+import { DEFAULT_DOWNLOAD_WAIT_MS, downloadPercent } from '../../src/main/download-monitor'
+
+describe('download wait', () => {
+  it('waits 15 minutes for the download to start', () => {
+    expect(DEFAULT_DOWNLOAD_WAIT_MS).toBe(15 * 60 * 1000)
+  })
+})
 
 describe('downloadPercent', () => {
   it('returns 0 when total is unknown', () => {

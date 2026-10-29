@@ -4,6 +4,8 @@ export interface GridOptions {
   viewportHeight?: number
   itemHeight?: number
   virtualize?: boolean
+  /** ready: every preview is already loaded. manual: tiles mounted after the first paint stay unloaded until releasePreviews(). */
+  previews?: 'ready' | 'manual'
 }
 
 export function createGooglePhotosGrid(doc: Document, options: GridOptions = {}): {
@@ -11,14 +13,36 @@ export function createGooglePhotosGrid(doc: Document, options: GridOptions = {})
   mainEl: HTMLElement
   getSelectedCount: () => number
   simulateScroll: (delta: number) => void
+  releasePreviews: () => void
 } {
   const {
     photoCount = 20,
     skipLabel = 'Salva tutte le foto del giorno',
     viewportHeight = 400,
     itemHeight = 80,
-    virtualize = true
+    virtualize = true,
+    previews
   } = options
+  let previewsReleased = previews === 'ready'
+  const firstMounted = new Set<number>()
+  let firstRender = true
+
+  const setPreview = (img: HTMLImageElement, ready: boolean): void => {
+    Object.defineProperty(img, 'complete', { configurable: true, get: () => ready })
+    Object.defineProperty(img, 'naturalWidth', { configurable: true, get: () => (ready ? 8 : 0) })
+  }
+
+  const ensurePreview = (cb: HTMLElement, index: number): void => {
+    if (!previews) return
+    let img = cb.querySelector('img')
+    if (!img) {
+      img = doc.createElement('img')
+      img.alt = ''
+      img.setAttribute('src', `photo-${index}.jpg`)
+      cb.appendChild(img)
+    }
+    setPreview(img, previewsReleased || firstMounted.has(index))
+  }
 
   doc.body.innerHTML = ''
 
@@ -63,6 +87,8 @@ export function createGooglePhotosGrid(doc: Document, options: GridOptions = {})
     if (!virtualize) {
       photos.forEach((p, idx) => {
         p.dataset.photo = String(idx)
+        if (firstRender) firstMounted.add(idx)
+        ensurePreview(p, idx)
         mainEl.appendChild(p)
       })
       scrollEl.style.height = `${viewportHeight}px`
@@ -77,6 +103,8 @@ export function createGooglePhotosGrid(doc: Document, options: GridOptions = {})
     for (let i = startIdx; i < Math.min(startIdx + visibleCount, photos.length); i++) {
       const p = photos[i]
       p.dataset.photo = String(i)
+      if (firstRender) firstMounted.add(i)
+      ensurePreview(p, i)
       mainEl.appendChild(p)
     }
 
@@ -102,6 +130,7 @@ export function createGooglePhotosGrid(doc: Document, options: GridOptions = {})
     scrollEl.dispatchEvent(new Event('scroll'))
   }
   renderVisible()
+  firstRender = false
 
   return {
     scrollEl,
@@ -114,6 +143,16 @@ export function createGooglePhotosGrid(doc: Document, options: GridOptions = {})
         scrollEl.scrollHeight - scrollEl.clientHeight
       )
       scrollEl.dispatchEvent(new Event('scroll'))
+    },
+    releasePreviews: () => {
+      previewsReleased = true
+      for (const p of photos) {
+        const img = p.querySelector('img')
+        if (img) {
+          setPreview(img, true)
+          img.dispatchEvent(new Event('load', { bubbles: true }))
+        }
+      }
     }
   }
 }

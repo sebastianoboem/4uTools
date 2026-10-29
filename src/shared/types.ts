@@ -34,6 +34,8 @@ export interface ProgressEvent {
   estPct: number
   elapsedMs: number
   state: EngineState
+  /** Set when a partial selection is about to be deleted. */
+  warning?: string
 }
 
 export type LogLevel = 'info' | 'azione' | 'avviso' | 'errore'

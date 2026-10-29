@@ -215,6 +215,7 @@ function updateProgress(p: ProgressEvent): void {
   statusProgress.value = pct
   statusPctLabel.textContent = `${Math.round(pct)}%`
   statusTime.textContent = formatTime(p.elapsedMs)
+  if (p.warning) showError(p.warning)
   statusProgress.setAttribute(
     'aria-label',
     p.state === 'downloading' ? 'Avanzamento download' : 'Avanzamento selezione'
@@ -508,7 +509,7 @@ async function init(): Promise<void> {
     statusProgress.value = 100
     statusPctLabel.textContent = '100%'
     if (event.leftovers > 0) {
-      showError(`Attenzione: ${event.leftovers} checkbox non selezionate nel viewport finale.`)
+      showError(`Attenzione: ${event.leftovers} checkbox non selezionate.`)
     }
     setRunControlsMode(false)
   })

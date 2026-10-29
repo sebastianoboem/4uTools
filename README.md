@@ -35,7 +35,7 @@ npm run dev
 npm test
 ```
 
-23 test (motore di selezione, selettori, sessioni, zoom, ecc.).
+50 test (motore di selezione, selettori, sessioni, zoom, ecc.).
 
 ## Aggiornamenti
 
@@ -105,8 +105,8 @@ I valori si regolano con slider nel pannello e si salvano in `userData/settings.
 | Parametro             | Default               | Range    | Descrizione                                            |
 | --------------------- | --------------------- | -------- | ------------------------------------------------------ |
 | Pausa tra click       | 80 ms                 | 0–500    | Ritardo tra un click checkbox e l'altro                |
-| Passo scroll          | 150%                  | 20–200   | Frazione dell'altezza visibile per ogni scroll         |
-| Attesa dopo scroll    | 1200 ms               | 200–5000 | Tempo per il lazy-load dopo lo scroll                  |
+| Passo scroll          | 70%                   | 20–80    | Percentuale del tratto che tiene visibile l’ultima foto già montata |
+| Attesa dopo scroll    | 1200 ms               | 200–5000 | Tempo massimo di attesa del caricamento anteprime; si prosegue prima se sono già caricate |
 | Riselezioni per passo | 2                     | 1–3      | Passaggi di selezione per ogni step (Avanzate)         |
 | Iterazioni ferme      | 6                     | 3–15     | Scroll stabili in fondo prima di concludere (Avanzate) |
 | Prefisso skip         | «Salva tutte le foto» | testo    | Etichetta checkbox da non cliccare (Avanzate)          |

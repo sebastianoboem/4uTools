@@ -305,4 +305,194 @@ describe('SelectionEngine', () => {
     expect(deleteClicks).toBe(0)
     expect(engine.getState()).toBe('done')
   })
+
+  it('selects photos a 150% step would skip', async () => {
+    const grid = createGooglePhotosGrid(document, {
+      photoCount: 40,
+      viewportHeight: 800,
+      itemHeight: 100
+    })
+    const steps: number[] = []
+    const orig = grid.scrollEl.scrollBy.bind(grid.scrollEl)
+    grid.scrollEl.scrollBy = (options?: ScrollToOptions | number, y?: number) => {
+      const top = typeof options === 'object' && options?.top != null ? options.top : 0
+      steps.push(top)
+      return orig(options, y)
+    }
+
+    const startPromise = engine.start({
+      clickDelay: 0,
+      settleDelay: 0,
+      scrollFraction: 150,
+      passesPerStep: 1,
+      stallPasses: 2
+    })
+
+    await vi.runAllTimersAsync()
+    await startPromise
+
+    expect(grid.getSelectedCount()).toBe(40)
+    expect(steps.length).toBeGreaterThan(0)
+    expect(Math.max(...steps)).toBeLessThanOrEqual(800 * 0.7)
+  })
+
+  it('does not spend settleDelay when new previews are already loaded', async () => {
+    createGooglePhotosGrid(document, {
+      photoCount: 30,
+      viewportHeight: 200,
+      itemHeight: 80,
+      previews: 'ready'
+    })
+    const done: number[] = []
+    engine.setCallbacks({ onDone: (e) => done.push(e.total) })
+
+    const startPromise = engine.start({
+      clickDelay: 0,
+      settleDelay: 5000,
+      scrollFraction: 50,
+      passesPerStep: 1,
+      stallPasses: 2
+    })
+
+    await vi.advanceTimersByTimeAsync(200)
+    expect(done).toHaveLength(1)
+    await startPromise
+  })
+
+  it('waits for a new preview to load before selecting the next tiles', async () => {
+    const grid = createGooglePhotosGrid(document, {
+      photoCount: 30,
+      viewportHeight: 200,
+      itemHeight: 80,
+      previews: 'manual'
+    })
+
+    const startPromise = engine.start({
+      clickDelay: 0,
+      settleDelay: 5000,
+      scrollFraction: 50,
+      passesPerStep: 1,
+      stallPasses: 3
+    })
+
+    await vi.advanceTimersByTimeAsync(200)
+    expect(grid.getSelectedCount()).toBe(5)
+
+    grid.releasePreviews()
+    await vi.advanceTimersByTimeAsync(200)
+    expect(grid.getSelectedCount()).toBeGreaterThan(5)
+
+    await vi.runAllTimersAsync()
+    await startPromise
+    expect(grid.getSelectedCount()).toBe(30)
+  })
+
+  it('selects the next tiles when a preview never loads', async () => {
+    const grid = createGooglePhotosGrid(document, {
+      photoCount: 30,
+      viewportHeight: 200,
+      itemHeight: 80,
+      previews: 'manual'
+    })
+
+    const startPromise = engine.start({
+      clickDelay: 0,
+      settleDelay: 300,
+      scrollFraction: 50,
+      passesPerStep: 1,
+      stallPasses: 2
+    })
+
+    await vi.advanceTimersByTimeAsync(50)
+    expect(grid.getSelectedCount()).toBe(5)
+
+    await vi.advanceTimersByTimeAsync(300)
+    expect(grid.getSelectedCount()).toBeGreaterThan(5)
+
+    await vi.runAllTimersAsync()
+    await startPromise
+  })
+
+  it('retries a checkbox whose first click does not stick', async () => {
+    const grid = createGooglePhotosGrid(document, { photoCount: 1, virtualize: false })
+    const cb = grid.mainEl.querySelector('[data-photo]') as HTMLElement
+    let clicks = 0
+    cb.addEventListener(
+      'click',
+      (ev) => {
+        clicks++
+        if (clicks === 1) {
+          ev.stopImmediatePropagation()
+          cb.setAttribute('aria-checked', 'false')
+        }
+      },
+      true
+    )
+
+    const startPromise = engine.start({
+      clickDelay: 0,
+      settleDelay: 0,
+      scrollFraction: 70,
+      passesPerStep: 1,
+      stallPasses: 2
+    })
+
+    await vi.runAllTimersAsync()
+    await startPromise
+
+    expect(grid.getSelectedCount()).toBe(1)
+    expect(clicks).toBeGreaterThanOrEqual(2)
+  })
+
+  it('deletes the partial selection when a checkbox never sticks', async () => {
+    const grid = createGooglePhotosGrid(document, { photoCount: 2, virtualize: false })
+    const cb = grid.mainEl.querySelector('[data-photo]') as HTMLElement
+    cb.addEventListener(
+      'click',
+      (ev) => {
+        ev.stopImmediatePropagation()
+        cb.setAttribute('aria-checked', 'false')
+      },
+      true
+    )
+
+    let deleteClicks = 0
+    const deleteBtn = document.createElement('button')
+    deleteBtn.setAttribute('aria-label', 'Elimina')
+    deleteBtn.addEventListener('click', () => {
+      deleteClicks++
+      const dialog = document.createElement('div')
+      dialog.setAttribute('role', 'dialog')
+      const confirm = document.createElement('button')
+      confirm.textContent = 'Sposta nel cestino'
+      confirm.addEventListener('click', () => dialog.remove())
+      dialog.appendChild(confirm)
+      document.body.appendChild(dialog)
+    })
+    document.body.appendChild(deleteBtn)
+
+    const warnings: string[] = []
+    const done: { leftovers: number }[] = []
+    engine.setCallbacks({
+      onProgress: (e) => {
+        if (e.warning) warnings.push(e.warning)
+      },
+      onDone: (e) => done.push(e)
+    })
+
+    const deletePromise = engine.startAndDelete({
+      clickDelay: 0,
+      settleDelay: 0,
+      scrollFraction: 70,
+      passesPerStep: 1,
+      stallPasses: 2
+    })
+
+    await vi.runAllTimersAsync()
+    await deletePromise
+
+    expect(deleteClicks).toBe(1)
+    expect(done[0]?.leftovers).toBeGreaterThan(0)
+    expect(warnings[0]).toMatch(/Elimino comunque/)
+  })
 })

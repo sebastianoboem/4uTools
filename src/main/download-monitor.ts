@@ -1,6 +1,6 @@
 import type { DownloadItem, Event, Session } from 'electron'
 
-export const DEFAULT_DOWNLOAD_WAIT_MS = 180_000
+export const DEFAULT_DOWNLOAD_WAIT_MS = 15 * 60 * 1000
 
 export type DownloadProgressInfo = {
   receivedBytes: number

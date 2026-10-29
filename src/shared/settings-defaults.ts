@@ -2,7 +2,7 @@ import type { SelectionParams } from './types'
 
 export const DEFAULT_SELECTION_PARAMS: SelectionParams = {
   clickDelay: 80,
-  scrollFraction: 150,
+  scrollFraction: 70,
   settleDelay: 1200,
   passesPerStep: 2,
   stallPasses: 6,
@@ -15,9 +15,9 @@ export const PARAM_TOOLTIPS: Record<keyof SelectionParams, string> = {
   clickDelay:
     'Pausa in millisecondi tra un click e il successivo sulle checkbox visibili, per dare tempo alla UI di aggiornarsi.',
   scrollFraction:
-    'Quanto scorrere a ogni passo, in percentuale dell’altezza visibile del contenitore di scroll (c-wiz). Valori più alti coprono più foto per passo.',
+    'Quanto scorrere a ogni passo, in percentuale del tratto che tiene ancora visibile l’ultima foto già montata. Valori più alti avanzano di più, senza uscire da quella fascia.',
   settleDelay:
-    'Attesa in millisecondi dopo ogni scroll prima di riselezionare, per far comparire le foto virtualizzate nel DOM.',
+    'Tempo massimo in millisecondi per il caricamento delle anteprime dopo lo scroll. Il motore prosegue appena le anteprime nuove sono caricate.',
   passesPerStep:
     'Quante volte ripetere la selezione sulle checkbox visibili prima e dopo ogni scroll (anti-skip).',
   stallPasses:
@@ -32,7 +32,7 @@ export const PARAM_TOOLTIPS: Record<keyof SelectionParams, string> = {
 
 export const PARAM_RANGES = {
   clickDelay: { min: 0, max: 500 },
-  scrollFraction: { min: 20, max: 200 },
+  scrollFraction: { min: 20, max: 80 },
   settleDelay: { min: 200, max: 5000 },
   passesPerStep: { min: 1, max: 3 },
   stallPasses: { min: 3, max: 15 },
@@ -42,7 +42,7 @@ export const PARAM_RANGES = {
 export function clampParams(params: SelectionParams): SelectionParams {
   return {
     clickDelay: clamp(params.clickDelay, PARAM_RANGES.clickDelay.min, PARAM_RANGES.clickDelay.max),
-    scrollFraction: clamp(params.scrollFraction, PARAM_RANGES.scrollFraction.min, PARAM_RANGES.scrollFraction.max),
+    scrollFraction: normalizeScrollFraction(params.scrollFraction),
     settleDelay: clamp(params.settleDelay, PARAM_RANGES.settleDelay.min, PARAM_RANGES.settleDelay.max),
     passesPerStep: clamp(params.passesPerStep, PARAM_RANGES.passesPerStep.min, PARAM_RANGES.passesPerStep.max),
     stallPasses: clamp(params.stallPasses, PARAM_RANGES.stallPasses.min, PARAM_RANGES.stallPasses.max),
@@ -50,6 +50,11 @@ export function clampParams(params: SelectionParams): SelectionParams {
     maxSelections: clamp(params.maxSelections, PARAM_RANGES.maxSelections.min, PARAM_RANGES.maxSelections.max),
     downloadAfterSelection: Boolean(params.downloadAfterSelection)
   }
+}
+
+function normalizeScrollFraction(value: number): number {
+  if (value > PARAM_RANGES.scrollFraction.max) return DEFAULT_SELECTION_PARAMS.scrollFraction
+  return clamp(value, PARAM_RANGES.scrollFraction.min, PARAM_RANGES.scrollFraction.max)
 }
 
 function clamp(value: number, min: number, max: number): number {

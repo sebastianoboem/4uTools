@@ -337,6 +337,12 @@ export function registerIpcHandlers(windowRefs: WindowRefs): void {
     const selected = lastProgress.selected
     const elapsedMs = lastProgress.elapsedMs
 
+    appendLog({
+      ts: Date.now(),
+      level: 'info',
+      msg: 'Attendo l\'avvio del download (max 15 minuti)'
+    })
+
     const downloadWait = waitForSessionDownload(refs.photosSession, {
       onProgress: (info) => {
         refs?.panelView?.send(IPC.PANEL_PROGRESS, {
