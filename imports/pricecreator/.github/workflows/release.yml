@@ -1,0 +1,94 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish-tauri:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target universal-apple-darwin
+          - platform: windows-latest
+            args: --bundles nsis
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Sync version from git tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: node scripts/sync-version-from-tag.mjs
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Firma macOS ad-hoc (gratis, evita «app danneggiata» su Apple Silicon)
+        if: matrix.platform == 'macos-latest'
+        run: echo "APPLE_SIGNING_IDENTITY=-" >> "$GITHUB_ENV"
+
+      - name: Prepara certificato Authenticode Windows
+        if: matrix.platform == 'windows-latest'
+        env:
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        shell: pwsh
+        run: |
+          if ($env:WINDOWS_CERTIFICATE) {
+            New-Item -ItemType Directory -Force -Path certificate | Out-Null
+            $b64 = ($env:WINDOWS_CERTIFICATE -replace '\s', '')
+            [IO.File]::WriteAllBytes("$pwd\certificate\certificate.pfx", [Convert]::FromBase64String($b64))
+            $secure = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -Force -AsPlainText
+            $cert = Import-PfxCertificate -Exportable -FilePath "$pwd\certificate\certificate.pfx" -CertStoreLocation Cert:\CurrentUser\My -Password $secure
+            Write-Host "Certificato importato dai secret."
+          } else {
+            $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject "CN=Doctor Phone" -CertStoreLocation Cert:\CurrentUser\My -HashAlgorithm SHA256 -NotAfter (Get-Date).AddYears(5)
+            Write-Host "Nessun secret: generato certificato self-signed efimero per questo job."
+          }
+          Add-Content -Path $env:GITHUB_ENV -Value "WINDOWS_CERTIFICATE_THUMBPRINT=$($cert.Thumbprint)"
+
+      - name: Imposta thumbprint in tauri.conf.json
+        if: matrix.platform == 'windows-latest'
+        run: node scripts/apply-windows-thumbprint.mjs
+
+      - uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
+        with:
+          tagName: v__VERSION__
+          releaseName: PriceCreator v__VERSION__
+          releaseBody: Installer macOS (universal) e Windows (NSIS). L'app controlla gli aggiornamenti da questa GitHub Release.
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
+          updaterJsonPreferNsis: true
+          updaterJsonKeepUniversal: true
+          uploadUpdaterJson: true
+          uploadUpdaterSignatures: true

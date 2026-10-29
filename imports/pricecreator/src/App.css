@@ -1,0 +1,366 @@
+@font-face {
+  font-family: "Barlow";
+  src: url("./assets/fonts/Barlow-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+@font-face {
+  font-family: "Barlow";
+  src: url("./assets/fonts/Barlow-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+:root {
+  --blu: #054b76;
+  --blu-scuro: #033551;
+  --rosso: #ff0000;
+  --sfondo: #eef2f5;
+  --bordo: #d7dee4;
+  --testo: #22333d;
+  --testo-tenue: #7d8d97;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Barlow", system-ui, -apple-system, sans-serif;
+  font-weight: 400;
+  background: var(--sfondo);
+  color: var(--testo);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Barra superiore ---- */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 13px 22px;
+  background: linear-gradient(135deg, var(--blu) 0%, var(--blu-scuro) 100%);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(16, 42, 58, 0.25);
+}
+
+.brand h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.brand .sub {
+  font-size: 12px;
+  opacity: 0.75;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.contatore {
+  font-size: 13px;
+  opacity: 0.9;
+  white-space: nowrap;
+}
+
+.genera-btn {
+  background: var(--rosso);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font: inherit;
+  font-weight: 800;
+  font-size: 14px;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.05s;
+}
+
+.genera-btn:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.genera-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.genera-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---- Messaggi ---- */
+
+.messaggio {
+  margin: 14px 22px 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.messaggio.ok {
+  background: #e2f4e7;
+  color: #1c6b36;
+  border: 1px solid #bfe5cb;
+}
+
+.messaggio.errore {
+  background: #fde7e8;
+  color: #a2141d;
+  border: 1px solid #f5c2c5;
+}
+
+.messaggio.aggiornamento {
+  background: #e7f0f7;
+  color: var(--blu-scuro);
+  border: 1px solid #b9d0e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.aggiornamento-azioni {
+  display: flex;
+  gap: 8px;
+}
+
+.aggiornamento-azioni button {
+  font: inherit;
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.aggiornamento-azioni button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.aggiornamento-azioni .aggiorna {
+  background: var(--blu);
+  color: #fff;
+  border: none;
+}
+
+.aggiornamento-azioni .dopo {
+  background: transparent;
+  color: var(--blu);
+  border: 1px solid #b9d0e0;
+}
+
+/* ---- Lista card ---- */
+
+.contenuto {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 22px;
+}
+
+.foglio + .foglio {
+  margin-top: 10px;
+  padding-top: 18px;
+  border-top: 1px dashed var(--bordo);
+}
+
+.foglio-titolo {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--blu);
+}
+
+.lista-card {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.aggiungi-btn {
+  width: 100%;
+  min-height: 240px;
+  align-self: stretch;
+  border-radius: 10px;
+  border: 2px dashed var(--blu);
+  background: #fff;
+  color: var(--blu);
+  font-size: 42px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.aggiungi-btn:hover {
+  background: var(--blu);
+  color: #fff;
+}
+
+/* ---- Singola card ---- */
+
+.tag-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--bordo);
+  border-top: 4px solid var(--blu);
+  border-radius: 10px;
+  padding: 12px 36px 14px 14px;
+  box-shadow: 0 1px 3px rgba(16, 42, 58, 0.06);
+}
+
+.tag-card.offerta {
+  border-top-color: var(--rosso);
+}
+
+.tag-num {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--blu);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 50%;
+}
+
+.tag-card.offerta .tag-num {
+  background: var(--rosso);
+}
+
+.tag-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field > span {
+  color: #5c707c;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 10px;
+}
+
+.field input[type="text"],
+.field input[type="number"],
+.field select {
+  font: inherit;
+  font-size: 14px;
+  padding: 8px 10px;
+  border: 1px solid var(--bordo);
+  border-radius: 7px;
+  background: #fbfcfd;
+  color: var(--testo);
+  min-width: 0;
+  width: 100%;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: 2px solid var(--blu);
+  outline-offset: -1px;
+}
+
+.field.nome,
+.field.gb,
+.field.prezzo,
+.field.prezzo-orig,
+.field.condizione {
+  width: 100%;
+}
+
+.field.offerta-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  user-select: none;
+}
+
+.field.offerta-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--rosso);
+  cursor: pointer;
+}
+
+.field.prezzo-orig input {
+  border-color: #f0b9bc;
+  background: #fffafa;
+}
+
+.remove-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9aa8b1;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.remove-btn:hover {
+  background: #fde7e8;
+  color: var(--rosso);
+}
+
+/* ---- Footer ---- */
+
+.hint {
+  padding: 8px 22px 16px;
+  font-size: 11.5px;
+  color: var(--testo-tenue);
+}
