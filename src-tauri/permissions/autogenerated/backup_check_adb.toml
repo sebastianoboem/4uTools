@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-backup-check-adb"
+description = "Enables the backup_check_adb command without any pre-configured scope."
+commands.allow = ["backup_check_adb"]
+
+[[permission]]
+identifier = "deny-backup-check-adb"
+description = "Denies the backup_check_adb command without any pre-configured scope."
+commands.deny = ["backup_check_adb"]

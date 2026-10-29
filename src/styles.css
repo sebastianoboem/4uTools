@@ -40,10 +40,63 @@ body { margin: 0; min-height: 100vh; overflow: hidden; }
   flex-shrink: 0;
 }
 
-.top-title {
+.top-tab {
+  border: 0;
+  background: transparent;
+  font: inherit;
   font-size: 0.9375rem;
   font-weight: 600;
+  color: var(--muted);
+  padding: 0.45rem 0.75rem;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.top-tab.active {
   color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.shared-device {
+  max-width: 16rem;
+}
+
+.top-trailing {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.top-settings {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.top-settings:hover { background: #f3f4f6; }
+
+.top-device {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.top-device-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(28rem, 40vw);
 }
 
 .content {
@@ -52,8 +105,52 @@ body { margin: 0; min-height: 100vh; overflow: hidden; }
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 1.5rem;
+  padding: 0;
   background: var(--bg);
+}
+
+.tab-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.tab-gphotos {
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.gphotos-layout {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  padding-top: 6px;
+}
+
+.gphotos-host {
+  flex: 1;
+  min-width: 0;
+}
+
+.gphotos-panel {
+  width: 320px;
+  flex: none;
+  overflow: auto;
+  border-left: 1px solid var(--border);
+  background: var(--card);
+}
+
+#tab-overview {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+#tab-overview .footer {
+  margin-top: auto;
 }
 
 .screen-empty, #screen-dashboard {
@@ -96,9 +193,6 @@ body { margin: 0; min-height: 100vh; overflow: hidden; }
   color: #047857;
   border-color: #a7f3d0;
 }
-
-.dashboard-header { margin-bottom: 1rem; }
-.dashboard-header h1 { margin: 0; font-size: 1.25rem; font-weight: 700; }
 
 .dashboard-grid {
   display: grid;
@@ -980,6 +1074,36 @@ body { margin: 0; min-height: 100vh; overflow: hidden; }
 .result-na { color: #9ca3af; }
 .result-warn { color: #d97706; font-weight: 600; }
 .result-bad { color: #dc2626; font-weight: 600; }
+
+.modal-settings { width: min(520px, 92vw); }
+
+.modal-settings .settings-section { margin-bottom: 1.25rem; }
+.modal-settings .settings-section h3 { margin: 0 0 0.65rem; font-size: 0.95rem; }
+.modal-settings .settings-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.75rem 0; }
+.modal-settings .settings-hint { margin: 0 0 0.75rem; font-size: 0.8rem; line-height: 1.45; }
+.modal-settings .settings-providers { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.75rem; }
+.modal-settings .settings-provider {
+  display: flex; gap: 0.6rem; align-items: flex-start;
+  padding: 0.65rem 0.75rem; border: 1px solid var(--border); border-radius: 8px;
+  cursor: pointer; background: var(--bg);
+}
+.modal-settings .settings-provider:hover { border-color: var(--accent); }
+.modal-settings .settings-provider.unavailable { opacity: 0.55; cursor: not-allowed; }
+.modal-settings .settings-provider-body { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.8rem; }
+.modal-settings .settings-provider-badge {
+  display: inline-block; width: fit-content; font-size: 0.65rem;
+  padding: 0.1rem 0.35rem; border-radius: 3px; background: #dcfce7; color: #166534;
+}
+.modal-settings .settings-provider.unavailable .settings-provider-badge { background: var(--border); color: var(--muted); }
+.modal-settings .settings-provider-path { font-size: 0.7rem; word-break: break-all; color: var(--muted); }
+.modal-settings .settings-custom { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: flex-end; margin-bottom: 0.75rem; }
+.modal-settings .settings-path-label { flex: 1; min-width: 200px; font-size: 0.8rem; }
+.modal-settings .settings-path-label input {
+  display: block; width: 100%; margin-top: 0.25rem; padding: 0.4rem 0.5rem;
+  border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-size: 0.8rem;
+}
+.modal-settings .settings-status { margin: 0; font-size: 0.78rem; }
+.modal-settings .footer-check { display: flex; align-items: center; gap: 0.4rem; font-size: 0.875rem; }
 
 .modal-footnote {
   margin-top: 1rem;

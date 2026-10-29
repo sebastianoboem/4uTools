@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "4uTools",
   "mainBinaryName": "4uTools",
-  "version": "1.4.3",
+  "version": "2.8.6",
   "identifier": "com.4utools.app",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -15,19 +15,37 @@
     "windows": [
       {
         "title": "4uTools",
-        "width": 1150,
-        "height": 850,
-        "minWidth": 1150,
-        "minHeight": 850
+        "width": 1200,
+        "height": 880,
+        "minWidth": 1200,
+        "minHeight": 880
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": {
+          "allow": [
+            "$HOME/**",
+            "$DOCUMENT/**",
+            "$PICTURE/**",
+            "$DOWNLOAD/**",
+            "$DESKTOP/**",
+            "/Users/**",
+            "/Volumes/**",
+            "C:/**",
+            "D:/**",
+            "E:/**"
+          ],
+          "requireLiteralLeadingDot": false
+        }
+      }
     }
   },
   "bundle": {
     "active": true,
-    "targets": "all",
+    "targets": ["app", "dmg", "nsis"],
     "createUpdaterArtifacts": true,
     "resources": [
       "../resources/battery-catalog.json"

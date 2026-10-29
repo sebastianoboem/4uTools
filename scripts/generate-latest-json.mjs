@@ -7,9 +7,9 @@
  *     --version 1.3.3 \
  *     --notes "Correzioni e miglioramenti" \
  *     --base-url https://github.com/sebastianoboem/4uTools/releases/download/v1.3.3 \
- *     --darwin-aarch64 release/staging-1.3.3/4uTools_1.3.3_aarch64.app.tar.gz.sig \
- *     --darwin-x86_64 release/staging-1.3.3/4uTools_1.3.3_x64.app.tar.gz.sig \
- *     --windows-x86_64 release/staging-1.3.3/4uTools_1.3.3_x64-setup.exe.sig
+ *     --darwin-aarch64 release/1.3.3/4uTools_1.3.3_aarch64.app.tar.gz.sig \
+ *     --darwin-x86_64 release/1.3.3/4uTools_1.3.3_x64.app.tar.gz.sig \
+ *     --windows-x86_64 release/1.3.3/4uTools_1.3.3_x64-setup.exe.sig
  *
  * Allega il file generato alla GitHub Release come `latest.json`.
  */

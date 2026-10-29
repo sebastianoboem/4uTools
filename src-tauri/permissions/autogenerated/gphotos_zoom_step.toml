@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-zoom-step"
+description = "Enables the gphotos_zoom_step command without any pre-configured scope."
+commands.allow = ["gphotos_zoom_step"]
+
+[[permission]]
+identifier = "deny-gphotos-zoom-step"
+description = "Denies the gphotos_zoom_step command without any pre-configured scope."
+commands.deny = ["gphotos_zoom_step"]

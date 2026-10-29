@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-stop-mirror-preview"
+description = "Enables the stop_mirror_preview command without any pre-configured scope."
+commands.allow = ["stop_mirror_preview"]
+
+[[permission]]
+identifier = "deny-stop-mirror-preview"
+description = "Denies the stop_mirror_preview command without any pre-configured scope."
+commands.deny = ["stop_mirror_preview"]

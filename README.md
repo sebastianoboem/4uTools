@@ -15,9 +15,10 @@ Pensato per **riparatori**, **rivenditori** e **utenti avanzati** che vogliono c
 | **Batteria** | Livello, salute, cicli di carica e dettagli estesi |
 | **Storage** | Spazio usato/libero con ripartizione per app, foto, sistema, ecc. |
 | **Verification Report** | Report di verifica componenti con punteggio riepilogativo |
-| **AutoBackup** | Avvia [AutoBackup](https://github.com/sebastianoboem/AutoBackup) per backup dati (installazione guidata se mancante) |
-| **AndroidAdwareCleaner** | Avvia [AndroidAdwareCleaner](https://github.com/sebastianoboem/AndroidAdwareCleaner) per analizzare e rimuovere app sospette |
-| **GoogleFotoManager** | Avvia [GoogleFotoManager](https://github.com/sebastianoboem/GoogleFotoManager) per selezionare automaticamente le foto in Google Foto (installazione guidata se mancante) |
+| **Adware Cleaner** | Scansione, flag e disinstallazione delle app sospette, con sync cloud |
+| **AutoBackup** | Backup manuale dei file dal telefono o dal computer |
+| **PriceCreator** | Cartellini prezzo in PDF |
+| **Google Foto** | Selezione, download ed eliminazione nella libreria Google Foto, con sessioni salvate |
 
 Puoi anche **riavviare** o **spegnere** il telefono, **nascondere serial/IMEI** a schermo e **cercare aggiornamenti** dell'app.
 
@@ -50,9 +51,9 @@ L'app controlla automaticamente all'avvio gli aggiornamenti da GitHub Releases e
 
 All'avvio rileva il dispositivo autorizzato e mostra la dashboard **Overview**. Se non vedi nulla, controlla cavo, debug USB e autorizzazione sul telefono.
 
-### 3. Strumenti collegati
+### 3. Google Foto
 
-- **AutoBackup**, **AndroidAdwareCleaner** e **GoogleFotoManager** aprono programmi companion: al primo click, se non installati, 4uTools propone di scaricarli.
+La tab **Google Foto** apre photos.google.com accanto al pannello di selezione. L'accesso avviene con **Accedi con Chrome** (o Edge): il login resta nel browser, poi la sessione viene copiata nell'app. Le sessioni salvate dalla vecchia app Google Foto Manager vengono importate al primo avvio.
 
 ---
 
@@ -64,6 +65,7 @@ All'avvio rileva il dispositivo autorizzato e mostra la dashboard **Overview**. 
 | **Telefono** | Android con debug USB attivo |
 | **Cavo** | USB dati |
 | **ADB** | Incluso nell'app al primo avvio (o già presente sul sistema) |
+| **Google Foto** | Google Chrome o Microsoft Edge, per il login |
 
 ---
 
@@ -85,6 +87,7 @@ cd 4uTools
 npm install
 npm run setup:adb   # opzionale: adb locale in resources/
 npm run tauri dev
+npm test
 ```
 
 Build release e aggiornamenti firmati: vedi [docs/RELEASE.md](docs/RELEASE.md).

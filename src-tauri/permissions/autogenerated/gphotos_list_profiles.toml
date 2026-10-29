@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-list-profiles"
+description = "Enables the gphotos_list_profiles command without any pre-configured scope."
+commands.allow = ["gphotos_list_profiles"]
+
+[[permission]]
+identifier = "deny-gphotos-list-profiles"
+description = "Denies the gphotos_list_profiles command without any pre-configured scope."
+commands.deny = ["gphotos_list_profiles"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-start"
+description = "Enables the gphotos_start command without any pre-configured scope."
+commands.allow = ["gphotos_start"]
+
+[[permission]]
+identifier = "deny-gphotos-start"
+description = "Denies the gphotos_start command without any pre-configured scope."
+commands.deny = ["gphotos_start"]

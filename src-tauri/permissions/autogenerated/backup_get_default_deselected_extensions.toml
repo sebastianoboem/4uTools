@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-backup-get-default-deselected-extensions"
+description = "Enables the backup_get_default_deselected_extensions command without any pre-configured scope."
+commands.allow = ["backup_get_default_deselected_extensions"]
+
+[[permission]]
+identifier = "deny-backup-get-default-deselected-extensions"
+description = "Denies the backup_get_default_deselected_extensions command without any pre-configured scope."
+commands.deny = ["backup_get_default_deselected_extensions"]

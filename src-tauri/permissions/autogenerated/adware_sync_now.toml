@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-sync-now"
+description = "Enables the adware_sync_now command without any pre-configured scope."
+commands.allow = ["adware_sync_now"]
+
+[[permission]]
+identifier = "deny-adware-sync-now"
+description = "Denies the adware_sync_now command without any pre-configured scope."
+commands.deny = ["adware_sync_now"]

@@ -6,6 +6,8 @@ pub enum AdbError {
     BinaryNotFound,
     #[error("adb command failed: {0}")]
     CommandFailed(String),
+    #[error("failed to parse adb output: {0}")]
+    ParseError(String),
     #[error("no device connected")]
     NoDevice,
     #[error("device unauthorized — accept USB debugging prompt on phone")]

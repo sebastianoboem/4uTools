@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-backup-resume-backup"
+description = "Enables the backup_resume_backup command without any pre-configured scope."
+commands.allow = ["backup_resume_backup"]
+
+[[permission]]
+identifier = "deny-backup-resume-backup"
+description = "Denies the backup_resume_backup command without any pre-configured scope."
+commands.deny = ["backup_resume_backup"]

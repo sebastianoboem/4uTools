@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-set-sync-folder"
+description = "Enables the adware_set_sync_folder command without any pre-configured scope."
+commands.allow = ["adware_set_sync_folder"]
+
+[[permission]]
+identifier = "deny-adware-set-sync-folder"
+description = "Denies the adware_set_sync_folder command without any pre-configured scope."
+commands.deny = ["adware_set_sync_folder"]

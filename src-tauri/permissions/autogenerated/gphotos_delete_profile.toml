@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-delete-profile"
+description = "Enables the gphotos_delete_profile command without any pre-configured scope."
+commands.allow = ["gphotos_delete_profile"]
+
+[[permission]]
+identifier = "deny-gphotos-delete-profile"
+description = "Denies the gphotos_delete_profile command without any pre-configured scope."
+commands.deny = ["gphotos_delete_profile"]

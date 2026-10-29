@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-dev-log-enabled"
+description = "Enables the adware_dev_log_enabled command without any pre-configured scope."
+commands.allow = ["adware_dev_log_enabled"]
+
+[[permission]]
+identifier = "deny-adware-dev-log-enabled"
+description = "Denies the adware_dev_log_enabled command without any pre-configured scope."
+commands.deny = ["adware_dev_log_enabled"]

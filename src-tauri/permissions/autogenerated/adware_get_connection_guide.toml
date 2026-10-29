@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-get-connection-guide"
+description = "Enables the adware_get_connection_guide command without any pre-configured scope."
+commands.allow = ["adware_get_connection_guide"]
+
+[[permission]]
+identifier = "deny-adware-get-connection-guide"
+description = "Denies the adware_get_connection_guide command without any pre-configured scope."
+commands.deny = ["adware_get_connection_guide"]

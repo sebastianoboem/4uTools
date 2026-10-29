@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-deselect"
+description = "Enables the gphotos_deselect command without any pre-configured scope."
+commands.allow = ["gphotos_deselect"]
+
+[[permission]]
+identifier = "deny-gphotos-deselect"
+description = "Denies the gphotos_deselect command without any pre-configured scope."
+commands.deny = ["gphotos_deselect"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-zoom-reset"
+description = "Enables the gphotos_zoom_reset command without any pre-configured scope."
+commands.allow = ["gphotos_zoom_reset"]
+
+[[permission]]
+identifier = "deny-gphotos-zoom-reset"
+description = "Denies the gphotos_zoom_reset command without any pre-configured scope."
+commands.deny = ["gphotos_zoom_reset"]

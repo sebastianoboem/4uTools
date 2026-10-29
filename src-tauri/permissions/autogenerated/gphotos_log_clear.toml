@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-log-clear"
+description = "Enables the gphotos_log_clear command without any pre-configured scope."
+commands.allow = ["gphotos_log_clear"]
+
+[[permission]]
+identifier = "deny-gphotos-log-clear"
+description = "Denies the gphotos_log_clear command without any pre-configured scope."
+commands.deny = ["gphotos_log_clear"]

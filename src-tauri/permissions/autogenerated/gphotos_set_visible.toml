@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-set-visible"
+description = "Enables the gphotos_set_visible command without any pre-configured scope."
+commands.allow = ["gphotos_set_visible"]
+
+[[permission]]
+identifier = "deny-gphotos-set-visible"
+description = "Denies the gphotos_set_visible command without any pre-configured scope."
+commands.deny = ["gphotos_set_visible"]

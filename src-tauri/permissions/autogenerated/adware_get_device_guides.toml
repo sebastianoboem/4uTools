@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-get-device-guides"
+description = "Enables the adware_get_device_guides command without any pre-configured scope."
+commands.allow = ["adware_get_device_guides"]
+
+[[permission]]
+identifier = "deny-adware-get-device-guides"
+description = "Denies the adware_get_device_guides command without any pre-configured scope."
+commands.deny = ["adware_get_device_guides"]

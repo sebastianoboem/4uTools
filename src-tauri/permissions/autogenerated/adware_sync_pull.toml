@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-sync-pull"
+description = "Enables the adware_sync_pull command without any pre-configured scope."
+commands.allow = ["adware_sync_pull"]
+
+[[permission]]
+identifier = "deny-adware-sync-pull"
+description = "Denies the adware_sync_pull command without any pre-configured scope."
+commands.deny = ["adware_sync_pull"]

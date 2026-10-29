@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-backup-stop-backup"
+description = "Enables the backup_stop_backup command without any pre-configured scope."
+commands.allow = ["backup_stop_backup"]
+
+[[permission]]
+identifier = "deny-backup-stop-backup"
+description = "Denies the backup_stop_backup command without any pre-configured scope."
+commands.deny = ["backup_stop_backup"]

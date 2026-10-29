@@ -21,7 +21,9 @@ pub fn resolve_adb_path() -> Option<PathBuf> {
     }
 
     if let Ok(home) = std::env::var("ANDROID_HOME").or_else(|_| std::env::var("ANDROID_SDK_ROOT")) {
-        let candidate = PathBuf::from(home).join("platform-tools").join(adb_exe_name());
+        let candidate = PathBuf::from(home)
+            .join("platform-tools")
+            .join(adb_exe_name());
         if candidate.exists() {
             return Some(candidate);
         }
@@ -55,24 +57,29 @@ fn app_installed_adb() -> Option<PathBuf> {
     if let Ok(dir) = std::env::var("FOURUTOOLS_PLATFORM_TOOLS")
         .or_else(|_| std::env::var("ANDROID_ADWARE_PLATFORM_TOOLS"))
     {
-        let p = PathBuf::from(&dir).join("platform-tools").join(exe);
-        if p.exists() {
-            return Some(p);
+        let base = PathBuf::from(&dir);
+        let nested = base.join("platform-tools").join(exe);
+        if nested.exists() {
+            return Some(nested);
         }
-        let direct = PathBuf::from(&dir).join(exe);
+        let direct = base.join(exe);
         if direct.exists() {
             return Some(direct);
         }
     }
     if let Some(data) = dirs::data_dir() {
         for app_name in ["4uTools", "AndroidAdwareCleaner"] {
-            let p = data
+            let nested = data
                 .join(app_name)
                 .join("platform-tools")
                 .join("platform-tools")
                 .join(exe);
-            if p.exists() {
-                return Some(p);
+            if nested.exists() {
+                return Some(nested);
+            }
+            let direct = data.join(app_name).join("platform-tools").join(exe);
+            if direct.exists() {
+                return Some(direct);
             }
         }
     }

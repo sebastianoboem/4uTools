@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-get-sync-settings"
+description = "Enables the adware_get_sync_settings command without any pre-configured scope."
+commands.allow = ["adware_get_sync_settings"]
+
+[[permission]]
+identifier = "deny-adware-get-sync-settings"
+description = "Denies the adware_get_sync_settings command without any pre-configured scope."
+commands.deny = ["adware_get_sync_settings"]

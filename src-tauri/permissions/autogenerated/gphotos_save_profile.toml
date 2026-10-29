@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-save-profile"
+description = "Enables the gphotos_save_profile command without any pre-configured scope."
+commands.allow = ["gphotos_save_profile"]
+
+[[permission]]
+identifier = "deny-gphotos-save-profile"
+description = "Denies the gphotos_save_profile command without any pre-configured scope."
+commands.deny = ["gphotos_save_profile"]

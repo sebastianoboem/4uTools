@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-diagnose"
+description = "Enables the gphotos_diagnose command without any pre-configured scope."
+commands.allow = ["gphotos_diagnose"]
+
+[[permission]]
+identifier = "deny-gphotos-diagnose"
+description = "Denies the gphotos_diagnose command without any pre-configured scope."
+commands.deny = ["gphotos_diagnose"]

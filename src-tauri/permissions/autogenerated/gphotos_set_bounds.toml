@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-set-bounds"
+description = "Enables the gphotos_set_bounds command without any pre-configured scope."
+commands.allow = ["gphotos_set_bounds"]
+
+[[permission]]
+identifier = "deny-gphotos-set-bounds"
+description = "Denies the gphotos_set_bounds command without any pre-configured scope."
+commands.deny = ["gphotos_set_bounds"]

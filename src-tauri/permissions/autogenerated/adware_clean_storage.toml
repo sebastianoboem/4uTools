@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-clean-storage"
+description = "Enables the adware_clean_storage command without any pre-configured scope."
+commands.allow = ["adware_clean_storage"]
+
+[[permission]]
+identifier = "deny-adware-clean-storage"
+description = "Denies the adware_clean_storage command without any pre-configured scope."
+commands.deny = ["adware_clean_storage"]

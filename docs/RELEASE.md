@@ -30,9 +30,13 @@ export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=""
 npm run release:build
 ```
 
-Con `createUpdaterArtifacts: true` vengono creati `.sig` e `.app.tar.gz` (macOS) / setup + `.sig` (Windows).
+Con `createUpdaterArtifacts: true` lo script copia in `release/X.Y.Z/` solo gli installer e gli artefatti updater:
 
-Staging tipico: `release/staging-X.Y.Z/` con DMG/EXE + artefatti updater rinominati.
+- `4uTools_X.Y.Z_arm64.dmg`, `4uTools_X.Y.Z_x64.dmg`
+- `4uTools_X.Y.Z_x64-setup.exe` + `.sig`
+- `4uTools_X.Y.Z_{aarch64,x64}.app.tar.gz` + `.sig`
+
+`.app`, MSI e le copie intermedie in `target/.../bundle/` non vengono tenute. Restano al massimo 3 cartelle di versione; le più vecchie si cancellano da sole.
 
 ### Chiavi di firma
 
@@ -47,9 +51,9 @@ CI=1 npm run tauri signer generate -- -w src-tauri/.updater-keys/key.pem -f --ci
 
 ## 2. Test updater in locale (obbligatorio prima del publish)
 
-Serve un build **release/bundle** (non solo `tauri dev`).
+Serve la cartella prodotta da `npm run release:build` (non `tauri dev`).
 
-1. Prepara `release/staging-local/` con artefatti firmati della **nuova** versione.
+1. La build sta in `release/X.Y.Z/`.
 2. Genera `latest.json` con URL locali:
 
 ```bash
@@ -57,16 +61,16 @@ npm run release:manifest -- \
   --version X.Y.Z \
   --notes "test locale" \
   --base-url http://127.0.0.1:8765 \
-  --darwin-aarch64 release/staging-local/4uTools_X.Y.Z_aarch64.app.tar.gz.sig \
-  --darwin-x86_64 release/staging-local/4uTools_X.Y.Z_x64.app.tar.gz.sig \
-  --windows-x86_64 release/staging-local/4uTools_X.Y.Z_x64-setup.exe.sig
-cp latest.json release/staging-local/
+  --darwin-aarch64 release/X.Y.Z/4uTools_X.Y.Z_aarch64.app.tar.gz.sig \
+  --darwin-x86_64 release/X.Y.Z/4uTools_X.Y.Z_x64.app.tar.gz.sig \
+  --windows-x86_64 release/X.Y.Z/4uTools_X.Y.Z_x64-setup.exe.sig
+cp latest.json release/X.Y.Z/
 ```
 
 3. Servi la cartella:
 
 ```bash
-cd release/staging-local && python3 -m http.server 8765
+cd release/X.Y.Z && python3 -m http.server 8765
 ```
 
 4. Temporaneamente (non committare) in `tauri.conf.json` — **obbligatorio** `dangerousInsecureTransportProtocol` perché Tauri rifiuta `http://` in release:
@@ -98,9 +102,7 @@ curl -L -o /tmp/upd.bin "http://127.0.0.1:8765/4uTools_X.Y.Z_aarch64.app.tar.gz"
 Tag: `vX.Y.Z`.
 
 1. Crea la release GitHub `vX.Y.Z`.
-2. Carica:
-   - installer umani: `*_arm64.dmg`, `*_x64.dmg`, `*_x64.exe`
-   - updater: `*.app.tar.gz` + `.sig`, `*-setup.exe` + `.sig`
+2. Carica tutto il contenuto di `release/X.Y.Z/` (dmg, setup exe, tar.gz, sig).
 3. Genera `latest.json`:
 
 ```bash
@@ -108,9 +110,9 @@ npm run release:manifest -- \
   --version X.Y.Z \
   --notes "Descrizione release" \
   --base-url https://github.com/sebastianoboem/4uTools/releases/download/vX.Y.Z \
-  --darwin-aarch64 release/staging-X.Y.Z/4uTools_X.Y.Z_aarch64.app.tar.gz.sig \
-  --darwin-x86_64 release/staging-X.Y.Z/4uTools_X.Y.Z_x64.app.tar.gz.sig \
-  --windows-x86_64 release/staging-X.Y.Z/4uTools_X.Y.Z_x64-setup.exe.sig
+  --darwin-aarch64 release/X.Y.Z/4uTools_X.Y.Z_aarch64.app.tar.gz.sig \
+  --darwin-x86_64 release/X.Y.Z/4uTools_X.Y.Z_x64.app.tar.gz.sig \
+  --windows-x86_64 release/X.Y.Z/4uTools_X.Y.Z_x64-setup.exe.sig
 ```
 
 4. Allega `latest.json` alla stessa GitHub Release:
@@ -134,6 +136,6 @@ curl -fsSL \
 - Footer **Cerca aggiornamenti** per check manuale.
 - Progresso download: MB accumulati + %.
 
-## Companion (install/update da 4uTools)
+## Tab integrate
 
-AutoBackup, AndroidAdwareCleaner e GoogleFotoManager hanno feed propri (possono ancora usare SourceForge come sorgente dei companion).
+Adware Cleaner, AutoBackup, PriceCreator e Google Foto sono dentro 4uTools. L'updater è solo quello di 4uTools.

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-clear-browsing-data"
+description = "Enables the adware_clear_browsing_data command without any pre-configured scope."
+commands.allow = ["adware_clear_browsing_data"]
+
+[[permission]]
+identifier = "deny-adware-clear-browsing-data"
+description = "Denies the adware_clear_browsing_data command without any pre-configured scope."
+commands.deny = ["adware_clear_browsing_data"]

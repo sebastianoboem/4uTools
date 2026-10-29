@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-startup-db-phase"
+description = "Enables the adware_startup_db_phase command without any pre-configured scope."
+commands.allow = ["adware_startup_db_phase"]
+
+[[permission]]
+identifier = "deny-adware-startup-db-phase"
+description = "Denies the adware_startup_db_phase command without any pre-configured scope."
+commands.deny = ["adware_startup_db_phase"]

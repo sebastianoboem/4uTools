@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-run-setup"
+description = "Enables the adware_run_setup command without any pre-configured scope."
+commands.allow = ["adware_run_setup"]
+
+[[permission]]
+identifier = "deny-adware-run-setup"
+description = "Denies the adware_run_setup command without any pre-configured scope."
+commands.deny = ["adware_run_setup"]

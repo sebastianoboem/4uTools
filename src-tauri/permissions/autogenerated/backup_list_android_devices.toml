@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-backup-list-android-devices"
+description = "Enables the backup_list_android_devices command without any pre-configured scope."
+commands.allow = ["backup_list_android_devices"]
+
+[[permission]]
+identifier = "deny-backup-list-android-devices"
+description = "Denies the backup_list_android_devices command without any pre-configured scope."
+commands.deny = ["backup_list_android_devices"]

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-reboot-device"
+description = "Enables the reboot_device command without any pre-configured scope."
+commands.allow = ["reboot_device"]
+
+[[permission]]
+identifier = "deny-reboot-device"
+description = "Denies the reboot_device command without any pre-configured scope."
+commands.deny = ["reboot_device"]

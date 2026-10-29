@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-shutdown-device"
+description = "Enables the shutdown_device command without any pre-configured scope."
+commands.allow = ["shutdown_device"]
+
+[[permission]]
+identifier = "deny-shutdown-device"
+description = "Denies the shutdown_device command without any pre-configured scope."
+commands.deny = ["shutdown_device"]

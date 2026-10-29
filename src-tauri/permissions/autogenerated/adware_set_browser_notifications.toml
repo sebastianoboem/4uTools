@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-set-browser-notifications"
+description = "Enables the adware_set_browser_notifications command without any pre-configured scope."
+commands.allow = ["adware_set_browser_notifications"]
+
+[[permission]]
+identifier = "deny-adware-set-browser-notifications"
+description = "Denies the adware_set_browser_notifications command without any pre-configured scope."
+commands.deny = ["adware_set_browser_notifications"]

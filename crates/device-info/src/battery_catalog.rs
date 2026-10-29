@@ -117,10 +117,6 @@ pub fn load_battery_catalog_path(path: &Path) -> Result<(), String> {
     Ok(())
 }
 
-pub fn lookup_design_capacity(brand: &str, model: &str, product: &str) -> Option<u32> {
-    lookup_design_capacity_with_hints(brand, model, product, &[])
-}
-
 pub fn lookup_design_capacity_with_hints(
     brand: &str,
     model: &str,

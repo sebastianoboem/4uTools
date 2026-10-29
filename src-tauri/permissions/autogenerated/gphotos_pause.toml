@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-pause"
+description = "Enables the gphotos_pause command without any pre-configured scope."
+commands.allow = ["gphotos_pause"]
+
+[[permission]]
+identifier = "deny-gphotos-pause"
+description = "Denies the gphotos_pause command without any pre-configured scope."
+commands.deny = ["gphotos_pause"]

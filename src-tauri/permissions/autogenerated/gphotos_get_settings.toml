@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-get-settings"
+description = "Enables the gphotos_get_settings command without any pre-configured scope."
+commands.allow = ["gphotos_get_settings"]
+
+[[permission]]
+identifier = "deny-gphotos-get-settings"
+description = "Denies the gphotos_get_settings command without any pre-configured scope."
+commands.deny = ["gphotos_get_settings"]

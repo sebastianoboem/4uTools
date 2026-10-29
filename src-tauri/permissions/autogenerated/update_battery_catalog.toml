@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-update-battery-catalog"
+description = "Enables the update_battery_catalog command without any pre-configured scope."
+commands.allow = ["update_battery_catalog"]
+
+[[permission]]
+identifier = "deny-update-battery-catalog"
+description = "Denies the update_battery_catalog command without any pre-configured scope."
+commands.deny = ["update_battery_catalog"]

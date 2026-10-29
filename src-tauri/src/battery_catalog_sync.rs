@@ -65,18 +65,6 @@ pub fn init_battery_catalog(app: &AppHandle) {
     }
 }
 
-pub fn catalog_status(app: &AppHandle) -> Result<BatteryCatalogStatus, String> {
-    let (entries, updated_at) = device_info::battery_catalog_stats();
-    let path = catalog_user_path(app)?
-        .to_string_lossy()
-        .into_owned();
-    Ok(BatteryCatalogStatus {
-        entries,
-        updated_at,
-        path,
-    })
-}
-
 pub fn sync_battery_catalog(app: &AppHandle) -> Result<BatteryCatalogStatus, String> {
     let client = reqwest::blocking::Client::builder()
         .user_agent(USER_AGENT)

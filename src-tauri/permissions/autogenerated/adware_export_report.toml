@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-export-report"
+description = "Enables the adware_export_report command without any pre-configured scope."
+commands.allow = ["adware_export_report"]
+
+[[permission]]
+identifier = "deny-adware-export-report"
+description = "Denies the adware_export_report command without any pre-configured scope."
+commands.deny = ["adware_export_report"]

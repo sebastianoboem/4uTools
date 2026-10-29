@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-resume"
+description = "Enables the gphotos_resume command without any pre-configured scope."
+commands.allow = ["gphotos_resume"]
+
+[[permission]]
+identifier = "deny-gphotos-resume"
+description = "Denies the gphotos_resume command without any pre-configured scope."
+commands.deny = ["gphotos_resume"]

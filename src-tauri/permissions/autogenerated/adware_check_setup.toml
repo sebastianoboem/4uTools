@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-check-setup"
+description = "Enables the adware_check_setup command without any pre-configured scope."
+commands.allow = ["adware_check_setup"]
+
+[[permission]]
+identifier = "deny-adware-check-setup"
+description = "Denies the adware_check_setup command without any pre-configured scope."
+commands.deny = ["adware_check_setup"]

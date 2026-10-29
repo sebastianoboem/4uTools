@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-get-adb-status"
+description = "Enables the adware_get_adb_status command without any pre-configured scope."
+commands.allow = ["adware_get_adb_status"]
+
+[[permission]]
+identifier = "deny-adware-get-adb-status"
+description = "Denies the adware_get_adb_status command without any pre-configured scope."
+commands.deny = ["adware_get_adb_status"]

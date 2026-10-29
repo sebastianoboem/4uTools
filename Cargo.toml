@@ -3,11 +3,17 @@ members = [
     "src-tauri",
     "crates/adb-bridge",
     "crates/device-info",
+    "crates/package-scanner",
+    "crates/uninstall-engine",
+    "crates/reputation-db",
+    "crates/cloud-sync",
+    "crates/system-setup",
+    "crates/autobackup-core",
 ]
 resolver = "2"
 
 [workspace.package]
-version = "1.4.3"
+version = "2.8.6"
 edition = "2021"
 
 [workspace.dependencies]
@@ -17,4 +23,10 @@ thiserror = "2"
 regex = "1"
 dirs = "6"
 base64 = "0.22"
+anyhow = "1"
+uuid = { version = "1", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+ureq = { version = "2.12", features = ["json"] }
+sha2 = "0.10"
 reqwest = { version = "0.12", default-features = false, features = ["json", "blocking", "rustls-tls"] }

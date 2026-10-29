@@ -10,10 +10,23 @@
     <div id="app">
       <nav class="top-tabs" id="top-tabs">
         <img src="/app-icon.png" alt="" class="top-app-icon" width="56" height="56" />
-        <span class="top-title">Overview</span>
+        <button type="button" class="top-tab active" data-tab="overview">Overview</button>
+        <button type="button" class="top-tab" data-tab="adware">Adware Cleaner</button>
+        <button type="button" class="top-tab" data-tab="autobackup">AutoBackup</button>
+        <button type="button" class="top-tab" data-tab="pricecreator">PriceCreator</button>
+        <button type="button" class="top-tab" data-tab="gphotos">Google Foto</button>
+        <div class="top-trailing">
+          <button type="button" id="btn-app-settings" class="top-settings" title="Impostazioni" aria-label="Impostazioni">⚙</button>
+          <select id="shared-device" class="shared-device hidden" aria-label="Telefono"></select>
+          <div class="top-device" id="top-device">
+            <span id="top-device-label" class="top-device-label hidden"></span>
+            <button type="button" id="btn-retry-connection-global" class="btn btn-primary">Riprova Connessione</button>
+          </div>
+        </div>
       </nav>
 
       <main class="content" id="content">
+        <section id="tab-overview" class="tab-panel" data-tab-panel="overview">
           <p id="app-toast" class="app-toast hidden" role="alert"></p>
           <section id="screen-empty" class="screen-empty">
             <div class="empty-icon" aria-hidden="true">📱</div>
@@ -22,11 +35,6 @@
           </section>
 
           <section id="screen-dashboard" class="screen-dashboard hidden">
-            <div class="dashboard-header">
-              <h1 id="device-name">—</h1>
-              <p id="device-subtitle" class="muted"></p>
-            </div>
-
             <div class="dashboard-grid">
               <div class="card device-visual">
                 <div class="phone-shell" id="phone-shell">
@@ -98,59 +106,87 @@
               </div>
             </div>
           </section>
-        </main>
-
-      <footer class="quick-actions" id="quick-actions">
-        <button type="button" class="quick-action" data-action="backup" id="qa-backup">
-          <span class="qa-icon-wrap">
-            <span class="qa-icon" aria-hidden="true">📦</span>
-            <span class="qa-badge qa-badge--download hidden" id="badge-backup" aria-hidden="true" title="Aggiornamento disponibile">
-              <svg viewBox="0 0 16 16" fill="none"><path d="M8 2v7M8 9l3-3M8 9L5 6M3 11v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <span class="qa-badge qa-badge--progress hidden" id="progress-backup" aria-hidden="true">
-              <svg viewBox="0 0 20 20"><circle class="qa-progress-track" cx="10" cy="10" r="8" fill="none" stroke-width="2.5"/><circle class="qa-progress-arc" cx="10" cy="10" r="8" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="50.27" stroke-dashoffset="50.27"/></svg>
-            </span>
-          </span>
-          <span>AutoBackup</span>
-        </button>
-        <button type="button" class="quick-action" data-action="app-manager" id="qa-app-manager">
-          <span class="qa-icon-wrap">
-            <span class="qa-icon" aria-hidden="true">🛡</span>
-            <span class="qa-badge qa-badge--download hidden" id="badge-app-manager" aria-hidden="true" title="Aggiornamento disponibile">
-              <svg viewBox="0 0 16 16" fill="none"><path d="M8 2v7M8 9l3-3M8 9L5 6M3 11v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <span class="qa-badge qa-badge--progress hidden" id="progress-app-manager" aria-hidden="true">
-              <svg viewBox="0 0 20 20"><circle class="qa-progress-track" cx="10" cy="10" r="8" fill="none" stroke-width="2.5"/><circle class="qa-progress-arc" cx="10" cy="10" r="8" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="50.27" stroke-dashoffset="50.27"/></svg>
-            </span>
-          </span>
-          <span>AndroidAdwareCleaner</span>
-        </button>
-        <button type="button" class="quick-action" data-action="google-foto-manager" id="qa-google-foto-manager">
-          <span class="qa-icon-wrap">
-            <span class="qa-icon" aria-hidden="true">📷</span>
-            <span class="qa-badge qa-badge--download hidden" id="badge-google-foto-manager" aria-hidden="true" title="Aggiornamento disponibile">
-              <svg viewBox="0 0 16 16" fill="none"><path d="M8 2v7M8 9l3-3M8 9L5 6M3 11v1a1 1 0 001 1h8a1 1 0 001-1v-1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <span class="qa-badge qa-badge--progress hidden" id="progress-google-foto-manager" aria-hidden="true">
-              <svg viewBox="0 0 20 20"><circle class="qa-progress-track" cx="10" cy="10" r="8" fill="none" stroke-width="2.5"/><circle class="qa-progress-arc" cx="10" cy="10" r="8" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="50.27" stroke-dashoffset="50.27"/></svg>
-            </span>
-          </span>
-          <span>GoogleFotoManager</span>
-        </button>
-      </footer>
-
-      <footer class="footer">
-        <label class="footer-check">
-          <input type="checkbox" id="hide-serial" />
-          Hide Serial / IMEI
-        </label>
-        <button type="button" id="btn-check-update" class="footer-link">Cerca aggiornamenti</button>
-        <button type="button" id="btn-update-battery-db" class="footer-link" title="Scarica capacità batteria dalle schede tecniche">Aggiorna DB batterie</button>
-        <span id="app-version">4uTools</span>
-      </footer>
+        </section>
+        <section id="tab-adware" class="tab-panel tab-adware hidden" data-tab-panel="adware"></section>
+        <section id="tab-autobackup" class="tab-panel tab-autobackup hidden" data-tab-panel="autobackup"></section>
+        <section id="tab-pricecreator" class="tab-panel tab-pricecreator hidden" data-tab-panel="pricecreator"></section>
+        <section id="tab-gphotos" class="tab-panel tab-gphotos hidden" data-tab-panel="gphotos">
+          <div class="gphotos-layout">
+            <div id="gphotos-host" class="gphotos-host"></div>
+            <aside id="gphotos-panel" class="gphotos-panel"></aside>
+          </div>
+          <div id="gphotos-tutorial" class="gphotos-tutorial hidden">
+            <div id="tutorial-spotlight" class="tutorial-spotlight hidden"></div>
+            <div id="tutorial-card" class="tutorial-card">
+              <p id="tutorial-step" class="tutorial-step"></p>
+              <p id="tutorial-text" class="tutorial-text"></p>
+              <label class="tutorial-dismiss">
+                <input type="checkbox" id="tutorial-dismiss" />
+                Non mostrare più al prossimo avvio
+              </label>
+              <div class="tutorial-actions">
+                <button id="tutorial-skip" type="button" class="secondary">Salta tutorial</button>
+                <button id="tutorial-next" type="button">Inizia</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
 
-    <dialog id="modal-device" class="modal">
+    <dialog id="dialog-settings" class="modal">
+      <div class="modal-inner modal-settings">
+        <header class="modal-header">
+          <h2>Impostazioni</h2>
+          <button type="button" class="modal-close" id="btn-settings-close">×</button>
+        </header>
+        <div class="modal-body">
+          <section class="settings-section">
+            <h3>Generali</h3>
+            <label class="footer-check">
+              <input type="checkbox" id="hide-serial" />
+              Nascondi Serial / IMEI
+            </label>
+            <label class="footer-check">
+              <input type="checkbox" id="gphotos-show-log" />
+              Mostra log di Google Foto
+            </label>
+            <div class="settings-actions">
+              <button type="button" id="btn-check-update" class="btn">Cerca aggiornamenti</button>
+              <button type="button" id="btn-update-battery-db" class="btn" title="Scarica capacità batteria dalle schede tecniche">Aggiorna DB batterie</button>
+            </div>
+            <p id="settings-app-version" class="settings-status muted">Versione: …</p>
+          </section>
+          <section class="settings-section">
+            <h3>Sincronizzazione database</h3>
+            <p class="settings-hint muted">
+              Il database reputazione viene salvato come <code>reputation-sync.json</code> in una cartella
+              sincronizzata dal client cloud installato sul PC (non serve login nell'app).
+            </p>
+            <div id="settings-providers" class="settings-providers"></div>
+            <div id="settings-custom-path" class="settings-custom hidden">
+              <label class="settings-path-label">
+                Cartella
+                <input id="settings-folder-input" type="text" readonly placeholder="Nessuna cartella selezionata" />
+              </label>
+              <button id="btn-settings-browse" type="button" class="btn">Sfoglia…</button>
+            </div>
+            <div id="settings-supabase" class="settings-custom hidden">
+              <label class="settings-path-label">
+                URL del progetto
+                <input id="settings-supabase-url" type="text" autocomplete="off" placeholder="https://….supabase.co" />
+              </label>
+              <label class="settings-path-label">
+                Chiave publishable
+                <input id="settings-supabase-key" type="password" autocomplete="off" placeholder="sb_publishable_…" />
+              </label>
+              <button id="btn-settings-supabase" type="button" class="btn">Collega</button>
+            </div>
+            <p id="settings-sync-status" class="settings-status muted"></p>
+          </section>
+        </div>
+      </div>
+    </dialog>
       <div class="modal-inner">
         <header class="modal-header">
           <h2>Device Details</h2>

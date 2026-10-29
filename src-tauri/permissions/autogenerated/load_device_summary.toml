@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-load-device-summary"
+description = "Enables the load_device_summary command without any pre-configured scope."
+commands.allow = ["load_device_summary"]
+
+[[permission]]
+identifier = "deny-load-device-summary"
+description = "Denies the load_device_summary command without any pre-configured scope."
+commands.deny = ["load_device_summary"]

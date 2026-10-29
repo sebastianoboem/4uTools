@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-bulk-uninstall"
+description = "Enables the adware_bulk_uninstall command without any pre-configured scope."
+commands.allow = ["adware_bulk_uninstall"]
+
+[[permission]]
+identifier = "deny-adware-bulk-uninstall"
+description = "Denies the adware_bulk_uninstall command without any pre-configured scope."
+commands.deny = ["adware_bulk_uninstall"]

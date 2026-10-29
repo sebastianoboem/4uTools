@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-adware-restore-packages"
+description = "Enables the adware_restore_packages command without any pre-configured scope."
+commands.allow = ["adware_restore_packages"]
+
+[[permission]]
+identifier = "deny-adware-restore-packages"
+description = "Denies the adware_restore_packages command without any pre-configured scope."
+commands.deny = ["adware_restore_packages"]

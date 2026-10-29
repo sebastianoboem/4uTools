@@ -5,10 +5,6 @@ use device_info::DeviceSummary;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 
-pub mod app_manager;
-pub mod autobackup;
-pub mod google_foto_manager;
-
 #[derive(Debug, Serialize)]
 pub struct AdbStatus {
     pub adb_path: Option<String>,
@@ -78,11 +74,6 @@ pub fn mirror_tap(
     let tx = ((x / display_width) * device_width as f64).round() as i32;
     let ty = ((y / display_height) * device_height as f64).round() as i32;
     mirror::mirror_tap(&serial, tx, ty)
-}
-
-#[tauri::command(rename_all = "snake_case")]
-pub fn battery_catalog_status(app: AppHandle) -> Result<BatteryCatalogStatus, String> {
-    battery_catalog_sync::catalog_status(&app)
 }
 
 #[tauri::command(rename_all = "snake_case")]

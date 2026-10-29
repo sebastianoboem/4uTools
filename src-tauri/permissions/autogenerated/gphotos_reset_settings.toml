@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-gphotos-reset-settings"
+description = "Enables the gphotos_reset_settings command without any pre-configured scope."
+commands.allow = ["gphotos_reset_settings"]
+
+[[permission]]
+identifier = "deny-gphotos-reset-settings"
+description = "Denies the gphotos_reset_settings command without any pre-configured scope."
+commands.deny = ["gphotos_reset_settings"]
