@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "adb-bridge"
-version = "2.8.6"
+version = "2.8.7"
 dependencies = [
  "anyhow",
  "dirs",
@@ -258,7 +258,7 @@ checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
 
 [[package]]
 name = "autobackup-core"
-version = "2.8.6"
+version = "2.8.7"
 dependencies = [
  "adb-bridge",
  "dirs",
@@ -635,7 +635,7 @@ dependencies = [
 
 [[package]]
 name = "cloud-sync"
-version = "2.8.6"
+version = "2.8.7"
 dependencies = [
  "chrono",
  "reputation-db",
@@ -976,7 +976,7 @@ dependencies = [
 
 [[package]]
 name = "device-info"
-version = "2.8.6"
+version = "2.8.7"
 dependencies = [
  "adb-bridge",
  "regex",
@@ -1364,7 +1364,7 @@ dependencies = [
 
 [[package]]
 name = "fourutools"
-version = "2.8.6"
+version = "2.8.7"
 dependencies = [
  "adb-bridge",
  "autobackup-core",
@@ -2992,7 +2992,7 @@ dependencies = [
 
 [[package]]
 name = "package-scanner"
-version = "2.8.6"
+version = "2.8.7"
 dependencies = [
  "adb-bridge",
  "axmldecoder",
@@ -3514,7 +3514,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "reputation-db"
-version = "2.8.6"
+version = "2.8.7"
 dependencies = [
  "chrono",
  "rusqlite",
@@ -4376,7 +4376,7 @@ dependencies = [
 
 [[package]]
 name = "system-setup"
-version = "2.8.6"
+version = "2.8.7"
 dependencies = [
  "adb-bridge",
  "serde",
@@ -5321,7 +5321,7 @@ checksum = "c6f5d3c3b1bf09027a88a6bc961fc00497d651009560b5463668dc81b0fa87a8"
 
 [[package]]
 name = "uninstall-engine"
-version = "2.8.6"
+version = "2.8.7"
 dependencies = [
  "adb-bridge",
  "serde",
