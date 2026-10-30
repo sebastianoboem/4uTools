@@ -60,25 +60,59 @@ as $$
     where flag_votes.voted_at < excluded.voted_at
 $$;
 
-create view package_stats with (security_invoker = false) as
+revoke execute on function push_uninstalls(jsonb), push_votes(jsonb) from public, anon;
+grant execute on function push_uninstalls(jsonb), push_votes(jsonb) to authenticated;
+
+create schema private;
+revoke all on schema private from public, anon, authenticated;
+
+create function private.refresh_package_stats(p_package_name text) returns void
+  language plpgsql security definer set search_path = public
+as $$
+begin
+  insert into public.package_stats (
+    package_name, uninstall_count, system_votes, trusted_votes, suspicious_votes
+  )
   select p.package_name,
-    coalesce(u.n, 0) as uninstall_count,
-    count(distinct v.phone_hash) filter (where v.flag = 'system')     as system_votes,
-    count(distinct v.phone_hash) filter (where v.flag = 'trusted')    as trusted_votes,
-    count(distinct v.phone_hash) filter (where v.flag = 'suspicious') as suspicious_votes
-  from (select package_name from flag_votes union select package_name from uninstall_events) p
-  left join flag_votes v using (package_name)
+    coalesce(u.n, 0),
+    count(distinct v.phone_hash) filter (where v.flag = 'system'),
+    count(distinct v.phone_hash) filter (where v.flag = 'trusted'),
+    count(distinct v.phone_hash) filter (where v.flag = 'suspicious')
+  from (
+    select package_name from flag_votes where package_name = p_package_name
+    union
+    select package_name from uninstall_events where package_name = p_package_name
+  ) p
+  left join flag_votes v on v.package_name = p.package_name
   left join (
     select package_name, count(*) n
     from uninstall_events
-    where success
+    where success and package_name = p_package_name
     group by 1
-  ) u using (package_name)
-  group by p.package_name, u.n;
+  ) u on u.package_name = p.package_name
+  group by p.package_name, u.n
+  on conflict (package_name) do update set
+    uninstall_count = excluded.uninstall_count,
+    system_votes = excluded.system_votes,
+    trusted_votes = excluded.trusted_votes,
+    suspicious_votes = excluded.suspicious_votes;
+end $$;
 
-revoke execute on function push_uninstalls(jsonb), push_votes(jsonb) from public, anon;
-grant execute on function push_uninstalls(jsonb), push_votes(jsonb) to authenticated;
-grant select on package_stats to authenticated;
+revoke all on function private.refresh_package_stats(text) from public, anon, authenticated;
+
+create table package_stats (
+  package_name text primary key,
+  uninstall_count bigint not null,
+  system_votes bigint not null,
+  trusted_votes bigint not null,
+  suspicious_votes bigint not null
+);
+alter table package_stats enable row level security;
+create policy package_stats_read on package_stats
+  for select to authenticated using (true);
+revoke all on table package_stats from public, anon, authenticated;
+grant select on table package_stats to authenticated;
+revoke select on table flag_votes, uninstall_events from anon, authenticated;
 
 -- I client si iscrivono solo a questa tabella. Poi rileggono package_stats.
 create table package_signals (
@@ -94,6 +128,7 @@ create function touch_package_signal() returns trigger
   language plpgsql security definer set search_path = public
 as $$
 begin
+  perform private.refresh_package_stats(new.package_name);
   insert into package_signals (package_name) values (new.package_name)
   on conflict (package_name) do update set changed_at = now();
   return new;

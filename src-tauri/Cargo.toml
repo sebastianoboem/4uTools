@@ -1,6 +1,6 @@
 [package]
 name = "fourutools"
-version = "2.8.7"
+version = "2.8.8"
 description = "Android device management suite"
 authors = ["ilpano"]
 edition = "2021"
