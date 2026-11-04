@@ -9,6 +9,10 @@ use super::state::{
 
 const ENGINE_JS: &str = include_str!("../../gen-assets/gfm-engine.js");
 const PHOTOS_URL: &str = "https://photos.google.com/";
+const PHOTOS_LIBRARY_URL: &str = "https://photos.google.com/u/0?hl=it&pli=1";
+/// Must match the identifier passed to `data_store_identifier` below.
+#[cfg(target_os = "macos")]
+pub(super) const PHOTOS_DATA_STORE_ID: [u8; 16] = *b"4uTools-gphotos!";
 
 fn allow_navigation(url: &Url) -> bool {
     if !matches!(url.scheme(), "https" | "http") {
@@ -26,8 +30,23 @@ fn allow_navigation(url: &Url) -> bool {
 }
 
 pub fn reload_photos(app: &AppHandle) -> Result<(), String> {
+    reload_photos_url(app, PHOTOS_URL)
+}
+
+pub fn reload_photos_after_login(app: &AppHandle) -> Result<(), String> {
+    // Cache-bust so WKWebView always loads with the freshly imported cookies.
+    let cb = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    let target = format!("{PHOTOS_LIBRARY_URL}&_gfm={cb}");
+    reload_photos_url(app, &target)?;
+    show_photos(app, true)
+}
+
+fn reload_photos_url(app: &AppHandle, raw: &str) -> Result<(), String> {
     let webview = photos(app)?;
-    let url = PHOTOS_URL.parse::<Url>().map_err(|e| e.to_string())?;
+    let url = raw.parse::<Url>().map_err(|e| e.to_string())?;
     webview.navigate(url).map_err(|e| e.to_string())
 }
 
@@ -93,18 +112,20 @@ fn download_payload(ok: bool, step: Option<&str>) -> serde_json::Value {
     })
 }
 
-pub fn open_photos(app: &AppHandle, x: f64, y: f64, width: f64, height: f64) -> Result<(), String> {
+/// Returns true when the child webview was created in this call.
+pub fn open_photos(app: &AppHandle, x: f64, y: f64, width: f64, height: f64) -> Result<bool, String> {
     if app.get_webview(WEBVIEW_LABEL).is_some() {
         set_bounds(app, x, y, width, height)?;
         let _ = show_photos(app, true);
-        return Ok(());
+        return Ok(false);
     }
     let window = app
         .get_window("main")
         .ok_or_else(|| "Finestra principale assente.".to_string())?;
     let handle = app.clone();
     let download_handle = app.clone();
-    let url = PHOTOS_URL.parse::<Url>().map_err(|e| e.to_string())?;
+    // about:blank first; restore_session_on_open decides cookies then navigates.
+    let url = "about:blank".parse::<Url>().map_err(|e| e.to_string())?;
     let mut builder = tauri::webview::WebviewBuilder::new(WEBVIEW_LABEL, WebviewUrl::External(url))
         .initialization_script(ENGINE_JS)
         .on_navigation(allow_navigation)
@@ -137,7 +158,7 @@ pub fn open_photos(app: &AppHandle, x: f64, y: f64, width: f64, height: f64) -> 
 
     #[cfg(target_os = "macos")]
     {
-        builder = builder.data_store_identifier(*b"4uTools-gphotos!");
+        builder = builder.data_store_identifier(PHOTOS_DATA_STORE_ID);
     }
     #[cfg(not(target_os = "macos"))]
     {
@@ -154,7 +175,7 @@ pub fn open_photos(app: &AppHandle, x: f64, y: f64, width: f64, height: f64) -> 
         )
         .map_err(|e| e.to_string())?;
     let _ = apply_zoom(app, current_zoom(app).factor);
-    Ok(())
+    Ok(true)
 }
 
 pub fn set_bounds(app: &AppHandle, x: f64, y: f64, width: f64, height: f64) -> Result<(), String> {

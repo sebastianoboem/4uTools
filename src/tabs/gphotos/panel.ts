@@ -252,12 +252,21 @@ function bindButtons(): void {
         const result = await api.chromeLogin()
         if (!result.ok) {
           showError(result.message ?? 'Login non riuscito.')
+          statusState.textContent = 'Inattivo'
         } else {
-          pageStatus = (await api.getPageStatus()) ?? pageStatus
+          statusState.textContent = 'Sessione importata'
+          await refreshProfiles()
+          // Reload after import cancels in-flight webview eval; page-status arrives on load.
+          try {
+            pageStatus = (await api.getPageStatus()) ?? pageStatus
+          } catch {
+            /* ignore "valutazione interrotta" during navigation */
+          }
           updatePageUi()
         }
       } catch (err) {
-        showError(err instanceof Error ? err.message : 'Errore login Chrome.')
+        statusState.textContent = 'Inattivo'
+        showError(err instanceof Error ? err.message : String(err))
       } finally {
         btnChromeLogin.disabled = false
       }

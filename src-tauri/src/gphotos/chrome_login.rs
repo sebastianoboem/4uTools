@@ -4,13 +4,19 @@ use std::time::{Duration, Instant};
 use chromiumoxide::browser::{Browser, BrowserConfig};
 use chromiumoxide::cdp::browser_protocol::network::CookieSameSite;
 use futures_util::StreamExt;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use super::profiles::{apply_stored_cookies, StoredCookie};
 use super::state::push_log;
-use super::webview::reload_photos;
+use super::webview::reload_photos_after_login;
 
-const PHOTOS_URL: &str = "https://photos.google.com/";
+const LOGIN_URL: &str = concat!(
+    "https://accounts.google.com/v3/signin/identifier",
+    "?continue=https%3A%2F%2Fphotos.google.com%2Fu%2F0%3Fhl%3Dit%26pli%3D1",
+    "&followup=https%3A%2F%2Fphotos.google.com%2Fu%2F0%3Fhl%3Dit%26pli%3D1",
+    "&hl=it&osid=1&passive=1209600&service=lh2",
+    "&flowName=GlifWebSignIn&flowEntry=ServiceLogin"
+);
 
 fn browser_candidates() -> Vec<(&'static str, PathBuf)> {
     let mut paths = Vec::new();
@@ -74,14 +80,24 @@ fn same_site_label(value: Option<CookieSameSite>) -> Option<String> {
     }
 }
 
+fn login_window_size(app: &AppHandle) -> (u32, u32) {
+    app.get_window("main")
+        .and_then(|window| window.outer_size().ok())
+        .map(|size| (size.width.max(800), size.height.max(600)))
+        .unwrap_or((1200, 880))
+}
+
 pub async fn run_chrome_login(app: &AppHandle) -> Result<usize, String> {
     let (display, executable) = resolve_browser()?;
     let dir = std::env::temp_dir().join(format!("gfm-login-{}", uuid::Uuid::new_v4()));
     std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let (width, height) = login_window_size(app);
     let config = BrowserConfig::builder()
         .chrome_executable(&executable)
         .with_head()
         .user_data_dir(&dir)
+        .window_size(width, height)
+        .viewport(None)
         .disable_default_args()
         .arg("--disable-blink-features=AutomationControlled")
         .arg("--no-first-run")
@@ -115,7 +131,7 @@ pub async fn run_chrome_login(app: &AppHandle) -> Result<usize, String> {
     let _ = browser.kill().await;
     let _ = std::fs::remove_dir_all(&dir);
     let count = result?;
-    reload_photos(app)?;
+    reload_photos_after_login(app)?;
     Ok(count)
 }
 
@@ -133,7 +149,7 @@ async fn login_session(
             "Object.defineProperty(navigator, 'webdriver', { get: () => undefined })",
         )
         .await;
-    page.goto(PHOTOS_URL).await.map_err(|e| e.to_string())?;
+    page.goto(LOGIN_URL).await.map_err(|e| e.to_string())?;
     let hint = format!("Accedi al tuo account Google in {display}, poi torna qui.");
     let _ = app.emit("gphotos-login", serde_json::json!({ "message": hint }));
 
@@ -183,19 +199,33 @@ async fn login_session(
     let cookies: Vec<StoredCookie> = raw
         .into_iter()
         .filter(|cookie| !cookie.domain.contains("usercontent.google.com"))
-        .map(|cookie| StoredCookie {
-            name: cookie.name,
-            value: cookie.value,
-            domain: Some(cookie.domain),
-            path: Some(cookie.path),
-            secure: Some(cookie.secure),
-            http_only: Some(cookie.http_only),
-            expiration_date: if cookie.expires > 0.0 {
-                Some(cookie.expires)
-            } else {
-                None
-            },
-            same_site: same_site_label(cookie.same_site),
+        .map(|cookie| {
+            let same_site = same_site_label(cookie.same_site).or_else(|| {
+                if cookie.name.starts_with("__Secure-")
+                    || matches!(
+                        cookie.name.as_str(),
+                        "SAPISID" | "APISID" | "__Secure-1PAPISID" | "__Secure-3PAPISID"
+                    )
+                {
+                    Some("no_restriction".into())
+                } else {
+                    Some("lax".into())
+                }
+            });
+            StoredCookie {
+                name: cookie.name,
+                value: cookie.value,
+                domain: Some(cookie.domain),
+                path: Some(cookie.path),
+                secure: Some(cookie.secure),
+                http_only: Some(cookie.http_only),
+                expiration_date: if cookie.expires > 0.0 {
+                    Some(cookie.expires)
+                } else {
+                    None
+                },
+                same_site,
+            }
         })
         .collect();
     if cookies.is_empty() {
@@ -203,5 +233,10 @@ async fn login_session(
             "Nessun cookie importato. Verifica di essere loggato in {display}."
         ));
     }
-    apply_stored_cookies(app, &cookies)
+    // Do not clear here: open/exit already wipe temporary sessions, and a clear
+    // racing set_cookie was wiping the jar mid-import.
+    let imported = apply_stored_cookies(app, &cookies).await?;
+    // Keep Chrome login temporary until the user presses «Salva sessione».
+    super::profiles::mark_session_temporary(app)?;
+    Ok(imported)
 }

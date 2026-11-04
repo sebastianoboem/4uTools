@@ -1,5 +1,7 @@
 mod chrome_login;
 mod engine;
+#[cfg(target_os = "macos")]
+mod macos_datastore;
 mod profiles;
 mod settings;
 mod state;
@@ -12,12 +14,23 @@ use state::{EngineEvent, ZoomState};
 
 pub use state::GphotosState;
 
+pub fn clear_temporary_session_data(app: &AppHandle) {
+    profiles::clear_temporary_browsing_data(app);
+}
+
 #[tauri::command]
 pub async fn gphotos_open(app: AppHandle, x: f64, y: f64, width: f64, height: f64) -> Result<(), String> {
     // add_child waits on the UI thread. Calling it from the UI thread never returns.
-    tauri::async_runtime::spawn_blocking(move || webview::open_photos(&app, x, y, width, height))
-        .await
-        .map_err(|e| e.to_string())?
+    let created = tauri::async_runtime::spawn_blocking({
+        let app = app.clone();
+        move || webview::open_photos(&app, x, y, width, height)
+    })
+    .await
+    .map_err(|e| e.to_string())??;
+    if created {
+        profiles::restore_session_on_open(&app).await?;
+    }
+    Ok(())
 }
 
 #[tauri::command]

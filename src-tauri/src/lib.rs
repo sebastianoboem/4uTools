@@ -138,6 +138,7 @@ pub fn run() {
                 window.on_window_event(move |event| {
                     if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                         if adware::commands::close_allowed() {
+                            gphotos::clear_temporary_session_data(&emit_handle);
                             return;
                         }
                         api.prevent_close();

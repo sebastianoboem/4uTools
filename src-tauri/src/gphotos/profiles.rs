@@ -137,9 +137,14 @@ fn same_site_to(value: Option<SameSite>) -> Option<String> {
 
 fn to_runtime_cookie(cookie: &StoredCookie) -> Cookie<'static> {
     let mut built = Cookie::new(cookie.name.clone(), cookie.value.clone());
+    // __Host- cookies are host-only (no Domain attribute). All other Google auth
+    // cookies (incl. __Secure-*) must be domain cookies: without a leading dot,
+    // NSHTTPCookie treats them as host-only for `google.com` and they are NOT
+    // sent to `photos.google.com` — login appears imported but the pane stays
+    // on accounts.google.com /photos/about.
     if !cookie.name.starts_with("__Host-") {
         if let Some(domain) = cookie.domain.as_deref() {
-            let domain = if domain.starts_with('.') || cookie.name.starts_with("__Secure-") {
+            let domain = if domain.starts_with('.') {
                 domain.to_string()
             } else if domain.contains('.') {
                 format!(".{domain}")
@@ -235,19 +240,90 @@ pub async fn snapshot_cookies(app: &tauri::AppHandle) -> Result<Vec<StoredCookie
     Ok(cookies.iter().filter_map(from_runtime_cookie).collect())
 }
 
-pub fn apply_stored_cookies(app: &tauri::AppHandle, cookies: &[StoredCookie]) -> Result<usize, String> {
-    let webview = photos(app)?;
-    let mut imported = 0;
-    for cookie in cookies {
-        if skip_domain(cookie.domain.as_deref()) {
-            continue;
-        }
-        let built = to_runtime_cookie(cookie);
-        if webview.set_cookie(built).is_ok() {
-            imported += 1;
-        }
+pub async fn apply_stored_cookies(
+    app: &tauri::AppHandle,
+    cookies: &[StoredCookie],
+) -> Result<usize, String> {
+    let built: Vec<_> = cookies
+        .iter()
+        .filter(|cookie| !skip_domain(cookie.domain.as_deref()))
+        .map(to_runtime_cookie)
+        .collect();
+    #[cfg(target_os = "macos")]
+    {
+        return super::macos_datastore::apply_cookies(app, built).await;
     }
-    Ok(imported)
+    #[cfg(not(target_os = "macos"))]
+    {
+        let webview = photos(app)?;
+        let mut imported = 0;
+        for cookie in built {
+            if webview.set_cookie(cookie).is_ok() {
+                imported += 1;
+            }
+        }
+        Ok(imported)
+    }
+}
+
+async fn wipe_browsing_data(app: &tauri::AppHandle) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    {
+        super::macos_datastore::clear_all(app).await
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let webview = photos(app)?;
+        webview.clear_all_browsing_data().map_err(|e| e.to_string())
+    }
+}
+
+/// Chrome login and "Temporanea" must not survive app restarts.
+pub fn mark_session_temporary(app: &tauri::AppHandle) -> Result<(), String> {
+    let state = app.state::<GphotosState>();
+    let mut store = load_store(&state);
+    if store.active_profile_id.take().is_none() {
+        return Ok(());
+    }
+    save_store(&state, &store)
+}
+
+/// On webview creation: wipe disk cookies unless a saved profile is active.
+pub async fn restore_session_on_open(app: &tauri::AppHandle) -> Result<(), String> {
+    let state = app.state::<GphotosState>();
+    let mut store = load_store(&state);
+    wipe_browsing_data(app).await?;
+
+    if let Some(id) = store.active_profile_id.clone() {
+        let cookies = load_cookies(&state, &id);
+        if auth_count(&cookies) < 3 {
+            store.active_profile_id = None;
+            save_store(&state, &store)?;
+            reload_photos(app)?;
+            return Ok(());
+        }
+        apply_stored_cookies(app, &cookies).await?;
+        let storage = load_storage(&state, &id);
+        write_storage(app, &storage).await?;
+    }
+
+    reload_photos(app)?;
+    Ok(())
+}
+
+pub fn clear_temporary_browsing_data(app: &tauri::AppHandle) {
+    let state = app.state::<GphotosState>();
+    if load_store(&state).active_profile_id.is_some() {
+        return;
+    }
+    #[cfg(target_os = "macos")]
+    {
+        super::macos_datastore::clear_all_fire_and_forget(app);
+    }
+    #[cfg(not(target_os = "macos"))]
+    if let Ok(webview) = photos(app) {
+        let _ = webview.clear_all_browsing_data();
+    }
 }
 
 pub async fn save_named_profile(app: &tauri::AppHandle, name: &str) -> Result<ProfileStoreData, String> {
@@ -320,10 +396,9 @@ pub async fn switch_profile(app: &tauri::AppHandle, profile_id: Option<String>) 
         .as_deref()
         .map(|id| load_storage(&state, id))
         .unwrap_or_default();
-    let webview = photos(app)?;
-    webview.clear_all_browsing_data().map_err(|e| e.to_string())?;
+    wipe_browsing_data(app).await?;
     if profile_id.is_some() {
-        apply_stored_cookies(app, &cookies)?;
+        apply_stored_cookies(app, &cookies).await?;
         write_storage(app, &storage).await?;
     }
     store.active_profile_id = profile_id;
