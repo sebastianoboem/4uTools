@@ -2,12 +2,12 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { initOverview } from "./tabs/overview.ts";
 
-type TabId = "overview" | "adware" | "autobackup" | "pricecreator" | "gphotos";
+type TabId = "overview" | "adware" | "autobackup" | "pricecreator" | "gphotos" | "ordini";
 
 const mounted = new Set<TabId>();
 
 function isTab(id: string | undefined): id is TabId {
-  return id === "overview" || id === "adware" || id === "autobackup" || id === "pricecreator" || id === "gphotos";
+  return id === "overview" || id === "adware" || id === "autobackup" || id === "pricecreator" || id === "gphotos" || id === "ordini";
 }
 
 async function ensureTab(id: TabId) {
@@ -24,6 +24,9 @@ async function ensureTab(id: TabId) {
   } else if (id === "gphotos") {
     const mod = await import("./tabs/gphotos/main.ts");
     await mod.mountGphotos(document.getElementById("tab-gphotos")!);
+  } else if (id === "ordini") {
+    const mod = await import("./tabs/ordini/mount.tsx");
+    mod.mountOrdini(document.getElementById("tab-ordini")!);
   } else {
     const _never: never = id;
     return _never;
