@@ -1,6 +1,7 @@
 import { appDataDir, join } from "@tauri-apps/api/path";
 import { exists, mkdir, readFile, readTextFile, writeFile } from "@tauri-apps/plugin-fs";
 import { MESSAGGIO_DEFAULT, FORNITORI_INIZIALI, STATI, TIPI_COVER, messaggioAttuale, type ArchivioOrdini, type FornitoreSalvato, type Ordine, type StatoOrdine, type TipoCover } from "./model";
+import { conIconaFornitore, senzaIconaPredefinita } from "./icone";
 
 async function percorsi() {
   const dir = await join(await appDataDir(), "ordini");
@@ -27,11 +28,11 @@ function normalizza(ordine: Omit<Ordine, "stato"> & { coverLibro?: boolean; fase
 }
 
 function normalizzaFornitore(voce: FornitoreSalvato): FornitoreSalvato {
-  return { id: voce.id, nome: voce.nome?.trim() || voce.id, immagine: voce.immagine ?? "" };
+  return conIconaFornitore({ id: voce.id, nome: voce.nome?.trim() || voce.id, immagine: voce.immagine ?? "" });
 }
 
 function archivioVuoto(): ArchivioOrdini {
-  return { messaggioWhatsapp: MESSAGGIO_DEFAULT, fornitori: FORNITORI_INIZIALI, ordini: [] };
+  return { messaggioWhatsapp: MESSAGGIO_DEFAULT, fornitori: FORNITORI_INIZIALI.map(conIconaFornitore), ordini: [] };
 }
 
 export async function cartellaDati(): Promise<string> {
@@ -56,7 +57,10 @@ export async function carica(): Promise<ArchivioOrdini> {
 export async function salva(archivio: ArchivioOrdini): Promise<void> {
   const { file } = await percorsi();
   await cartellaDati();
-  await writeFile(file, new TextEncoder().encode(JSON.stringify(archivio, null, 2)));
+  await writeFile(file, new TextEncoder().encode(JSON.stringify({
+    ...archivio,
+    fornitori: archivio.fornitori.map(senzaIconaPredefinita),
+  }, null, 2)));
 }
 
 export async function backup(): Promise<string> {
