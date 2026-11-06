@@ -96,7 +96,13 @@ export function euro(n: number): string {
 }
 
 export function parseEuro(testo: string): number {
-  const n = Number(testo.trim().replace(/\s/g, "").replace(/\./g, "").replace(",", "."));
+  const pulito = testo.trim().replace(/\s/g, "");
+  const decimale = pulito.includes(",")
+    ? pulito.replace(/\./g, "").replace(",", ".")
+    : /^\d+\.\d{1,2}$/.test(pulito)
+      ? pulito
+      : pulito.replace(/\./g, "");
+  const n = Number(decimale);
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 

@@ -27,22 +27,22 @@ copy() {
 echo "==> Build macOS Apple Silicon (arm64)"
 npm run tauri build -- --target aarch64-apple-darwin
 ARM="$TARGET/aarch64-apple-darwin/release/bundle"
-copy "$ARM/dmg/4uTools_${VERSION}_aarch64.dmg" "$OUT/4uTools_${VERSION}_arm64.dmg"
-copy "$ARM/macos/4uTools.app.tar.gz" "$OUT/4uTools_${VERSION}_aarch64.app.tar.gz"
-copy "$ARM/macos/4uTools.app.tar.gz.sig" "$OUT/4uTools_${VERSION}_aarch64.app.tar.gz.sig"
+copy "$ARM/dmg/DPTools_${VERSION}_aarch64.dmg" "$OUT/DPTools_${VERSION}_arm64.dmg"
+copy "$ARM/macos/DPTools.app.tar.gz" "$OUT/DPTools_${VERSION}_aarch64.app.tar.gz"
+copy "$ARM/macos/DPTools.app.tar.gz.sig" "$OUT/DPTools_${VERSION}_aarch64.app.tar.gz.sig"
 
 echo "==> Build macOS Intel (x64)"
 npm run tauri build -- --target x86_64-apple-darwin
 X64="$TARGET/x86_64-apple-darwin/release/bundle"
-copy "$X64/dmg/4uTools_${VERSION}_x64.dmg" "$OUT/4uTools_${VERSION}_x64.dmg"
-copy "$X64/macos/4uTools.app.tar.gz" "$OUT/4uTools_${VERSION}_x64.app.tar.gz"
-copy "$X64/macos/4uTools.app.tar.gz.sig" "$OUT/4uTools_${VERSION}_x64.app.tar.gz.sig"
+copy "$X64/dmg/DPTools_${VERSION}_x64.dmg" "$OUT/DPTools_${VERSION}_x64.dmg"
+copy "$X64/macos/DPTools.app.tar.gz" "$OUT/DPTools_${VERSION}_x64.app.tar.gz"
+copy "$X64/macos/DPTools.app.tar.gz.sig" "$OUT/DPTools_${VERSION}_x64.app.tar.gz.sig"
 
 echo "==> Build Windows (x64)"
 npm run tauri build -- --runner cargo-xwin --target x86_64-pc-windows-msvc
 WIN="$TARGET/x86_64-pc-windows-msvc/release/bundle"
-copy "$WIN/nsis/4uTools_${VERSION}_x64-setup.exe" "$OUT/4uTools_${VERSION}_x64-setup.exe"
-copy "$WIN/nsis/4uTools_${VERSION}_x64-setup.exe.sig" "$OUT/4uTools_${VERSION}_x64-setup.exe.sig"
+copy "$WIN/nsis/DPTools_${VERSION}_x64-setup.exe" "$OUT/DPTools_${VERSION}_x64-setup.exe"
+copy "$WIN/nsis/DPTools_${VERSION}_x64-setup.exe.sig" "$OUT/DPTools_${VERSION}_x64-setup.exe.sig"
 
 # The unpacked .app, create-dmg helpers, and old installers are intermediates.
 rm -rf "$ARM" "$X64" "$WIN" "$TARGET/release/bundle"

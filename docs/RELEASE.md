@@ -14,7 +14,7 @@ Updater in produzione: **solo GitHub Releases**.
 
 ```json
 "endpoints": [
-  "https://github.com/sebastianoboem/4uTools/releases/latest/download/latest.json"
+  "https://github.com/sebastianoboem/DPTools-releases/releases/latest/download/latest.json"
 ]
 ```
 
@@ -32,9 +32,9 @@ npm run release:build
 
 Con `createUpdaterArtifacts: true` lo script copia in `release/X.Y.Z/` solo gli installer e gli artefatti updater:
 
-- `4uTools_X.Y.Z_arm64.dmg`, `4uTools_X.Y.Z_x64.dmg`
-- `4uTools_X.Y.Z_x64-setup.exe` + `.sig`
-- `4uTools_X.Y.Z_{aarch64,x64}.app.tar.gz` + `.sig`
+- `DPTools_X.Y.Z_arm64.dmg`, `DPTools_X.Y.Z_x64.dmg`
+- `DPTools_X.Y.Z_x64-setup.exe` + `.sig`
+- `DPTools_X.Y.Z_{aarch64,x64}.app.tar.gz` + `.sig`
 
 `.app`, MSI e le copie intermedie in `target/.../bundle/` non vengono tenute. Restano al massimo 3 cartelle di versione; le più vecchie si cancellano da sole.
 
@@ -61,9 +61,9 @@ npm run release:manifest -- \
   --version X.Y.Z \
   --notes "test locale" \
   --base-url http://127.0.0.1:8765 \
-  --darwin-aarch64 release/X.Y.Z/4uTools_X.Y.Z_aarch64.app.tar.gz.sig \
-  --darwin-x86_64 release/X.Y.Z/4uTools_X.Y.Z_x64.app.tar.gz.sig \
-  --windows-x86_64 release/X.Y.Z/4uTools_X.Y.Z_x64-setup.exe.sig
+  --darwin-aarch64 release/X.Y.Z/DPTools_X.Y.Z_aarch64.app.tar.gz.sig \
+  --darwin-x86_64 release/X.Y.Z/DPTools_X.Y.Z_x64.app.tar.gz.sig \
+  --windows-x86_64 release/X.Y.Z/DPTools_X.Y.Z_x64-setup.exe.sig
 cp latest.json release/X.Y.Z/
 ```
 
@@ -92,7 +92,7 @@ Smoke test solo rete:
 
 ```bash
 curl -fsSL http://127.0.0.1:8765/latest.json | head
-curl -L -o /tmp/upd.bin "http://127.0.0.1:8765/4uTools_X.Y.Z_aarch64.app.tar.gz"
+curl -L -o /tmp/upd.bin "http://127.0.0.1:8765/DPTools_X.Y.Z_aarch64.app.tar.gz"
 ```
 
 ---
@@ -109,23 +109,23 @@ Tag: `vX.Y.Z`.
 npm run release:manifest -- \
   --version X.Y.Z \
   --notes "Descrizione release" \
-  --base-url https://github.com/sebastianoboem/4uTools/releases/download/vX.Y.Z \
-  --darwin-aarch64 release/X.Y.Z/4uTools_X.Y.Z_aarch64.app.tar.gz.sig \
-  --darwin-x86_64 release/X.Y.Z/4uTools_X.Y.Z_x64.app.tar.gz.sig \
-  --windows-x86_64 release/X.Y.Z/4uTools_X.Y.Z_x64-setup.exe.sig
+  --base-url https://github.com/sebastianoboem/DPTools-releases/releases/download/vX.Y.Z \
+  --darwin-aarch64 release/X.Y.Z/DPTools_X.Y.Z_aarch64.app.tar.gz.sig \
+  --darwin-x86_64 release/X.Y.Z/DPTools_X.Y.Z_x64.app.tar.gz.sig \
+  --windows-x86_64 release/X.Y.Z/DPTools_X.Y.Z_x64-setup.exe.sig
 ```
 
 4. Allega `latest.json` alla stessa GitHub Release:
 
 ```
-https://github.com/sebastianoboem/4uTools/releases/latest/download/latest.json
+https://github.com/sebastianoboem/DPTools-releases/releases/latest/download/latest.json
 ```
 
 5. Verifica:
 
 ```bash
 curl -fsSL \
-  "https://github.com/sebastianoboem/4uTools/releases/latest/download/latest.json" | head
+  "https://github.com/sebastianoboem/DPTools-releases/releases/latest/download/latest.json" | head
 ```
 
 ---
@@ -138,4 +138,4 @@ curl -fsSL \
 
 ## Tab integrate
 
-Adware Cleaner, AutoBackup, PriceCreator e Google Foto sono dentro 4uTools. L'updater è solo quello di 4uTools.
+Adware Cleaner, AutoBackup, PriceCreator e Google Foto sono dentro DPTools. L'updater è solo quello di DPTools.

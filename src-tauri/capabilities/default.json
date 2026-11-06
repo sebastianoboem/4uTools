@@ -119,6 +119,7 @@
     "allow-gphotos-get-tutorial-completed",
     "allow-gphotos-set-tutorial-completed",
     "allow-gphotos-log-history",
-    "allow-gphotos-log-clear"
+    "allow-gphotos-log-clear",
+    "allow-diagnostica-log"
   ]
 }

@@ -3,6 +3,7 @@ mod adware;
 mod backup;
 mod battery_catalog_sync;
 mod commands;
+mod diagnostica;
 mod gphotos;
 mod migration;
 mod mirror;
@@ -17,6 +18,7 @@ use tokio::sync::Semaphore;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    diagnostica::init();
     adware::dev_log::init();
     if adware::dev_log::ENABLED {
         adb_bridge::set_dev_logger(adware::dev_log::record);
@@ -128,6 +130,7 @@ pub fn run() {
             gphotos::gphotos_set_tutorial_completed,
             gphotos::gphotos_log_history,
             gphotos::gphotos_log_clear,
+            diagnostica::diagnostica_log,
         ])
         .setup(|app| {
             battery_catalog_sync::init_battery_catalog(app.handle());

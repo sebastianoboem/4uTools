@@ -11,6 +11,7 @@ import {
   MESSAGGIO_DEFAULT,
   nomeAutomatico,
   ordineDaBozza,
+  parseEuro,
   ordina,
   toCsv,
   upsert,
@@ -97,6 +98,7 @@ describe("ordini", () => {
     expect(salvato.prezzoTotale).toBe(1234.5);
     expect(etichettaStato(salvato.stato)).toBe("Da ordinare");
     expect(euro(salvato.prezzoTotale)).toBe("1.234,50");
+    expect(parseEuro("12.50")).toBe(12.5);
     const csv = toCsv([salvato]);
     expect(daCsv(csv, [{ id: "amazon", nome: "Amazon", immagine: "" }]).ordini).toHaveLength(1);
     expect(csv).toContain("1.234,50");

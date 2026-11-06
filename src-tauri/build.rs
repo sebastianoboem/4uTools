@@ -85,6 +85,7 @@ fn main() {
             "gphotos_set_tutorial_completed",
             "gphotos_log_history",
             "gphotos_log_clear",
+            "diagnostica_log",
         ])),
     )
     .expect("failed to run tauri-build");

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import { useEffect, useState, type DragEvent, type KeyboardEvent as TastoCampo } from "react";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeFile } from "@tauri-apps/plugin-fs";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -19,6 +19,7 @@ import {
   ordina,
   titoloOrdine,
   ordineDaBozza,
+  parseEuro,
   toCsv,
   upsert,
   urlWhatsapp,
@@ -31,7 +32,46 @@ import {
   type Verso,
 } from "./model";
 import { carica, salva } from "./store";
+import { registra } from "../../diagnostica.ts";
 import "./App.css";
+
+function virgolaDaPunto(evento: TastoCampo<HTMLInputElement>, testo: string, applica: (valore: string) => void) {
+  if (evento.key !== "." && !(evento.code === "NumpadDecimal" && evento.key !== ",")) return;
+  evento.preventDefault();
+  const inizio = evento.currentTarget.selectionStart ?? testo.length;
+  const fine = evento.currentTarget.selectionEnd ?? inizio;
+  const prossimo = `${testo.slice(0, inizio)},${testo.slice(fine)}`;
+  applica(prossimo);
+  const campo = evento.currentTarget;
+  requestAnimationFrame(() => campo.setSelectionRange(inizio + 1, inizio + 1));
+}
+
+function CellaImporto({ valore, etichetta, onCommit }: { valore: number; etichetta: string; onCommit: (n: number) => void }) {
+  const [testo, setTesto] = useState(euro(valore));
+  const [attivo, setAttivo] = useState(false);
+  useEffect(() => {
+    if (!attivo) setTesto(euro(valore));
+  }, [valore, attivo]);
+  return (
+    <input
+      aria-label={etichetta}
+      inputMode="decimal"
+      value={testo}
+      onFocus={() => {
+        setAttivo(true);
+        setTesto(euro(valore));
+      }}
+      onBlur={() => {
+        const n = parseEuro(testo);
+        setAttivo(false);
+        setTesto(euro(n));
+        onCommit(n);
+      }}
+      onKeyDown={(evento) => virgolaDaPunto(evento, testo, setTesto)}
+      onChange={(evento) => setTesto(evento.target.value)}
+    />
+  );
+}
 
 function dataUrl(bytes: Uint8Array, mime: string): Promise<string> {
   return new Promise((resolve) => {
@@ -83,36 +123,12 @@ export default function App() {
   const [bozzaMessaggio, setBozzaMessaggio] = useState("");
   const [annullaConsegna, setAnnullaConsegna] = useState<Ordine | null>(null);
   const [menuFornitore, setMenuFornitore] = useState<string | null>(null);
-  const dialogOrdine = useRef<HTMLDialogElement>(null);
-  const dialogFornitore = useRef<HTMLDialogElement>(null);
-  const dialogMessaggio = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     void carica()
       .then(setArchivio)
       .catch((err: unknown) => setErrore(err instanceof Error ? err.message : String(err)));
   }, []);
-
-  useEffect(() => {
-    const el = dialogOrdine.current;
-    if (!el) return;
-    if (finestra && !el.open) el.showModal();
-    if (!finestra && el.open) el.close();
-  }, [finestra]);
-
-  useEffect(() => {
-    const el = dialogFornitore.current;
-    if (!el) return;
-    if (elencoFornitori && !el.open) el.showModal();
-    if (!elencoFornitori && el.open) el.close();
-  }, [elencoFornitori]);
-
-  useEffect(() => {
-    const el = dialogMessaggio.current;
-    if (!el) return;
-    if (messaggioAperto && !el.open) el.showModal();
-    if (!messaggioAperto && el.open) el.close();
-  }, [messaggioAperto]);
 
   useEffect(() => {
     if (!finestra?.focus) return;
@@ -147,15 +163,18 @@ export default function App() {
       await salva(prossimo);
     } catch (err) {
       setErrore(err instanceof Error ? err.message : String(err));
+      registra("ordini salva", err instanceof Error ? err.message : String(err));
     }
   }
 
   function apriNuovo() {
+    registra("ordini nuovo");
     const bozza = bozzaNuova();
     setFinestra({ id: null, bozza, iniziale: JSON.stringify(bozza), focus: "cliente", focusNonce: 1 });
   }
 
   function apriOrdine(ordine: Ordine, focus: Campo | null = null) {
+    registra("ordini modifica");
     const bozza = bozzaDaOrdine(ordine);
     setSelezionato(ordine.id);
     setFinestra({ id: ordine.id, bozza, iniziale: JSON.stringify(bozza), focus, focusNonce: 1 });
@@ -170,8 +189,23 @@ export default function App() {
     setFinestra(null);
   }
 
+  useEffect(() => {
+    if (!finestra && !elencoFornitori && !messaggioAperto) return;
+    const suTasto = (evento: KeyboardEvent) => {
+      if (evento.key !== "Escape") return;
+      evento.preventDefault();
+      if (finestra) chiudiFinestra();
+      else if (messaggioAperto) setMessaggioAperto(false);
+      else if (schedaFornitore) setSchedaFornitore(null);
+      else setElencoFornitori(false);
+    };
+    window.addEventListener("keydown", suTasto);
+    return () => window.removeEventListener("keydown", suTasto);
+  }, [finestra, elencoFornitori, messaggioAperto, schedaFornitore]);
+
   async function salvaFinestra() {
     if (!archivio || !finestra) return;
+    registra(finestra.id ? "ordini salva modifica" : "ordini salva nuovo");
     const manca = campoMancante(finestra.bozza);
     if (manca) {
       setFinestra({ ...finestra, focus: manca, focusNonce: finestra.focusNonce + 1 });
@@ -233,6 +267,7 @@ export default function App() {
   async function segnaConsegna(ordine: Ordine) {
     if (!archivio) return;
     const consegnato = !ordine.consegnato;
+    registra("ordini consegnato", String(consegnato));
     const aggiornato = { ...ordine, consegnato, stato: consegnato ? "pronto_ritiro" as const : ordine.stato };
     await persisti({ ...archivio, ordini: upsert(archivio.ordini, aggiornato) });
     setSelezionato(ordine.id);
@@ -256,6 +291,7 @@ export default function App() {
 
   async function avvisa() {
     if (!archivio || !selezionato) return;
+    registra("whatsapp");
     const ordine = archivio.ordini.find((voce) => voce.id === selezionato);
     if (!ordine) return;
     const url = urlWhatsapp(ordine.telefono, compilaMessaggio(archivio.messaggioWhatsapp, ordine));
@@ -281,6 +317,7 @@ export default function App() {
 
   async function importaCsv() {
     if (!archivio) return;
+    registra("csv importa");
     const scelto = await open({ title: "Importa ordini", filters: [{ name: "CSV", extensions: ["csv"] }], multiple: false });
     if (!scelto || Array.isArray(scelto)) return;
     const letto = daCsv(await readTextFile(scelto), archivio.fornitori);
@@ -290,6 +327,7 @@ export default function App() {
 
   async function esporta() {
     if (!archivio) return;
+    registra("csv esporta");
     const percorso = await save({
       title: "Esporta ordini",
       defaultPath: archivio.percorsoCsv ?? "ordini.csv",
@@ -323,7 +361,7 @@ export default function App() {
           <p>Accessori clienti</p>
         </div>
         <div className="ordini-nuovi">
-          <button type="button" className="ordini-nuovo" onClick={() => { setSchedaFornitore(null); setElencoFornitori(true); }}>
+          <button type="button" className="ordini-nuovo" onClick={() => { setSchedaFornitore(null); setElencoFornitori(true); registra("fornitori apri"); }}>
             Fornitori
           </button>
           <button type="button" className="btn btn-primary ordini-nuovo" onClick={apriNuovo}>
@@ -388,7 +426,7 @@ export default function App() {
                   ["costo", "Costo"],
                   ["totale", "Totale"],
                 ] as const).map(([id, etichetta]) => (
-                  <th key={id} aria-sort={colonna === id ? (verso === "asc" ? "ascending" : "descending") : "none"}>
+                  <th key={id} className={id === "fornitore" || id === "consegnato" ? "ordini-centro" : undefined} aria-sort={colonna === id ? (verso === "asc" ? "ascending" : "descending") : "none"}>
                     <button
                       type="button"
                       onClick={() => {
@@ -426,7 +464,7 @@ export default function App() {
                     />
                   </td>
                   <td>{ordine.colore}</td>
-                  <td className="ordini-fornitore-cella" onClick={(evento) => evento.stopPropagation()}>
+                  <td className="ordini-fornitore-cella ordini-centro" onClick={(evento) => evento.stopPropagation()}>
                     {(() => {
                       const scelto = archivio.fornitori.find((voce) => voce.id === ordine.fornitore);
                       const nome = scelto?.nome ?? ordine.fornitore;
@@ -486,7 +524,7 @@ export default function App() {
                       onChange={(evento) => modifica(ordine.id, { dataOrdine: evento.target.value })}
                     />
                   </td>
-                  <td>
+                  <td className="ordini-centro">
                     <input
                       type="checkbox"
                       checked={ordine.consegnato}
@@ -495,8 +533,20 @@ export default function App() {
                       onChange={() => void segnaConsegna(ordine)}
                     />
                   </td>
-                  <td>{euro(ordine.costo)} €</td>
-                  <td>{euro(ordine.prezzoTotale)} €</td>
+                  <td className="ordini-cella" onClick={(evento) => evento.stopPropagation()}>
+                    <CellaImporto
+                      valore={ordine.costo}
+                      etichetta={`Costo di ${ordine.cliente}`}
+                      onCommit={(n) => modifica(ordine.id, { costo: n })}
+                    />
+                  </td>
+                  <td className="ordini-cella" onClick={(evento) => evento.stopPropagation()}>
+                    <CellaImporto
+                      valore={ordine.prezzoTotale}
+                      etichetta={`Totale di ${ordine.cliente}`}
+                      onCommit={(n) => modifica(ordine.id, { prezzoTotale: n })}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -532,15 +582,9 @@ export default function App() {
       {errore ? <p className="ordini-errore">{errore}</p> : null}
       {avviso ? <p className="ordini-nota">{avviso}</p> : null}
 
-      <dialog
-        ref={dialogOrdine}
-        className="ordini-dialog"
-        onCancel={(evento) => {
-          evento.preventDefault();
-          chiudiFinestra();
-        }}
-      >
-        {finestra ? (
+      {finestra ? (
+        <div className="ordini-overlay">
+          <div className="ordini-dialog" role="dialog" aria-modal="true">
           <form
             onSubmit={(evento) => {
               evento.preventDefault();
@@ -625,15 +669,30 @@ export default function App() {
             </label>
             <label>
               Costo (€)
-              <input value={finestra.bozza.costo} onChange={(evento) => aggiorna({ costo: evento.target.value })} />
+              <input
+                value={finestra.bozza.costo}
+                inputMode="decimal"
+                onKeyDown={(evento) => virgolaDaPunto(evento, finestra.bozza.costo, (costo) => aggiorna({ costo }))}
+                onChange={(evento) => aggiorna({ costo: evento.target.value })}
+              />
             </label>
             <label>
               Prezzo totale (€)
-              <input value={finestra.bozza.prezzo} onChange={(evento) => aggiorna({ prezzo: evento.target.value })} />
+              <input
+                value={finestra.bozza.prezzo}
+                inputMode="decimal"
+                onKeyDown={(evento) => virgolaDaPunto(evento, finestra.bozza.prezzo, (prezzo) => aggiorna({ prezzo }))}
+                onChange={(evento) => aggiorna({ prezzo: evento.target.value })}
+              />
             </label>
             <label>
               Acconto (€)
-              <input value={finestra.bozza.acconto} onChange={(evento) => aggiorna({ acconto: evento.target.value })} />
+              <input
+                value={finestra.bozza.acconto}
+                inputMode="decimal"
+                onKeyDown={(evento) => virgolaDaPunto(evento, finestra.bozza.acconto, (acconto) => aggiorna({ acconto }))}
+                onChange={(evento) => aggiorna({ acconto: evento.target.value })}
+              />
             </label>
             <label>
               Note aggiuntive
@@ -644,18 +703,13 @@ export default function App() {
               <button type="submit" className="btn btn-primary">Salva</button>
             </div>
           </form>
-        ) : null}
-      </dialog>
+          </div>
+        </div>
+      ) : null}
 
-      <dialog
-        ref={dialogFornitore}
-        className="ordini-dialog"
-        onCancel={(evento) => {
-          evento.preventDefault();
-          if (schedaFornitore) setSchedaFornitore(null);
-          else setElencoFornitori(false);
-        }}
-      >
+      {elencoFornitori ? (
+        <div className="ordini-overlay">
+          <div className="ordini-dialog" role="dialog" aria-modal="true">
         {schedaFornitore ? (
           <form
             onSubmit={(evento) => {
@@ -706,16 +760,13 @@ export default function App() {
             </div>
           </div>
         )}
-      </dialog>
+          </div>
+        </div>
+      ) : null}
 
-      <dialog
-        ref={dialogMessaggio}
-        className="ordini-dialog"
-        onCancel={(evento) => {
-          evento.preventDefault();
-          setMessaggioAperto(false);
-        }}
-      >
+      {messaggioAperto ? (
+        <div className="ordini-overlay">
+          <div className="ordini-dialog" role="dialog" aria-modal="true">
         <form
           onSubmit={(evento) => {
             evento.preventDefault();
@@ -733,7 +784,9 @@ export default function App() {
             <button type="submit" className="btn btn-primary">Salva</button>
           </div>
         </form>
-      </dialog>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { initOverview } from "./tabs/overview.ts";
+import { registra } from "./diagnostica.ts";
 
 type TabId = "overview" | "adware" | "autobackup" | "pricecreator" | "gphotos" | "ordini";
 
@@ -42,6 +43,7 @@ function showTab(id: TabId) {
     panel.classList.toggle("hidden", panel.dataset.tabPanel !== id);
   });
   void (async () => {
+    registra("scheda", id);
     await ensureTab(id);
     const { syncGphotosVisibility } = await import("./tabs/gphotos/main.ts");
     await syncGphotosVisibility(id === "gphotos");
@@ -99,3 +101,11 @@ document.getElementById("btn-app-settings")?.addEventListener("click", () => {
 });
 
 void initOverview();
+
+window.addEventListener("error", (evento) => {
+  registra("errore", evento.message);
+});
+window.addEventListener("unhandledrejection", (evento) => {
+  const motivo = evento.reason instanceof Error ? evento.reason.message : String(evento.reason);
+  registra("promessa", motivo);
+});

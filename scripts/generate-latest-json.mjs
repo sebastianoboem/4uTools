@@ -74,9 +74,9 @@ if (!opts.version || !opts.baseUrl) {
 }
 
 const artifactNames = {
-  "darwin-aarch64": `4uTools_${opts.version}_aarch64.app.tar.gz`,
-  "darwin-x86_64": `4uTools_${opts.version}_x64.app.tar.gz`,
-  "windows-x86_64": `4uTools_${opts.version}_x64-setup.exe`,
+  "darwin-aarch64": `DPTools_${opts.version}_aarch64.app.tar.gz`,
+  "darwin-x86_64": `DPTools_${opts.version}_x64.app.tar.gz`,
+  "windows-x86_64": `DPTools_${opts.version}_x64-setup.exe`,
 };
 
 const pubkey = loadUpdaterPubkey();
@@ -104,7 +104,7 @@ for (const [platform, sigPath] of Object.entries(opts.platforms)) {
 
 const manifest = {
   version: opts.version,
-  notes: opts.notes || `4uTools ${opts.version}`,
+  notes: opts.notes || `DPTools ${opts.version}`,
   pub_date: new Date().toISOString(),
   platforms,
 };

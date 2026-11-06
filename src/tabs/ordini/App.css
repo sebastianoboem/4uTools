@@ -179,6 +179,7 @@
 .ordini-tabella th.ordini-centro button { width: 100%; text-align: center; }
 .ordini-fornitore-cella { position: relative; text-align: center; }
 .ordini-fornitore-scelto {
+  display: inline-flex;
   border: 0;
   background: transparent;
   padding: 0;
@@ -255,16 +256,27 @@
   font-size: 0.8rem;
 }
 
+.ordini-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.4);
+}
+
 .ordini-dialog {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 0;
   width: min(28rem, 92vw);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
   background: var(--card);
   color: var(--text);
 }
-
-.ordini-dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
 
 .ordini-dialog form {
   display: flex;

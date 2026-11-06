@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-diagnostica-log"
+description = "Enables the diagnostica_log command without any pre-configured scope."
+commands.allow = ["diagnostica_log"]
+
+[[permission]]
+identifier = "deny-diagnostica-log"
+description = "Denies the diagnostica_log command without any pre-configured scope."
+commands.deny = ["diagnostica_log"]

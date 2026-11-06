@@ -2637,6 +2637,12 @@
           "markdownDescription": "Enables the backup_stop_backup command without any pre-configured scope."
         },
         {
+          "description": "Enables the diagnostica_log command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-diagnostica-log",
+          "markdownDescription": "Enables the diagnostica_log command without any pre-configured scope."
+        },
+        {
           "description": "Enables the get_active_device command without any pre-configured scope.",
           "type": "string",
           "const": "allow-get-active-device",
@@ -3133,6 +3139,12 @@
           "type": "string",
           "const": "deny-backup-stop-backup",
           "markdownDescription": "Denies the backup_stop_backup command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the diagnostica_log command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-diagnostica-log",
+          "markdownDescription": "Denies the diagnostica_log command without any pre-configured scope."
         },
         {
           "description": "Denies the get_active_device command without any pre-configured scope.",

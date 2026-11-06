@@ -1,6 +1,6 @@
-# 4uTools
+# DPTools
 
-**4uTools** è un'applicazione desktop per **macOS** e **Windows** che ti permette di collegare un telefono **Android** al PC via USB e vedere subito le informazioni principali del dispositivo — in stile [3uTools](https://www.3u.com/), ma open source e leggero.
+**DPTools** (DoctorPhone Tools) è un'applicazione desktop per **macOS** e **Windows** che ti permette di collegare un telefono **Android** al PC via USB e vedere subito le informazioni principali del dispositivo.
 
 Pensato per **riparatori**, **rivenditori** e **utenti avanzati** che vogliono controllare uno smartphone senza navigare menu complicati sul telefono.
 
@@ -26,13 +26,13 @@ Puoi anche **riavviare** o **spegnere** il telefono, **nascondere serial/IMEI** 
 
 ## Download
 
-Scarica l'installer dalle **[GitHub Releases](https://github.com/sebastianoboem/4uTools/releases)**:
+Scarica l'installer dalle **[GitHub Releases](https://github.com/sebastianoboem/DPTools-releases/releases)**:
 
 | Piattaforma | File |
 | ----------- | ---- |
-| macOS (Apple Silicon) | `4uTools_<versione>_arm64.dmg` |
-| macOS (Intel) | `4uTools_<versione>_x64.dmg` |
-| Windows | `4uTools_<versione>_x64.exe` |
+| macOS (Apple Silicon) | `DPTools_<versione>_arm64.dmg` |
+| macOS (Intel) | `DPTools_<versione>_x64.dmg` |
+| Windows | `DPTools_<versione>_x64.exe` |
 
 L'app controlla automaticamente all'avvio gli aggiornamenti da GitHub Releases e propone l'installazione.
 
@@ -47,7 +47,7 @@ L'app controlla automaticamente all'avvio gli aggiornamenti da GitHub Releases e
 3. Collega il cavo USB (deve trasferire dati, non solo ricaricare).
 4. Sul telefono compare *«Consentire debug USB?»* → seleziona **Consenti** (meglio *Consenti sempre da questo computer*).
 
-### 2. Apri 4uTools
+### 2. Apri DPTools
 
 All'avvio rileva il dispositivo autorizzato e mostra la dashboard **Overview**. Se non vedi nulla, controlla cavo, debug USB e autorizzazione sul telefono.
 
@@ -71,7 +71,7 @@ La tab **Google Foto** apre photos.google.com accanto al pannello di selezione. 
 
 ## Note
 
-- Usa 4uTools solo con il **consenso del proprietario** del dispositivo.
+- Usa DPTools solo con il **consenso del proprietario** del dispositivo.
 - Non aggira blocchi schermo, FRP o altre protezioni del telefono.
 - Il **Verification Report** su Android non equivale a un controllo factory Apple: molti campi mostrano solo il valore letto via ADB.
 
@@ -82,8 +82,8 @@ La tab **Google Foto** apre photos.google.com accanto al pannello di selezione. 
 Stack: [Tauri 2](https://tauri.app) + Rust + TypeScript/Vite.
 
 ```bash
-git clone https://github.com/sebastianoboem/4uTools.git
-cd 4uTools
+git clone https://github.com/sebastianoboem/DPTools.git
+cd DPTools
 npm install
 npm run setup:adb   # opzionale: adb locale in resources/
 npm run tauri dev
