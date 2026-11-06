@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "DPTools",
   "mainBinaryName": "DPTools",
-  "version": "2.19.24",
+  "version": "2.19.25",
   "identifier": "com.4utools.app",
   "build": {
     "beforeDevCommand": "npm run dev",

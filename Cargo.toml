@@ -16,6 +16,10 @@ resolver = "2"
 version = "2.8.8"
 edition = "2021"
 
+[patch.crates-io]
+# shortcut: tao 0.35.4 non è su crates.io; il commit evita il blocco Windows su Alt-Tab. Togliere quando Tauri porta un tao che include il fix.
+tao = { git = "https://github.com/tauri-apps/tao.git", rev = "c704261c519c58cfdd0bc2d58ba24e06a0b71c92" }
+
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
