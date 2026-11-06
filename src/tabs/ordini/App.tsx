@@ -546,9 +546,11 @@ export default function App() {
                       </button>
                     ) : null}
                   </td>
-                  <td className="ordini-cella" onClick={(evento) => evento.stopPropagation()}>
+                  <td className="ordini-cella ordini-prodotto" onClick={(evento) => evento.stopPropagation()}>
                     <input
                       aria-label={`Prodotto di ${ordine.cliente}`}
+                      size={larghezze.prodotto ? 1 : Math.max(ordine.nomeProdotto.length, 1)}
+                      style={larghezze.prodotto ? { width: Math.max(48, larghezze.prodotto - 22) } : undefined}
                       value={ordine.nomeProdotto}
                       onFocus={() => setSelezionato(ordine.id)}
                       onChange={(evento) => modifica(ordine.id, { nomeProdotto: evento.target.value })}

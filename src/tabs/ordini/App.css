@@ -369,6 +369,12 @@
   padding: 0.15rem 0.25rem;
 }
 
+.ordini-tabella td.ordini-prodotto input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
 .ordini-cella input:focus,
 .ordini-cella select:focus {
   border-color: var(--border);
