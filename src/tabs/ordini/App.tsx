@@ -22,6 +22,7 @@ import {
   parseEuro,
   toCsv,
   upsert,
+  urlDiApertura,
   urlWhatsapp,
   type ArchivioOrdini,
   type Bozza,
@@ -289,6 +290,16 @@ export default function App() {
     setSelezionato(null);
   }
 
+  async function apriLink(link: string) {
+    const destinazione = urlDiApertura(link);
+    try {
+      await openUrl(destinazione);
+    } catch (err) {
+      if (destinazione === link.trim()) throw err;
+      await openUrl(link.trim());
+    }
+  }
+
   async function avvisa() {
     if (!archivio || !selezionato) return;
     registra("whatsapp");
@@ -417,6 +428,7 @@ export default function App() {
                 {([
                   ["cliente", "Cliente"],
                   ["telefono", "Telefono"],
+                  ["link", "Link"],
                   ["prodotto", "Prodotto"],
                   ["colore", "Colore"],
                   ["fornitore", "Fornitore"],
@@ -426,7 +438,7 @@ export default function App() {
                   ["costo", "Costo"],
                   ["totale", "Totale"],
                 ] as const).map(([id, etichetta]) => (
-                  <th key={id} className={id === "fornitore" || id === "consegnato" ? "ordini-centro" : undefined} aria-sort={colonna === id ? (verso === "asc" ? "ascending" : "descending") : "none"}>
+                  <th key={id} className={id === "fornitore" || id === "consegnato" || id === "link" ? "ordini-centro" : undefined} aria-sort={colonna === id ? (verso === "asc" ? "ascending" : "descending") : "none"}>
                     <button
                       type="button"
                       onClick={() => {
@@ -455,6 +467,17 @@ export default function App() {
                   </td>
                   <td>{ordine.cliente}</td>
                   <td>{ordine.telefono}</td>
+                  <td className="ordini-centro" onClick={(evento) => evento.stopPropagation()}>
+                    {ordine.link.trim() ? (
+                      <button
+                        type="button"
+                        aria-label={`Apri link di ${ordine.cliente}`}
+                        onClick={() => void apriLink(ordine.link)}
+                      >
+                        Apri
+                      </button>
+                    ) : null}
+                  </td>
                   <td className="ordini-cella" onClick={(evento) => evento.stopPropagation()}>
                     <input
                       aria-label={`Prodotto di ${ordine.cliente}`}
@@ -583,7 +606,7 @@ export default function App() {
       {avviso ? <p className="ordini-nota">{avviso}</p> : null}
 
       {finestra ? (
-        <div className="ordini-overlay">
+        <div className="ordini-overlay" onMouseDown={(evento) => { if (evento.target === evento.currentTarget) chiudiFinestra(); }}>
           <div className="ordini-dialog" role="dialog" aria-modal="true">
           <form
             onSubmit={(evento) => {
@@ -599,6 +622,13 @@ export default function App() {
             <label>
               Telefono
               <input id="ordini-telefono" value={finestra.bozza.telefono} onChange={(evento) => aggiorna({ telefono: evento.target.value })} />
+            </label>
+            <label>
+              Link
+              <input
+                value={finestra.bozza.link}
+                onChange={(evento) => aggiorna({ link: evento.target.value })}
+              />
             </label>
             <label>
               Modello telefono / dispositivo *
@@ -708,7 +738,14 @@ export default function App() {
       ) : null}
 
       {elencoFornitori ? (
-        <div className="ordini-overlay">
+        <div
+          className="ordini-overlay"
+          onMouseDown={(evento) => {
+            if (evento.target !== evento.currentTarget) return;
+            setSchedaFornitore(null);
+            setElencoFornitori(false);
+          }}
+        >
           <div className="ordini-dialog" role="dialog" aria-modal="true">
         {schedaFornitore ? (
           <form
@@ -765,7 +802,7 @@ export default function App() {
       ) : null}
 
       {messaggioAperto ? (
-        <div className="ordini-overlay">
+        <div className="ordini-overlay" onMouseDown={(evento) => { if (evento.target === evento.currentTarget) setMessaggioAperto(false); }}>
           <div className="ordini-dialog" role="dialog" aria-modal="true">
         <form
           onSubmit={(evento) => {

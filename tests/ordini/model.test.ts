@@ -15,6 +15,7 @@ import {
   ordina,
   toCsv,
   upsert,
+  urlDiApertura,
   urlWhatsapp,
   bozzaNuova,
   type Ordine,
@@ -39,6 +40,7 @@ function ordine(patch: Partial<Ordine> = {}): Ordine {
     prezzoTotale: 12.5,
     acconto: 0,
     note: "",
+    link: "",
     ...patch,
   };
 }
@@ -99,8 +101,14 @@ describe("ordini", () => {
     expect(etichettaStato(salvato.stato)).toBe("Da ordinare");
     expect(euro(salvato.prezzoTotale)).toBe("1.234,50");
     expect(parseEuro("12.50")).toBe(12.5);
-    const csv = toCsv([salvato]);
-    expect(daCsv(csv, [{ id: "amazon", nome: "Amazon", immagine: "" }]).ordini).toHaveLength(1);
+    const csv = toCsv([{ ...salvato, link: "https://doctorphone.bitrix24.it/crm/deal/1" }]);
+    const importato = daCsv(csv, [{ id: "amazon", nome: "Amazon", immagine: "" }]).ordini;
+    expect(importato).toHaveLength(1);
+    expect(importato[0]?.link).toBe("https://doctorphone.bitrix24.it/crm/deal/1");
+    expect(urlDiApertura("https://e-pol.bitrix24.it/company/personal/user/1/tasks/task/view/2/")).toBe(
+      "bx://v3/open/https://e-pol.bitrix24.it/company/personal/user/1/tasks/task/view/2/",
+    );
+    expect(urlDiApertura("https://www.amazon.it/dp/123")).toBe("https://www.amazon.it/dp/123");
     expect(csv).toContain("1.234,50");
     expect(compilaMessaggio("Resto {totale - acconto}", { ...salvato, prezzoTotale: 10, acconto: 4 })).toBe("Resto 6,00");
     expect(compilaMessaggio(MESSAGGIO_DEFAULT, { ...salvato, cliente: "Ada", nomeProdotto: "Cover", colore: "Nero", acconto: 0, prezzoTotale: 12 })).toBe(

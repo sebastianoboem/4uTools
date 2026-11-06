@@ -34,6 +34,7 @@ export interface Ordine {
   prezzoTotale: number;
   acconto: number;
   note: string;
+  link: string;
 }
 
 export interface ArchivioOrdini {
@@ -58,6 +59,7 @@ export interface Bozza {
   prezzo: string;
   acconto: string;
   note: string;
+  link: string;
 }
 
 export const MESSAGGIO_DEFAULT = `Ciao {cliente}, il tuo {prodotto}, {colore} è pronto per il ritiro.
@@ -127,6 +129,7 @@ export function bozzaNuova(data = oggiIso()): Bozza {
     prezzo: "0,00",
     acconto: "0,00",
     note: "",
+    link: "",
   };
 }
 
@@ -146,6 +149,7 @@ export function bozzaDaOrdine(ordine: Ordine): Bozza {
     prezzo: euro(ordine.prezzoTotale),
     acconto: euro(ordine.acconto),
     note: ordine.note,
+    link: ordine.link,
   };
 }
 
@@ -220,6 +224,7 @@ export function ordineDaBozza(id: string, consegnato: boolean, bozza: Bozza): Or
     prezzoTotale: parseEuro(bozza.prezzo),
     acconto: parseEuro(bozza.acconto),
     note: bozza.note.trim(),
+    link: bozza.link.trim(),
   };
 }
 
@@ -241,7 +246,7 @@ export function contatori(ordini: Ordine[]) {
   };
 }
 
-export type Colonna = "cliente" | "telefono" | "prodotto" | "colore" | "fornitore" | "stato" | "data" | "consegnato" | "costo" | "totale";
+export type Colonna = "cliente" | "telefono" | "link" | "prodotto" | "colore" | "fornitore" | "stato" | "data" | "consegnato" | "costo" | "totale";
 export type Verso = "asc" | "desc";
 
 function valoreColonna(ordine: Ordine, colonna: Colonna, nomi: Record<string, string>): string | number {
@@ -250,6 +255,8 @@ function valoreColonna(ordine: Ordine, colonna: Colonna, nomi: Record<string, st
       return ordine.cliente;
     case "telefono":
       return ordine.telefono;
+    case "link":
+      return ordine.link;
     case "prodotto":
       return ordine.nomeProdotto;
     case "colore":
@@ -365,6 +372,21 @@ export function urlWhatsapp(telefono: string, testo: string): string | null {
   return `https://wa.me/${cifre}?text=${encodeURIComponent(testo)}`;
 }
 
+export function urlDiApertura(link: string): string {
+  const testo = link.trim();
+  let pagina: URL;
+  try {
+    pagina = new URL(testo);
+  } catch {
+    return testo;
+  }
+  if (pagina.protocol !== "http:" && pagina.protocol !== "https:") return testo;
+  const host = pagina.hostname.toLowerCase();
+  const bitrix = /(^|\.)bitrix24\.(com\.br|[a-z]{2,})$/.test(host);
+  if (!bitrix) return testo;
+  return `bx://v3/open/${testo}`;
+}
+
 export function daCsv(testo: string, fornitori: FornitoreSalvato[]): { ordini: Ordine[]; fornitori: FornitoreSalvato[] } {
   const tabella = leggiTabellaCsv(testo.replace(/^\uFEFF/, ""));
   const intestazione = tabella[0]?.map((cella) => cella.trim().toLowerCase()) ?? [];
@@ -372,6 +394,7 @@ export function daCsv(testo: string, fornitori: FornitoreSalvato[]): { ordini: O
   const colonne = {
     cliente: indice("cliente"),
     telefono: indice("telefono"),
+    link: indice("link") >= 0 ? indice("link") : indice("link bitrix24"),
     prodotto: indice("prodotto"),
     dispositivo: indice("dispositivo"),
     colore: indice("colore"),
@@ -404,6 +427,7 @@ export function daCsv(testo: string, fornitori: FornitoreSalvato[]): { ordini: O
       id: crypto.randomUUID(),
       cliente,
       telefono: valore(colonne.telefono),
+      link: valore(colonne.link),
       nomeProdotto: valore(colonne.prodotto),
       dispositivo,
       colore: valore(colonne.colore),
@@ -467,10 +491,11 @@ function cellaCsv(valore: string): string {
 
 export function toCsv(ordini: Ordine[], fornitori: FornitoreSalvato[] = []): string {
   const righe = [
-    ["Cliente", "Telefono", "Prodotto", "Dispositivo", "Colore", "Cover", "Fornitore", "Stato", "Consegnato", "Data", "Costo", "Prezzo", "Acconto", "Note"],
+    ["Cliente", "Telefono", "Link", "Prodotto", "Dispositivo", "Colore", "Cover", "Fornitore", "Stato", "Consegnato", "Data", "Costo", "Prezzo", "Acconto", "Note"],
     ...ordini.map((ordine) => [
       ordine.cliente,
       ordine.telefono,
+      ordine.link,
       ordine.nomeProdotto,
       ordine.dispositivo,
       ordine.colore,
