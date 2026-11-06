@@ -41,6 +41,7 @@ function ordine(patch: Partial<Ordine> = {}): Ordine {
     acconto: 0,
     note: "",
     link: "",
+    ricambio: "",
     ...patch,
   };
 }
@@ -87,13 +88,15 @@ describe("ordini", () => {
     expect(campoMancante(bozzaNuova())).toBe("cliente");
     const senzaModello = { ...bozzaNuova(), cliente: "Ada" };
     expect(campoMancante(senzaModello)).toBe("dispositivo");
-    expect(nomeAutomatico({ dispositivo: "Galaxy A17", cover: true, tipoCover: "libro" })).toBe(
+    expect(nomeAutomatico({ dispositivo: "galaxy a17", colore: "", ricambio: "", cover: true, tipoCover: "libro" })).toBe(
       "Cover a libro per Galaxy A17",
     );
-    expect(nomeAutomatico({ dispositivo: "Galaxy A17", cover: true, tipoCover: "normale" })).toBe(
+    expect(nomeAutomatico({ dispositivo: "Galaxy A17", colore: "", ricambio: "", cover: true, tipoCover: "normale" })).toBe(
       "Cover per Galaxy A17",
     );
-    expect(nomeAutomatico({ dispositivo: "Galaxy A17", cover: false, tipoCover: "libro" })).toBe("Galaxy A17");
+    expect(nomeAutomatico({ dispositivo: "galaxy a17", colore: "nero", ricambio: "pellicola", cover: false, tipoCover: "libro" })).toBe(
+      "Pellicola per Galaxy A17, Nero",
+    );
     const salvato = ordineDaBozza("9", false, { ...senzaModello, dispositivo: "Pixel", costo: "10,00", prezzo: "1.234,50" });
     expect(salvato.nomeProdotto).toBe("Pixel");
     expect(salvato.costo).toBe(10);

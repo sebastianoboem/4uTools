@@ -35,6 +35,7 @@ export interface Ordine {
   acconto: number;
   note: string;
   link: string;
+  ricambio: string;
 }
 
 export interface ArchivioOrdini {
@@ -60,6 +61,9 @@ export interface Bozza {
   acconto: string;
   note: string;
   link: string;
+  ricambio: string;
+  nome: string;
+  nomeLibero: boolean;
 }
 
 export const MESSAGGIO_DEFAULT = `Ciao {cliente}, il tuo {prodotto}, {colore} è pronto per il ritiro.
@@ -130,6 +134,9 @@ export function bozzaNuova(data = oggiIso()): Bozza {
     acconto: "0,00",
     note: "",
     link: "",
+    ricambio: "",
+    nome: "",
+    nomeLibero: false,
   };
 }
 
@@ -150,6 +157,15 @@ export function bozzaDaOrdine(ordine: Ordine): Bozza {
     acconto: euro(ordine.acconto),
     note: ordine.note,
     link: ordine.link,
+    ricambio: ordine.ricambio,
+    nome: ordine.nomeProdotto,
+    nomeLibero: ordine.nomeProdotto !== nomeAutomatico({
+      dispositivo: ordine.dispositivo,
+      colore: ordine.colore,
+      cover: ordine.cover,
+      tipoCover: ordine.tipoCover,
+      ricambio: ordine.ricambio,
+    }),
   };
 }
 
@@ -187,14 +203,29 @@ export function nomeFornitore(fornitori: FornitoreSalvato[], id: string): string
   return fornitori.find((voce) => voce.id === id)?.nome ?? id;
 }
 
-export function nomeAutomatico(bozza: Pick<Bozza, "dispositivo" | "cover" | "tipoCover">): string {
-  const dispositivo = bozza.dispositivo.trim();
-  if (!bozza.cover) return dispositivo;
+function inMaiuscolo(testo: string): string {
+  return testo
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((parola) => parola.charAt(0).toLocaleUpperCase("it") + parola.slice(1).toLocaleLowerCase("it"))
+    .join(" ");
+}
+
+export function nomeAutomatico(bozza: Pick<Bozza, "dispositivo" | "colore" | "cover" | "tipoCover" | "ricambio">): string {
+  const dispositivo = inMaiuscolo(bozza.dispositivo);
+  const colore = inMaiuscolo(bozza.colore);
+  if (!bozza.cover) {
+    const ricambio = inMaiuscolo(bozza.ricambio);
+    const testa = ricambio && dispositivo ? `${ricambio} per ${dispositivo}` : ricambio || dispositivo;
+    if (colore && testa) return `${testa}, ${colore}`;
+    return testa || colore;
+  }
   const prefisso = prefissoCover(bozza.tipoCover);
   return dispositivo ? `${prefisso} per ${dispositivo}` : prefisso;
 }
 
-export function titoloOrdine(bozza: Pick<Bozza, "dispositivo" | "cover" | "tipoCover">): string {
+export function titoloOrdine(bozza: Pick<Bozza, "dispositivo" | "colore" | "cover" | "tipoCover" | "ricambio">): string {
   const nome = nomeAutomatico(bozza);
   return nome ? `Ordine - ${nome}` : "Ordine";
 }
@@ -214,7 +245,7 @@ export function ordineDaBozza(id: string, consegnato: boolean, bozza: Bozza): Or
     colore: bozza.colore.trim(),
     cover: bozza.cover,
     tipoCover: bozza.tipoCover,
-    nomeProdotto: nomeAutomatico(bozza),
+    nomeProdotto: bozza.nomeLibero ? bozza.nome.trim() : nomeAutomatico(bozza),
     fornitore: bozza.fornitore,
     immagine: bozza.immagine,
     stato: bozza.stato,
@@ -225,6 +256,7 @@ export function ordineDaBozza(id: string, consegnato: boolean, bozza: Bozza): Or
     acconto: parseEuro(bozza.acconto),
     note: bozza.note.trim(),
     link: bozza.link.trim(),
+    ricambio: bozza.cover ? "" : bozza.ricambio.trim(),
   };
 }
 
@@ -395,6 +427,7 @@ export function daCsv(testo: string, fornitori: FornitoreSalvato[]): { ordini: O
     cliente: indice("cliente"),
     telefono: indice("telefono"),
     link: indice("link") >= 0 ? indice("link") : indice("link bitrix24"),
+    ricambio: indice("ricambio"),
     prodotto: indice("prodotto"),
     dispositivo: indice("dispositivo"),
     colore: indice("colore"),
@@ -428,6 +461,7 @@ export function daCsv(testo: string, fornitori: FornitoreSalvato[]): { ordini: O
       cliente,
       telefono: valore(colonne.telefono),
       link: valore(colonne.link),
+      ricambio: valore(colonne.ricambio),
       nomeProdotto: valore(colonne.prodotto),
       dispositivo,
       colore: valore(colonne.colore),
@@ -491,13 +525,14 @@ function cellaCsv(valore: string): string {
 
 export function toCsv(ordini: Ordine[], fornitori: FornitoreSalvato[] = []): string {
   const righe = [
-    ["Cliente", "Telefono", "Link", "Prodotto", "Dispositivo", "Colore", "Cover", "Fornitore", "Stato", "Consegnato", "Data", "Costo", "Prezzo", "Acconto", "Note"],
+    ["Cliente", "Telefono", "Link", "Prodotto", "Dispositivo", "Ricambio", "Colore", "Cover", "Fornitore", "Stato", "Consegnato", "Data", "Costo", "Prezzo", "Acconto", "Note"],
     ...ordini.map((ordine) => [
       ordine.cliente,
       ordine.telefono,
       ordine.link,
       ordine.nomeProdotto,
       ordine.dispositivo,
+      ordine.ricambio,
       ordine.colore,
       ordine.cover ? etichettaCover(ordine.tipoCover) : "No",
       nomeFornitore(fornitori, ordine.fornitore),

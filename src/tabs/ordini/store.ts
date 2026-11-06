@@ -9,7 +9,7 @@ async function percorsi() {
   return { dir, file };
 }
 
-function normalizza(ordine: Omit<Ordine, "stato" | "link"> & { coverLibro?: boolean; fase?: string; stato?: string; link?: string; linkBitrix24?: string }): Ordine {
+function normalizza(ordine: Omit<Ordine, "stato" | "link" | "ricambio"> & { coverLibro?: boolean; fase?: string; stato?: string; link?: string; linkBitrix24?: string; ricambio?: string }): Ordine {
   const { coverLibro, fase: faseGrezza, linkBitrix24, ...resto } = ordine;
   const tipo = TIPI_COVER.find((voce) => voce === ordine.tipoCover);
   const tipoCover: TipoCover = tipo ?? (coverLibro ? "libro" : "normale");
@@ -24,6 +24,7 @@ function normalizza(ordine: Omit<Ordine, "stato" | "link"> & { coverLibro?: bool
     costo: Number.isFinite(ordine.costo) ? ordine.costo : 0,
     nomeProdotto: ordine.nomeProdotto ?? "",
     link: ordine.link ?? linkBitrix24 ?? "",
+    ricambio: ordine.ricambio ?? "",
     stato,
   };
 }

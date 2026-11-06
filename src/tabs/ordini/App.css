@@ -144,7 +144,7 @@
 }
 
 .ordini-tabella {
-  width: 100%;
+  width: max-content;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
@@ -157,10 +157,33 @@
   white-space: nowrap;
 }
 
+.ordini-tabella.ordini-fissa { table-layout: fixed; }
+.ordini-tabella.ordini-fissa th,
+.ordini-tabella.ordini-fissa td {
+  width: auto;
+  max-width: none;
+}
+
 .ordini-tabella th {
   position: sticky;
   top: 0;
   background: var(--bg);
+  border-right: 1px solid var(--border);
+}
+
+.ordini-ridimensiona {
+  position: absolute;
+  top: 0;
+  right: -4px;
+  z-index: 2;
+  width: 8px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.ordini-ridimensiona:hover {
+  background: rgb(156 163 175 / 35%);
 }
 
 .ordini-tabella th button {
@@ -286,6 +309,22 @@
 }
 
 .ordini-dialog h2 { margin: 0 0 0.25rem; font-size: 1.1rem; }
+.ordini-titolo {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.ordini-titolo span { flex: none; }
+.ordini-dialog .ordini-titolo input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  font-size: inherit;
+}
 
 .ordini-dialog label {
   display: flex;
@@ -321,8 +360,8 @@
 
 .ordini-cella input,
 .ordini-cella select {
-  width: 100%;
-  min-width: 7.5rem;
+  width: auto;
+  min-width: 0;
   border: 1px solid transparent;
   background: transparent;
   font: inherit;

@@ -16,8 +16,8 @@ import {
   etichettaStato,
   daCsv,
   euro,
+  nomeAutomatico,
   ordina,
-  titoloOrdine,
   ordineDaBozza,
   parseEuro,
   toCsv,
@@ -57,6 +57,7 @@ function CellaImporto({ valore, etichetta, onCommit }: { valore: number; etichet
     <input
       aria-label={etichetta}
       inputMode="decimal"
+      size={Math.max(testo.length, 1)}
       value={testo}
       onFocus={() => {
         setAttivo(true);
@@ -99,6 +100,40 @@ async function immagineTrascinata(evento: DragEvent<HTMLDivElement>): Promise<st
   return dataUrl(new Uint8Array(await risposta.arrayBuffer()), tipo);
 }
 
+function Maniglia({ id, onRidimensiona }: { id: string; onRidimensiona: (larghezze: Record<string, number>) => void }) {
+  return (
+    <span
+      className="ordini-ridimensiona"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Larghezza colonna"
+      onPointerDown={(evento) => {
+        evento.preventDefault();
+        evento.stopPropagation();
+        const tabella = evento.currentTarget.closest("table");
+        const teste = tabella?.querySelectorAll<HTMLElement>("thead th[data-col]");
+        if (!teste) return;
+        const base: Record<string, number> = {};
+        teste.forEach((testa) => {
+          const chiave = testa.dataset.col;
+          if (chiave) base[chiave] = testa.getBoundingClientRect().width;
+        });
+        const partenzaX = evento.clientX;
+        const iniziale = base[id] ?? 80;
+        const muovi = (spostamento: PointerEvent) => {
+          onRidimensiona({ ...base, [id]: Math.max(36, Math.round(iniziale + spostamento.clientX - partenzaX)) });
+        };
+        const fine = () => {
+          window.removeEventListener("pointermove", muovi);
+          window.removeEventListener("pointerup", fine);
+        };
+        window.addEventListener("pointermove", muovi);
+        window.addEventListener("pointerup", fine);
+      }}
+    />
+  );
+}
+
 interface FinestraOrdine {
   id: string | null;
   bozza: Bozza;
@@ -117,6 +152,7 @@ export default function App() {
   const [selezionato, setSelezionato] = useState<string | null>(null);
   const [colonna, setColonna] = useState<Colonna>("data");
   const [verso, setVerso] = useState<Verso>("desc");
+  const [larghezze, setLarghezze] = useState<Record<string, number>>({});
   const [finestra, setFinestra] = useState<FinestraOrdine | null>(null);
   const [elencoFornitori, setElencoFornitori] = useState(false);
   const [schedaFornitore, setSchedaFornitore] = useState<{ id: string | null; nome: string; immagine: string } | null>(null);
@@ -193,12 +229,25 @@ export default function App() {
   useEffect(() => {
     if (!finestra && !elencoFornitori && !messaggioAperto) return;
     const suTasto = (evento: KeyboardEvent) => {
-      if (evento.key !== "Escape") return;
-      evento.preventDefault();
-      if (finestra) chiudiFinestra();
-      else if (messaggioAperto) setMessaggioAperto(false);
-      else if (schedaFornitore) setSchedaFornitore(null);
-      else setElencoFornitori(false);
+      if (evento.key === "Escape") {
+        evento.preventDefault();
+        if (finestra) chiudiFinestra();
+        else if (messaggioAperto) setMessaggioAperto(false);
+        else if (schedaFornitore) setSchedaFornitore(null);
+        else setElencoFornitori(false);
+        return;
+      }
+      if (evento.key !== "Enter" || evento.shiftKey || evento.altKey || evento.metaKey || evento.ctrlKey) return;
+      if (finestra) {
+        evento.preventDefault();
+        void salvaFinestra();
+      } else if (messaggioAperto) {
+        evento.preventDefault();
+        void salvaMessaggio();
+      } else if (schedaFornitore) {
+        evento.preventDefault();
+        void salvaFornitore();
+      }
     };
     window.addEventListener("keydown", suTasto);
     return () => window.removeEventListener("keydown", suTasto);
@@ -349,6 +398,10 @@ export default function App() {
     setAvviso(`CSV salvato in ${percorso}`);
   }
 
+  function impostaLarghezza(prossime: Record<string, number>) {
+    setLarghezze(prossime);
+  }
+
   if (!archivio) {
     return <div className="ordini">{errore ? <p className="ordini-errore">{errore}</p> : <p>Caricamento…</p>}</div>;
   }
@@ -421,10 +474,19 @@ export default function App() {
         </div>
         {nota ? <p className="ordini-nota">{nota}</p> : null}
         <div className="ordini-tabella-wrap">
-          <table className="ordini-tabella">
+          <table className={Object.keys(larghezze).length ? "ordini-tabella ordini-fissa" : "ordini-tabella"}>
+            {Object.keys(larghezze).length ? (
+              <colgroup>
+                {["immagine", "cliente", "telefono", "link", "prodotto", "colore", "fornitore", "stato", "data", "consegnato", "costo", "totale"].map((id) => (
+                  <col key={id} style={{ width: larghezze[id] }} />
+                ))}
+              </colgroup>
+            ) : null}
             <thead>
               <tr>
-                <th className="ordini-thumb-col" aria-label="Immagine" />
+                <th className="ordini-thumb-col" data-col="immagine" aria-label="Immagine">
+                  <Maniglia id="immagine" onRidimensiona={impostaLarghezza} />
+                </th>
                 {([
                   ["cliente", "Cliente"],
                   ["telefono", "Telefono"],
@@ -438,7 +500,12 @@ export default function App() {
                   ["costo", "Costo"],
                   ["totale", "Totale"],
                 ] as const).map(([id, etichetta]) => (
-                  <th key={id} className={id === "fornitore" || id === "consegnato" || id === "link" ? "ordini-centro" : undefined} aria-sort={colonna === id ? (verso === "asc" ? "ascending" : "descending") : "none"}>
+                  <th
+                    key={id}
+                    data-col={id}
+                    className={id === "fornitore" || id === "consegnato" || id === "link" ? "ordini-centro" : undefined}
+                    aria-sort={colonna === id ? (verso === "asc" ? "ascending" : "descending") : "none"}
+                  >
                     <button
                       type="button"
                       onClick={() => {
@@ -451,6 +518,7 @@ export default function App() {
                     >
                       {etichetta}{colonna === id ? (verso === "asc" ? " ↑" : " ↓") : ""}
                     </button>
+                    <Maniglia id={id} onRidimensiona={impostaLarghezza} />
                   </th>
                 ))}
               </tr>
@@ -614,7 +682,14 @@ export default function App() {
               void salvaFinestra();
             }}
           >
-            <h2>{titoloOrdine(finestra.bozza)}</h2>
+            <h2 className="ordini-titolo">
+              <span>Ordine -</span>
+              <input
+                aria-label="Nome prodotto"
+                value={finestra.bozza.nomeLibero ? finestra.bozza.nome : nomeAutomatico(finestra.bozza)}
+                onChange={(evento) => aggiorna({ nome: evento.target.value, nomeLibero: true })}
+              />
+            </h2>
             <label>
               Cliente *
               <input id="ordini-cliente" value={finestra.bozza.cliente} onChange={(evento) => aggiorna({ cliente: evento.target.value })} />
@@ -657,6 +732,14 @@ export default function App() {
                 ))}
               </select>
             </div>
+            <label>
+              Ricambio
+              <input
+                value={finestra.bozza.ricambio}
+                disabled={finestra.bozza.cover}
+                onChange={(evento) => aggiorna({ ricambio: evento.target.value })}
+              />
+            </label>
             <label>
               Colore
               <input value={finestra.bozza.colore} onChange={(evento) => aggiorna({ colore: evento.target.value })} />
